@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
 import { Inbox, FolderOpen, Plus, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { prefetchTodayItems, prefetchCategories } from "@/hooks/use-items";
+import { useCallback } from "react";
 
 export default function DashboardLayout({
   children,
@@ -13,18 +15,29 @@ export default function DashboardLayout({
 }) {
   const pathname = usePathname();
 
+  // Prefetch functions for instant navigation
+  const prefetchToday = useCallback(() => {
+    prefetchTodayItems();
+  }, []);
+
+  const prefetchLibrary = useCallback(() => {
+    prefetchCategories();
+  }, []);
+
   const navItems = [
     {
       href: "/today",
       label: "Today",
       icon: Inbox,
       isActive: pathname === "/today",
+      onPrefetch: prefetchToday,
     },
     {
       href: "/items",
       label: "Library",
       icon: FolderOpen,
       isActive: pathname === "/items" || pathname.startsWith("/items?"),
+      onPrefetch: prefetchLibrary,
     },
   ];
 
@@ -48,6 +61,9 @@ export default function DashboardLayout({
                 <Link
                   key={item.href}
                   href={item.href}
+                  // Prefetch data on hover for instant navigation
+                  onMouseEnter={item.onPrefetch}
+                  onFocus={item.onPrefetch}
                   className={cn(
                     "relative flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200",
                     item.isActive

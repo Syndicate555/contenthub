@@ -3,7 +3,7 @@
  * Uses AES-256-GCM encryption with a secret key from environment
  */
 
-import crypto from "crypto";
+import * as crypto from "crypto";
 
 const ALGORITHM = "aes-256-gcm";
 const IV_LENGTH = 16; // 128 bits

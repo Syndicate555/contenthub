@@ -3,7 +3,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { ITEM_CATEGORIES, type ItemCategory } from "@/types";
 
-// GET /api/categories - Get category counts with thumbnails
+// GET /api/categories - Get category counts with thumbnails (OPTIMIZED)
 export async function GET() {
   try {
     const user = await getCurrentUser();
@@ -12,65 +12,73 @@ export async function GET() {
       return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get all non-deleted items for the user
-    const items = await db.item.findMany({
+    // OPTIMIZATION: Use groupBy for counts instead of fetching all items
+    const categoryCounts = await db.item.groupBy({
+      by: ["category"],
       where: {
         userId: user.id,
         status: { not: "deleted" },
       },
-      select: {
-        id: true,
-        category: true,
-        imageUrl: true,
-        title: true,
-      },
-      orderBy: { createdAt: "desc" },
+      _count: { id: true },
     });
 
-    // Group items by category and collect thumbnails
-    const categoryMap = new Map<string, { count: number; thumbnails: string[]; titles: string[] }>();
-
-    // Initialize with all categories
-    ITEM_CATEGORIES.forEach((cat) => {
-      categoryMap.set(cat.value, { count: 0, thumbnails: [], titles: [] });
+    // Create a map of category -> count
+    const countMap = new Map<string, number>();
+    let totalItems = 0;
+    categoryCounts.forEach((c) => {
+      const cat = c.category || "other";
+      countMap.set(cat, c._count.id);
+      totalItems += c._count.id;
     });
 
-    // Count items per category and collect thumbnails
-    items.forEach((item) => {
-      const category = item.category || "other";
-      const data = categoryMap.get(category) || { count: 0, thumbnails: [], titles: [] };
-      data.count += 1;
+    // OPTIMIZATION: Only fetch thumbnails for categories that have items
+    // Fetch only 4 items per category for thumbnails (much more efficient)
+    const categoriesWithItems = Array.from(countMap.keys());
 
-      // Collect up to 4 thumbnails per category (for the preview grid)
-      if (data.thumbnails.length < 4 && item.imageUrl) {
-        data.thumbnails.push(item.imageUrl);
-      }
+    // Parallel fetch thumbnails for each category (limited to 4 per category)
+    const thumbnailPromises = categoriesWithItems.map(async (category) => {
+      const items = await db.item.findMany({
+        where: {
+          userId: user.id,
+          status: { not: "deleted" },
+          category: category === "other" ? null : category,
+        },
+        select: {
+          imageUrl: true,
+          title: true,
+        },
+        orderBy: { createdAt: "desc" },
+        take: 4, // Only get 4 items for thumbnails
+      });
 
-      // Collect titles as fallback for items without images
-      if (data.titles.length < 4) {
-        data.titles.push(item.title || "Untitled");
-      }
-
-      categoryMap.set(category, data);
+      return {
+        category,
+        thumbnails: items.filter((i) => i.imageUrl).map((i) => i.imageUrl!),
+        titles: items.map((i) => i.title || "Untitled"),
+      };
     });
+
+    const thumbnailResults = await Promise.all(thumbnailPromises);
+    const thumbnailMap = new Map(
+      thumbnailResults.map((r) => [r.category, { thumbnails: r.thumbnails, titles: r.titles }])
+    );
 
     // Build response with category metadata
     const categories = ITEM_CATEGORIES.map((cat) => {
-      const data = categoryMap.get(cat.value) || { count: 0, thumbnails: [], titles: [] };
+      const count = countMap.get(cat.value) || 0;
+      const thumbnailData = thumbnailMap.get(cat.value) || { thumbnails: [], titles: [] };
+
       return {
         category: cat.value as ItemCategory,
         label: cat.label,
         icon: cat.icon,
-        count: data.count,
-        thumbnails: data.thumbnails,
-        titles: data.titles,
+        count,
+        thumbnails: thumbnailData.thumbnails,
+        titles: thumbnailData.titles,
       };
     }).filter((cat) => cat.count > 0); // Only return categories with items
 
-    // Calculate total items
-    const totalItems = items.length;
-
-    // Get unique platforms
+    // Get unique platforms (this query is already efficient)
     const platforms = await db.item.groupBy({
       by: ["source"],
       where: {
@@ -87,7 +95,8 @@ export async function GET() {
       count: p._count.id,
     }));
 
-    return NextResponse.json({
+    // Create response with cache headers
+    const response = NextResponse.json({
       ok: true,
       data: {
         categories,
@@ -95,6 +104,15 @@ export async function GET() {
         platforms: platformCounts,
       },
     });
+
+    // Add cache headers for browser caching (stale-while-revalidate pattern)
+    // Cache for 30 seconds, allow stale for 60 seconds while revalidating
+    response.headers.set(
+      "Cache-Control",
+      "private, max-age=30, stale-while-revalidate=60"
+    );
+
+    return response;
   } catch (error) {
     console.error("GET /api/categories error:", error);
     return NextResponse.json(

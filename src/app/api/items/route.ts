@@ -79,7 +79,8 @@ export async function GET(request: NextRequest) {
     const totalPages = Math.ceil(total / query.limit);
     const hasMore = query.page < totalPages;
 
-    return NextResponse.json({
+    // Create response with cache headers
+    const response = NextResponse.json({
       ok: true,
       data: items,
       meta: {
@@ -90,6 +91,15 @@ export async function GET(request: NextRequest) {
         hasMore,
       },
     });
+
+    // Add cache headers for browser caching (stale-while-revalidate pattern)
+    // Short cache for items as they change more frequently
+    response.headers.set(
+      "Cache-Control",
+      "private, max-age=10, stale-while-revalidate=30"
+    );
+
+    return response;
   } catch (error) {
     console.error("GET /api/items error:", error);
     return NextResponse.json(

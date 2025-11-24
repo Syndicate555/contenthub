@@ -64,13 +64,19 @@ async function importBookmark(
       userId,
     });
 
+    // Get the best available image from Twitter API media
+    // Prefer the actual media URL, fallback to preview image
+    const twitterMediaUrl = bookmark.media?.[0]?.url || bookmark.media?.[0]?.previewImageUrl;
+
     if (!result.success) {
-      // Even if processing fails, update with import metadata
+      // Even if processing fails, update with import metadata and Twitter media
       await prisma.item.update({
         where: { id: result.item.id },
         data: {
           importSource: "twitter",
           externalId: bookmark.id,
+          // Use Twitter API media if available, since extraction may have failed
+          ...(twitterMediaUrl && { imageUrl: twitterMediaUrl }),
         },
       });
       return {
@@ -79,12 +85,15 @@ async function importBookmark(
       };
     }
 
-    // Update the item with import source info
+    // Update the item with import source info and Twitter media
+    // Twitter API media takes precedence over any extracted image (if not already set)
     await prisma.item.update({
       where: { id: result.item.id },
       data: {
         importSource: "twitter",
         externalId: bookmark.id,
+        // Override with Twitter API media - more reliable than extraction
+        ...(twitterMediaUrl && { imageUrl: twitterMediaUrl }),
       },
     });
 

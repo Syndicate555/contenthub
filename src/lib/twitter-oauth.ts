@@ -3,7 +3,7 @@
  * Implements the OAuth 2.0 Authorization Code Flow with PKCE
  */
 
-import crypto from "crypto";
+import * as crypto from "crypto";
 
 // Twitter OAuth 2.0 endpoints
 export const TWITTER_AUTH_URL = "https://twitter.com/i/oauth2/authorize";
