@@ -1,0 +1,907 @@
+ContentHub v1 – Product Requirements Document
+1. Product Overview
+
+Product name (working): ContentHub
+Type: Personal “second brain” for social content
+Platform: Web app (Next.js monolith, Supabase Postgres, OpenAI)
+Audience for v1: Single user (the builder)
+
+1.1 Problem
+
+The user regularly encounters high-signal content on Twitter, Instagram, and LinkedIn, and typically:
+
+Saves or bookmarks posts.
+
+Intends to revisit them later.
+
+Almost never actually returns to them.
+
+This leads to:
+
+Scattered “saves” across multiple apps.
+
+A growing backlog of digital clutter.
+
+Missed opportunities to learn from and reuse good content.
+
+1.2 Solution (v1)
+
+A simple web app that:
+
+Lets the user save links from Twitter, Instagram, and LinkedIn into a single inbox.
+
+Fetches and distills the content into:
+
+Clean title
+
+Bullet summary
+
+Tags
+
+Type: learn / do / reference
+
+Stores everything in Supabase Postgres and makes it:
+
+Searchable
+
+Filterable by tag and status
+
+Provides a “Today” review screen with a limited set of new items for triage:
+
+Pin
+
+Archive
+
+Delete
+
+Capture from mobile is done via platform share sheets that send URLs to a Next.js API endpoint. No native apps for v1.
+
+2. Goals and Non-Goals
+2.1 Goals (v1)
+
+Build a working prototype in a few days using Next.js.
+
+Centralize saved content from:
+
+Twitter (tweets / threads via URL)
+
+Instagram (posts / reels via URL)
+
+LinkedIn (posts / articles via URL)
+
+Automatically:
+
+Summarize content
+
+Generate tags
+
+Classify type (learn / do / reference)
+
+Provide:
+
+Minimal but usable UI for capture, review, and search.
+
+2.2 Non-Goals (v1)
+
+No direct platform sync of “saved” or “bookmarked” items via official APIs.
+
+No native iOS/Android app.
+
+No push notifications or reminder system.
+
+No multi-user accounts or sharing.
+
+No spaced repetition or advanced learning workflows.
+
+No screenshot/image OCR.
+
+No browser extension (can be added later).
+
+3. Target User and Context
+3.1 Primary User
+
+Heavy consumer of educational content on social media.
+
+Background in software engineering and tech.
+
+Willing to tolerate small amounts of friction in exchange for better recall and organization.
+
+For v1:
+
+Only a single user exists.
+
+No multi-tenant or organization support.
+
+No user settings UI is required.
+
+3.2 Usage Context
+
+On mobile:
+
+User sees a Twitter/Instagram/LinkedIn post.
+
+Uses the native Share action to send the link to ContentHub via a Shortcut or HTTP share configuration.
+
+On desktop:
+
+User copies the URL from the browser.
+
+Opens /add and pastes the URL.
+
+Later, during review:
+
+User opens the web app (contenthub.<domain>).
+
+Reviews “Today” items.
+
+Searches previously saved content when needed.
+
+4. Scope of v1
+4.1 In Scope
+
+Web app with:
+
+Login
+
+Today view
+
+All items view
+
+Add item page
+
+API endpoints to:
+
+Capture URLs
+
+Summarize and tag content
+
+Update item status
+
+Query items
+
+Supabase Postgres as the primary data store.
+
+OpenAI integration for summarization and tagging.
+
+iOS / Android Shortcut or HTTP share integration for quick capture.
+
+4.2 Out of Scope
+
+Real-time full sync with social media accounts.
+
+Rich text note-taking editor.
+
+Advanced multi-device session management.
+
+Admin dashboards, analytics, or metrics UI.
+
+External user onboarding, invites, or payments.
+
+5. Key Features and Requirements
+5.1 Capture
+5.1.1 Manual Capture (Web Add Page)
+
+User Story
+
+As a user, when I find a valuable post or thread on my laptop, I want to quickly paste the URL into ContentHub and save it, without extra steps.
+
+Requirements
+
+Route: /add
+
+UI elements:
+
+Input: URL (required)
+
+Input: Note (optional, short text)
+
+Button: Save
+
+On submit:
+
+Call POST /api/items with { url, note? }.
+
+Show feedback: loading / success / error.
+
+Optionally redirect to /today after success.
+
+Validation
+
+Client-side check that the URL is non-empty and looks like a URL.
+
+Server-side validation of URL format.
+
+If invalid, return an error and display message.
+
+5.1.2 Quick Capture from Twitter / Instagram / LinkedIn (Mobile)
+
+User Story
+
+As a user, when I see a valuable social post on mobile, I want to tap share, choose ContentHub, and have it saved in the background.
+
+Requirements
+
+Public endpoint: POST /api/items/quick-add
+
+Authentication: Authorization: Bearer <SECRET> in the request header.
+
+Body:
+
+url (required)
+
+note (optional)
+
+Response:
+
+Success: { ok: true, itemId, title?, source }
+
+Failure: { ok: false, error }
+
+iOS Shortcut / Android HTTP:
+
+Accepts shared URL from the OS share sheet.
+
+Sends HTTP POST to POST /api/items/quick-add.
+
+Behavior
+
+Uses the same internal processing pipeline as manual capture.
+
+No frontend UI, only a simple success/failure indication in the Shortcut.
+
+5.2 Processing and Summarization
+
+User Story
+
+As a user, when I save a URL, I want the system to fetch and distill the content so I can recall key ideas later without re-reading everything.
+
+Requirements
+
+When a new URL is submitted (via /api/items or /api/items/quick-add):
+
+Create an Item row in Supabase:
+
+url
+
+note
+
+status = "new"
+
+source = domain extracted from URL
+
+userId
+
+Fetch HTML from the URL on the server.
+
+Extract content using a readability approach:
+
+Title: from <title> and/or readability’s title.
+
+Main text: from readability’s main content, or fallback to body text.
+
+Call OpenAI with the “Ingest + Summarize + Tag + Classify” system prompt.
+
+Parse the JSON response from the LLM.
+
+Update the Item:
+
+title
+
+summary (stored as joined bullet text or JSON)
+
+tags (string array)
+
+type (learn / do / reference)
+
+rawContent (truncated to a safe length)
+
+Edge Cases
+
+If HTTP fetch fails:
+
+Keep the item with:
+
+title = url
+
+summary = "Failed to fetch content."
+
+If LLM call fails:
+
+Keep the item with:
+
+title from HTML (if available)
+
+summary = "Summarization failed."
+
+Optional tag added: ["llm_failed"].
+
+Performance
+
+v1 processing is synchronous inside the API route.
+
+Target: end-to-end response in ~3–5 seconds is acceptable for single-user use.
+
+5.3 Today View (Daily Review)
+
+User Story
+
+As a user, when I open ContentHub, I want to see a small set of new items I haven’t processed yet, and quickly decide what to do with each.
+
+Requirements
+
+Route: /today (default landing route after login).
+
+Backend logic:
+
+Fetch up to 10 items where:
+
+status = "new"
+
+userId = current user
+
+Order by createdAt ASC.
+
+UI:
+
+List of cards, each showing:
+
+Source domain (e.g., twitter.com).
+
+Title (click opens original link in a new tab).
+
+Bullet summary (3–7 bullets).
+
+Tags (small chips).
+
+Note (if present, smaller/faded).
+
+Created date.
+
+Actions per card:
+
+Pin → sets status = "pinned".
+
+Archive → sets status = "reviewed".
+
+Delete → sets status = "deleted" (soft delete).
+
+On action:
+
+Optimistically remove item from the list.
+
+Send PATCH /api/items/:id server request.
+
+Handle error (if any) by optionally restoring the card or showing a toast.
+
+5.4 All Items View (Browse & Search)
+
+User Story
+
+As a user, when I want to find or revisit specific content, I want to search and filter across all my saved items.
+
+Requirements
+
+Route: /items
+
+UI elements:
+
+Search input (q).
+
+Filters:
+
+Status: All / New / Reviewed / Pinned
+
+Tag: dropdown or chip selector.
+
+Results list:
+
+Title
+
+Source
+
+Key tags
+
+One-liner or first summary bullet
+
+Status badge (optional)
+
+Backend endpoint: GET /api/items
+
+Query parameters:
+
+q?: string
+
+status?: "new" | "reviewed" | "pinned" | "all"
+
+tag?: string
+
+limit?: number (default: 50)
+
+Search behavior:
+
+Basic text search using contains on:
+
+title
+
+summary
+
+note
+
+Filter by:
+
+status if provided (except all).
+
+tags containing given tag if provided.
+
+5.5 Item Status Management
+
+Statuses
+
+new – Saved, not yet reviewed in Today.
+
+reviewed – Seen and archived.
+
+pinned – Marked as important/favorite.
+
+deleted – Soft-deleted, hidden from normal views.
+
+User Story
+
+As a user, I want basic states so I can distinguish between new, processed, and important items.
+
+Requirements
+
+Endpoint: PATCH /api/items/:id
+
+Auth: session required.
+
+Body: partial update, including:
+
+status
+
+tags
+
+note
+
+Soft delete behavior:
+
+status = "deleted"; items are excluded from /today and /items (unless explicitly queried).
+
+5.6 Auth and Security (Single User)
+
+User Story
+
+As a user, I want basic authentication so the app is not publicly accessible to anyone who knows the URL.
+
+Requirements
+
+Route: /login
+
+Fields:
+
+Email
+
+Password
+
+Endpoint: POST /api/auth/login
+
+Validates email and password against:
+
+Either a User record in Supabase, or
+
+Values stored in environment variables.
+
+On success:
+
+Creates a session row with token in Session table, or generates a signed token.
+
+Sets session cookie:
+
+HttpOnly
+
+Secure
+
+SameSite=Lax
+
+Auth guard:
+
+Middleware / server helper to:
+
+Extract session cookie.
+
+Validate session (exists + not expired).
+
+Redirect to /login if invalid.
+
+All routes and APIs, except /login and POST /api/items/quick-add, require a valid session.
+
+Quick-add endpoint:
+
+Secured via shared secret in Authorization: Bearer <SECRET> header.
+
+6. User Flows (End-to-End)
+6.1 Mobile Save Flow (Twitter / Instagram / LinkedIn)
+
+User taps “Share” on a post.
+
+User selects “Save to ContentHub” Shortcut / HTTP action.
+
+Shortcut:
+
+Extracts the shared URL.
+
+Sends POST /api/items/quick-add with:
+
+Header: Authorization: Bearer <SECRET>
+
+Body: { url }.
+
+API:
+
+Authenticates the bearer token.
+
+Creates an Item with status = "new".
+
+Fetches the HTML, extracts main content.
+
+Calls OpenAI to summarize and tag.
+
+Updates the Item with title, summary, tags, type.
+
+Returns { ok: true, itemId }.
+
+Shortcut displays a success message.
+
+Later, user opens /today and sees the summarized item for review.
+
+6.2 Desktop Save Flow
+
+User copies URL from browser.
+
+Opens /add.
+
+Pastes URL, optionally writes a note, and clicks Save.
+
+Browser sends POST /api/items with { url, note } and cookie-based session.
+
+API:
+
+Validates session.
+
+Creates an Item.
+
+Fetches HTML, extracts main content.
+
+Calls OpenAI summarizer.
+
+Updates the Item.
+
+Returns { ok: true, itemId }.
+
+UI shows a confirmation or redirects user to /today.
+
+6.3 Daily Review Flow
+
+User logs in and is redirected to /today.
+
+Server:
+
+Validates session.
+
+Fetches up to 10 new items.
+
+Page renders item cards with titles, summaries, and tags.
+
+User processes each card by choosing:
+
+Pin / Archive / Delete.
+
+On action:
+
+Frontend sends PATCH /api/items/:id with new status.
+
+Item is removed from the list on success.
+
+6.4 Search and Recall Flow
+
+User navigates to /items.
+
+User enters a query in the search box and optionally selects a status or tag filter.
+
+Frontend sends GET /api/items?q=...&status=...&tag=....
+
+API:
+
+Validates session.
+
+Builds Prisma query with optional q, status, tag.
+
+Returns list of matching items.
+
+User clicks a result to:
+
+Read the summary.
+
+Open the original content in a new tab if needed.
+
+7. System Design (High Level)
+7.1 Architecture
+
+Single Next.js app acting as:
+
+Frontend (React UI)
+
+Backend (API routes)
+
+Database:
+
+Supabase Postgres, accessed via Prisma.
+
+LLM:
+
+OpenAI Chat API (e.g., gpt-4.1-mini).
+
+Hosting:
+
+Vercel for the Next.js application.
+
+7.2 Main Components
+
+Pages
+
+/login
+
+/today
+
+/items
+
+/add
+
+API Routes
+
+POST /api/auth/login
+
+GET /api/items
+
+POST /api/items
+
+POST /api/items/quick-add
+
+PATCH /api/items/:id
+
+Library Modules
+
+lib/db.ts – Prisma client singleton.
+
+lib/auth.ts – Session create/validate helpers.
+
+lib/items.ts – Business logic for item creation, fetch + summarize pipeline.
+
+lib/openai.ts – Wrapper for LLM calls.
+
+lib/summarizerPrompt.ts – Centralized system prompt used for summarization.
+
+8. Data Model (Supabase / Prisma)
+8.1 Item
+model Item {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+
+  url         String
+  title       String?
+  source      String?       // e.g. "twitter.com", "instagram.com", "linkedin.com"
+  note        String?
+
+  rawContent  String?
+  summary     String?       // bullet list joined by "\n" or JSON string
+  tags        String[]      // Postgres text[]
+  type        String?       // "learn" | "do" | "reference"
+  status      String        @default("new") // "new" | "reviewed" | "pinned" | "deleted"
+
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  reviewedAt  DateTime?
+}
+
+8.2 User
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String   // hashed or pre-hashed password
+  createdAt DateTime @default(now())
+
+  items     Item[]
+  sessions  Session[]
+}
+
+8.3 Session
+model Session {
+  token     String   @id
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+}
+
+9. API Summary
+9.1 POST /api/auth/login
+
+Auth: None (login endpoint).
+
+Body: { email: string, password: string }
+
+Behavior:
+
+Validate credentials.
+
+On success:
+
+Create Session row with random token and expiresAt.
+
+Set session cookie.
+
+On failure:
+
+Return { ok: false, error }.
+
+9.2 POST /api/items
+
+Auth: Session cookie.
+
+Body: { url: string, note?: string }
+
+Behavior:
+
+Validate session.
+
+Create Item row with minimal fields.
+
+Fetch HTML and extract text.
+
+Call OpenAI summarizer.
+
+Update Item.
+
+Return { ok: true, itemId } (or error).
+
+9.3 POST /api/items/quick-add
+
+Auth: Authorization: Bearer <SECRET>.
+
+Body: { url: string, note?: string }
+
+Behavior:
+
+Validate bearer token.
+
+Reuse same logic as POST /api/items (summary pipeline).
+
+Return { ok: true, itemId } or error.
+
+9.4 GET /api/items
+
+Auth: Session cookie.
+
+Query Params:
+
+q?: string
+
+status?: "new" | "reviewed" | "pinned" | "all"
+
+tag?: string
+
+limit?: number (default 50)
+
+Behavior:
+
+Validate session.
+
+Build Prisma query with filters.
+
+Return list of matching items.
+
+9.5 PATCH /api/items/:id
+
+Auth: Session cookie.
+
+Body: partial fields (e.g. { status, tags, note }).
+
+Behavior:
+
+Validate session.
+
+Ensure item belongs to current user.
+
+Apply updates to Item.
+
+Return { ok: true } or error.
+
+10. Non-Functional Requirements
+
+Performance
+
+Save operations (with summarization) can take up to ~3–5 seconds.
+
+Simple page loads should complete in under ~1 second for typical usage.
+
+Security
+
+All traffic over HTTPS.
+
+HttpOnly, Secure, SameSite=Lax for session cookies.
+
+Strong random session tokens.
+
+Quick-add secret stored only in environment variables.
+
+Reliability
+
+If HTML fetch or LLM call fails, the Item row should still exist.
+
+Errors should be visible to the user (e.g., simple error summary text).
+
+Maintainability
+
+Shared logic in lib/ modules.
+
+Centralized prompt definition.
+
+Clear separation between:
+
+Request handling (API routes)
+
+Business logic (lib/items.ts)
+
+Persistence (lib/db.ts).
+
+11. Implementation Phases
+Phase 1 – Core Skeleton
+
+Scaffold Next.js app with TypeScript.
+
+Connect Supabase via Prisma.
+
+Define User, Session, Item models and run migrations.
+
+Implement:
+
+/login (static credentials)
+
+Basic session handling
+
+/today, /items, /add pages (static or dummy data).
+
+Phase 2 – Functional Item Pipeline
+
+Implement POST /api/items:
+
+Create item.
+
+Fetch HTML and extract text.
+
+Call OpenAI summarizer.
+
+Update item.
+
+Wire /add page to API.
+
+Implement /today page backed by real data.
+
+Implement PATCH /api/items/:id for status updates.
+
+Phase 3 – Quick-Add + Search + Polish
+
+Implement POST /api/items/quick-add.
+
+Configure iOS Shortcut / Android HTTP share.
+
+Implement GET /api/items with search and filters.
+
+Improve UI with Tailwind CSS for:
+
+Card layouts
+
+Basic responsive design
+
+Optional light refactoring for code clarity.

@@ -1,0 +1,936 @@
+ContentHub – Project Context for Claude Code
+1. Project Summary
+
+ContentHub is a personal “second brain” for social media content.
+
+It lets a single user capture links from Twitter, Instagram, and LinkedIn, automatically distill the content using an LLM, and review it later in a focused way. The app stores titles, summaries, tags, and links in a searchable database, so valuable posts don’t get lost in scattered bookmarks across different platforms.
+
+This v1 is a solo-built, single-user web app using Next.js, Supabase (Postgres), and OpenAI.
+
+2. Problem and Motivation
+2.1 Core Problem
+
+The user:
+
+Consumes a lot of educational content on Twitter, Instagram, and LinkedIn.
+
+Often saves bookmarks or “saved” posts with the intention of reading or using them later.
+
+Rarely goes back to these saved items.
+
+Has content scattered across multiple apps and save lists.
+
+This leads to:
+
+A “graveyard” of saved posts that are never revisited.
+
+Constant feeling of information overload.
+
+Lost opportunities to actually learn from or apply good content.
+
+2.2 Why a New Tool
+
+Existing tools (read-it-later apps, PKM systems) mostly focus on:
+
+Articles and PDFs.
+
+Email newsletters.
+
+Long-form content.
+
+ContentHub is focused specifically on:
+
+Short-form and feed-based content from social platforms.
+
+Automatic distillation and tagging, not just raw saving.
+
+A daily review workflow that keeps the backlog manageable.
+
+3. Core Concept
+
+ContentHub acts like a personal knowledge refinery for social media content:
+
+Capture
+The user sends a URL (tweet, thread, post, article) from Twitter, Instagram, or LinkedIn into ContentHub.
+
+Distill
+The backend:
+
+Fetches the page.
+
+Extracts the main text.
+
+Uses an LLM to:
+
+Generate a short bullet-point summary.
+
+Suggest tags.
+
+Classify the item as:
+
+learn (knowledge)
+
+do (action-oriented)
+
+reference (evergreen info)
+
+Store
+The item is stored in Supabase Postgres, with:
+
+URL
+
+Source (domain)
+
+Title
+
+Summary
+
+Tags
+
+Type (learn/do/reference)
+
+Status (new / reviewed / pinned / deleted)
+
+Optional user note
+
+Review & Search
+
+A Today view shows a small set of new items to triage.
+
+An All items view lets the user search and filter by tags and status.
+
+The big idea: convert raw, chaotic, saved social content into a structured, persistent memory that’s actually used.
+
+4. Target User
+
+For v1 there is exactly one user: the builder.
+
+Assume the user is:
+
+A software engineer.
+
+Heavy consumer of educational content on social media.
+
+Motivated to:
+
+Reduce overload.
+
+Improve recall.
+
+Build a personal knowledge base.
+
+There is no multi-user support in v1. No signups, teams, or organizations.
+
+5. MVP Scope (What the App Must Do)
+5.1 High-Level Feature Set
+
+Authentication
+
+Simple login page with email + password.
+
+Single user only.
+
+Session stored via cookie.
+
+Capture
+
+Web “Add item” page where the user pastes a URL and optional note.
+
+Public “quick add” API for mobile shortcuts that accepts a URL and a secret token.
+
+Processing
+
+Fetch the HTML for the URL.
+
+Extract title and readable text.
+
+Call OpenAI to:
+
+Summarize in 3–7 bullet points.
+
+Suggest tags.
+
+Classify type (learn / do / reference).
+
+Store results in the Item record.
+
+Today View
+
+Show up to 10 new items.
+
+Each item card shows:
+
+Source, title, summary bullets, tags, note.
+
+Actions per item:
+
+Pin → status pinned
+
+Archive → status reviewed
+
+Delete → status deleted (soft delete)
+
+All Items View
+
+Search box for simple keyword search (title, summary, note).
+
+Filters:
+
+Status (All / New / Reviewed / Pinned)
+
+Tag (single tag filter)
+
+List of matching items with key info.
+
+Basic State Management
+
+Status field per item:
+
+new, reviewed, pinned, deleted.
+
+6. Non-Goals (For v1)
+
+These are explicitly out of scope for now:
+
+Direct integration with Twitter / Instagram / LinkedIn APIs for “saved posts”.
+
+Native mobile apps (iOS/Android).
+
+Browser extensions.
+
+Notifications / reminders / spaced repetition.
+
+Multiple users, teams, or shared spaces.
+
+Rich text note editor or full PKM features.
+
+OCR on screenshots or images.
+
+The goal is to ship a lean, working web prototype quickly.
+
+7. Platform & Tech Stack
+7.1 Overall Approach
+
+Use a Next.js monolith that contains:
+
+Frontend React pages.
+
+Backend API routes.
+
+Shared business logic and types.
+
+7.2 Tech Choices
+
+Frontend + Backend: Next.js (TypeScript)
+
+Styling: Tailwind CSS
+
+Database: Supabase Postgres
+
+ORM: Prisma
+
+LLM: OpenAI Chat API (e.g. gpt-4.1-mini)
+
+Hosting: Vercel (Next.js app), Supabase handles the DB
+
+7.3 Reasons
+
+Single app and repo make it easy for a solo dev to maintain.
+
+Prisma + Supabase give migrations and a good DX.
+
+Next.js API routes remove the need for a separate backend service.
+
+8. Architecture Overview
+8.1 Components
+
+Next.js pages
+
+/login – login form.
+
+/today – daily review of new items.
+
+/items – search and browse all items.
+
+/add – manual URL add form.
+
+API routes
+
+POST /api/auth/login – login, create session.
+
+POST /api/items – create + summarize item (manual add).
+
+POST /api/items/quick-add – create + summarize item (mobile shortcut).
+
+GET /api/items – list items with filters and search.
+
+PATCH /api/items/:id – update item status, tags, note.
+
+Shared libs
+
+lib/db.ts – Prisma client.
+
+lib/auth.ts – session helpers.
+
+lib/items.ts – core item logic:
+
+create item
+
+fetch HTML
+
+extract readable text
+
+call OpenAI
+
+update DB
+
+lib/openai.ts – wrapper for LLM calls.
+
+lib/summarizerPrompt.ts – system prompt string for summarization.
+
+9. Data Model (Simplified)
+9.1 Item
+
+Core entity that represents one saved piece of content.
+
+Fields (conceptual):
+
+id – unique ID (string, e.g. cuid).
+
+userId – owner (single user in v1).
+
+url – original link (Twitter/IG/LinkedIn/other).
+
+source – domain (e.g. twitter.com).
+
+note – optional user note.
+
+rawContent – extracted text (possibly truncated).
+
+title – normalized title from content.
+
+summary – bullet summary as a single string or JSON.
+
+tags – list of strings.
+
+type – "learn" | "do" | "reference".
+
+status – "new" | "reviewed" | "pinned" | "deleted".
+
+createdAt, updatedAt, reviewedAt.
+
+9.2 User
+
+Even for one user, have a simple User table:
+
+id
+
+email
+
+password (hashed or pre-hashed)
+
+createdAt
+
+9.3 Session
+
+For cookie-based sessions:
+
+token – random string (primary key).
+
+userId
+
+createdAt
+
+expiresAt
+
+10. Key Flows (Step-by-Step)
+10.1 Desktop Add Flow
+
+User opens /add.
+
+User pastes a URL (Twitter, Instagram, LinkedIn, or any web page), optionally adds a note, clicks “Save”.
+
+Frontend calls POST /api/items with { url, note? }.
+
+API:
+
+Validates session.
+
+Inserts a new Item row with basic data (url, note, status = "new", source).
+
+Fetches HTML from the URL.
+
+Extracts title and main text.
+
+Calls OpenAI with summarizer prompt.
+
+Updates the Item with title, summary, tags, type, rawContent.
+
+Response returns { ok: true, itemId }.
+
+UI shows confirmation or redirects to /today.
+
+10.2 Mobile Quick Add Flow
+
+On mobile, user taps Share on a post.
+
+User picks a Shortcut called “Save to ContentHub” (or similar).
+
+Shortcut sends POST /api/items/quick-add:
+
+Headers: Authorization: Bearer <SECRET>
+
+Body: { url }.
+
+API:
+
+Validates bearer token.
+
+Runs the same pipeline as POST /api/items.
+
+Shortcut shows a success message.
+
+User later opens /today and sees the processed item.
+
+10.3 Today Review Flow
+
+User logs in and is redirected to /today.
+
+Server selects up to 10 items where:
+
+status = "new"
+
+Ordered by createdAt ASC.
+
+Frontend renders cards for each item with title, summary, tags.
+
+For each card:
+
+User chooses Pin / Archive / Delete.
+
+On click:
+
+Frontend sends PATCH /api/items/:id with new status.
+
+Card is removed from the list.
+
+10.4 Search and Browse Flow
+
+User opens /items.
+
+User types a search query and optionally picks a status or tag.
+
+Frontend calls GET /api/items?q=...&status=...&tag=....
+
+API builds a Prisma query:
+
+Filters on status, tag (tags array contains).
+
+Simple contains search on title, summary, note.
+
+Results return as JSON and are displayed in the list.
+
+11. How LLM Is Used
+
+The LLM is used in one primary place for v1:
+
+11.1 Summarization + Tagging + Classification
+
+When a new item is created, the backend:
+
+Sends the extracted text (and some metadata) to OpenAI with a system prompt that instructs the model to:
+
+Normalize the title.
+
+Create 3–7 bullet-point summary.
+
+Suggest 3–8 tags (short, useful categories).
+
+Classify item type as:
+
+"learn" – primarily informational/educational.
+
+"do" – checklists, recipes, workouts, step-by-step things to apply.
+
+"reference" – stable info that is useful to look up.
+
+The model responds with strict JSON.
+
+The backend parses this JSON and updates the Item row.
+
+No other advanced LLM features are required in v1.
+
+12. Constraints and Priorities
+12.1 Constraints
+
+Single user only.
+
+Must be shippable in a few days by one developer.
+
+No need to optimize for high concurrency or scale.
+
+12.2 Priorities
+
+Simplicity of architecture
+One Next.js app, clear separation in lib/ for business logic.
+
+End-to-end working flow
+Being able to:
+
+Save a URL.
+
+See it summarized in /today.
+
+Search it later in /items.
+
+Minimal but usable UI
+Focus on function over visual polish.
+
+Extensibility later
+Code should be structured so additional features (browser extension, more sources, better review flows) can be added without rewriting everything.
+
+********************************************************************************************************************************
+1. The “second brain” idea in plain terms
+
+The “second brain” concept comes from personal knowledge management (PKM). In this model, you deliberately move important information out of your biological memory into an external system that you control.
+
+Tiago Forte popularized this idea as a “trusted place outside your head where you can collect and organize your most important ideas and insights and use them to do your best work.”
+Forte Labs
++1
+
+The goals are:
+
+Reduce cognitive load by not trying to remember everything.
+
+Make useful information findable at the moment you need it.
+
+Turn scattered inputs into reusable knowledge or action.
+
+So far, most “second brain” systems focus on:
+
+Notes, documents, and PDFs.
+
+Book highlights and long-form articles.
+
+Project notes, meeting notes, and personal writing.
+
+What your idea does is push that concept down into short-form social media content. Instead of only capturing books and articles, you are asking:
+
+“What if the useful 1 percent of the content I see in feeds was captured, organized, and available later, as if it were part of my own memory?”
+
+That is the core conceptual move.
+
+2. The problem: information overload plus digital hoarding
+   2.1. Social feeds and shrinking attention
+
+Several lines of research point to two things happening at the same time:
+
+People are exposed to far more information than they can realistically process.
+
+Average attention spans for focused tasks have shrunk over the past couple of decades.
+
+Psychologist Gloria Mark’s work shows that average attention on a screen task has dropped from minutes to well under a minute in some observational studies.
+APA
+
+Broader work on “digital wellbeing” notes that social platforms and apps are explicitly optimized to capture and hold attention, which fragments focus and encourages rapid switching between stimuli rather than sustained concentration.
+PMC
++1
+
+Short-form video platforms like TikTok and Reels further reinforce this pattern of fast, reward-dense content.
+
+2.2. The “save now, never return” behavior
+
+To cope with overload, people lean on bookmarking and “read it later” behaviors:
+
+Built-in “saved” or “bookmarked” features in Instagram, X, TikTok, Facebook.
+
+Dedicated tools like Instapaper, Readwise Reader, or similar, focused on saving articles to read later.
+Instapaper
++2
+Zapier
++2
+
+There is both anecdotal and commentary-level evidence that these lists often turn into “digital graveyards” of content that was never revisited. Commentators on read-it-later tools describe them as collections of things people decided not to read “for now” and then rarely came back to.
+MPU Talk
++1
+
+Articles and essays also discuss the phenomenon of saving content “for later” and then effectively abandoning it, treating it as a way to relieve anxiety about missing out rather than a true plan to act.
+Technology
++1
+
+2.3. Digital hoarding and stress
+
+Research on digital hoarding shows that:
+
+People often accumulate digital content and struggle to delete it.
+
+This behavior is linked to fear of missing out, emotional attachment, and information overload.
+ScienceDirect
++2
+PMC
++2
+
+Digital hoarding has been associated with higher fatigue and more self-reported cognitive failures in everyday functioning.
+Frontiers
++1
+
+Social media is a specific context where digital hoarding shows up through:
+
+Saving posts.
+
+Bookmarking threads.
+
+Collecting screenshots and links that are never organized.
+AIS eLibrary
++1
+
+So the pattern “I save this so I do not lose it, then I never actually use it” is not just a quirk. It is a documented behavioral pattern tied to overload and anxiety rather than effective learning.
+
+Your own experience matches what the literature and commentary already describe.
+
+3. What your platform is actually proposing
+
+Stripping away implementation details, your platform is saying:
+
+Capture the right things
+
+Give the user an easy way to send social media posts, threads, videos and articles into a single inbox via share sheet or simple URL capture.
+
+Transform them
+
+Extract the key text and ideas.
+
+Summarize them into short bullet points.
+
+Add tags and lightweight categories.
+
+Classify items as “learn”, “do”, or “reference”.
+
+Store as persistent memory
+
+Keep a structured record: title, summary, tags, source, and link back.
+
+Make it searchable and filterable by topic.
+
+Resurface deliberately
+
+Present a small, manageable daily batch to review.
+
+Encourage simple actions like:
+
+Pin (important)
+
+Archive (reviewed)
+
+Delete (not useful)
+
+Functionally, this is a personal knowledge refinery for social-origin content. It tries to convert:
+
+“I saved 100 things and forgot all of them”
+
+into
+
+“The 10 percent that actually mattered is now part of a structured, searchable memory that I revisit on purpose.”
+
+That is different from standard bookmarking tools, which mostly focus on capture and nicer reading, not long-term knowledge integration or structured resurfacing.
+Instapaper
++2
+Mark Koester
++2
+
+4. Who is this for?
+
+Based on available research and market signals, the largest and most plausible target segments are:
+
+Heavy knowledge-oriented social media users
+
+People who follow educational accounts across tech, finance, science, politics, fitness, and similar.
+
+They save a lot of content with aspirational intent (“I’ll read or apply this later”) but seldom return.
+
+Studies on digital hoarding show younger, tech-savvy populations are particularly prone to accumulating digital content and struggling to manage it.
+Frontiers
++2
+SAGE Journals
++2
+
+Knowledge workers and creators influenced by PKM
+
+People who already use Notion, Obsidian, Readwise, Roam, etc.
+
+They understand the “second brain” narrative, but their pipeline from social to PKM is clumsy.
+
+The PKM and second brain movement has grown steadily, with dedicated courses, books, and communities built around structured capture and reuse of information.
+Forte Labs
++2
+Bullet Journal
++2
+
+People who already use “read it later” tools
+
+Users of Instapaper, Readwise Reader, browser reading lists, and similar.
+
+Commentary around these tools often acknowledges the gap between saving and actually reading or using saved content.
+Medium
++2
+MPU Talk
++2
+
+Pocket’s shutdown in 2025 and migration traffic to alternatives like Instapaper suggests that people value the basic “save for later” model, but the space is still in flux.
+TechRadar
++1
+
+These groups already show the behaviors your tool addresses. They are not hypothetical users. The open question is whether enough of them want an additional tool, and whether your approach fits their habits.
+
+5. What actually validates the need for something like this?
+
+There are three broad categories of “evidence” you can lean on. None of them prove your exact product will work, but they do show the problem space is real.
+
+5.1. Behavioral and psychological research
+
+Information overload and attention fragmentation are widely documented as factors that reduce focus and increase stress in digital environments.
+PMC
++2
+APA
++2
+
+Digital hoarding research shows that many people accumulate digital content, struggle to delete it, and report fatigue and cognitive failures as a result.
+ScienceDirect
++2
+Frontiers
++2
+
+Social media specific studies highlight that characteristics of social information (volume, novelty, social endorsement) feed into digital hoarding patterns on these platforms.
+AIS eLibrary
++2
+TPM Psychology
++2
+
+These studies validate that the problem you feel (over-saving, under-using) is part of a wider pattern, not just an individual quirk.
+
+5.2. Market activity around PKM and read-it-later tools
+
+The growth of PKM systems and the popularity of “Building a Second Brain” suggest a meaningful number of people are willing to invest in external knowledge systems that capture and reuse information.
+Forte Labs
++2
+buildingasecondbrain.com
++2
+
+Long-standing tools like Instapaper, and newer tools like Readwise Reader, exist specifically to help people capture content for later reading and integrate it into note systems.
+Instapaper
++2
+Zapier
++2
+
+Pocket’s long run and recent shutdown, plus immediate interest in alternatives, show both:
+
+Demand for this type of product.
+
+Fragility of single-feature read-it-later business models.
+TechRadar
++1
+
+Your concept roughly sits between these categories: it is more structured and knowledge-centric than simple bookmarking, but more focused on social-media-origin content than general PKM tools.
+
+5.3. Lived behavior patterns
+
+There is plenty of qualitative reporting (blogs, forums, social media discussions) where people describe:
+
+Saving “almost everything” into bookmarks or read-it-later apps.
+
+Rarely going back to what they saved.
+
+Feeling overwhelmed by the backlog and anxious about “all the things I should read.”
+Reddit
++2
+Technology
++2
+
+This is not controlled research, but it is consistent and widespread enough to suggest a real pattern.
+
+6. Brutal truths and limitations
+
+Now the part you asked for explicitly.
+
+6.1. Tools do not fix behavior on their own
+
+There is no strong experimental evidence that a second-brain-style app, by itself, reliably:
+
+Restores attention span.
+
+Eliminates digital hoarding.
+
+Ensures people deeply learn what they save.
+
+What does help, according to both research and productivity literature, is changing routines and habits:
+
+Setting aside dedicated reading or review time.
+
+Limiting the inflow of new content.
+
+Actively reflecting on and using what you store.
+Collabwriting
++1
+
+Your platform can support better habits, but it cannot create them for the user. If someone continues to save far more than they are willing to review, the system can become yet another backlog, even if the summaries are excellent.
+
+6.2. You might reinforce digital hoarding
+
+There is a non-trivial risk that:
+
+“Now I have a smarter inbox”
+
+simply becomes
+
+“Now I feel safer saving even more things, because I believe the system will handle them.”
+
+Research on digital hoarding suggests that tools which make accumulation easier without equally strong deletion and prioritization mechanisms can increase the volume of stored items without improving outcomes, and may add stress.
+ScienceDirect
++2
+Frontiers
++2
+
+To avoid that, your design would need to be opinionated about:
+
+Small daily limits.
+
+Clear surfacing of what remains unreviewed.
+
+Easy deletion and pruning.
+
+If you skip that, the problem can get worse.
+
+6.3. Strong competition and overlapping products
+
+Your idea overlaps with several existing tool categories:
+
+Read-it-later apps (Instapaper, Readwise Reader, and others) already:
+
+Capture web content.
+
+Provide clean reading experiences.
+
+Often support highlights and integrations with note systems.
+Instapaper
++2
+Zapier
++2
+
+PKM tools plus integrations (Readwise syncing highlights into Notion, Obsidian, etc.) create a kind of second brain for text, though usually less tailored to social feeds.
+
+The unique angle you are proposing is:
+
+Social-first capture.
+
+Automatic distillation and tagging.
+
+A daily, finite “review” queue.
+
+That is a meaningful differentiation, but it is incremental, not a completely new category. You would need to accept that some users will be satisfied with their current stack and see this as “yet another inbox.”
+
+6.4. Privacy, data durability, and platform risk
+
+Storing a large, structured record of what someone reads, saves, and values creates:
+
+Privacy risks.
+A leak would expose not just links, but implied interests, political leanings, health concerns, and more.
+
+Platform dependency risks.
+As the Pocket shutdown showed, users can lose access to many years of curated material if a service disappears, unless export is easy and standard.
+TechRadar
+
+Any serious product in this space needs:
+
+Transparent data ownership and export paths.
+
+Clear privacy boundaries, especially if using LLMs.
+
+For a personal hobby tool you run yourself, this is less of a business risk, but it is still something to be conscious of.
+
+6.5. No hard proof of impact on learning or performance
+
+There are, so far, no large controlled studies that show:
+
+“Using an LLM-assisted second brain for social content improves long-term learning outcomes by X percent.”
+
+The PKM and second brain communities provide many testimonials but mostly anecdotal evidence.
+Bullet Journal
++1
+
+So you should be honest with yourself: this is a reasonable hypothesis, not a proven intervention. You would need to validate its impact through your own usage and, if you scale it, through user research or small experiments.
+
+7. Why it can still be worth building
+
+Even with those caveats, there are rational reasons to build this as a v1 for yourself.
+
+The problem is clearly real and studied
+
+Information overload, attention fragmentation, and digital hoarding behaviors are documented.
+AIS eLibrary
++4
+PMC
++4
+APA
++4
+
+There is a proven willingness to use tools in this space
+
+Decade-long existence of read-it-later apps.
+
+Growth of PKM methods and products.
+
+User migration activity when Pocket shut down.
+Forte Labs
++3
+Instapaper
++3
+Zapier
++3
+
+Your idea is aligned with established PKM principles
+
+Capture → organize → distill → express is a well-known second brain workflow. You are essentially applying it to social content with automated distillation.
+Forte Labs
++1
+
+As a personal tool, the bar is lower and the upside is high
+
+Even if it only helps you remember and reuse a fraction of what you currently lose in feeds, that is a personal win.
+
+The engineering cost of a narrow MVP is modest.
+
+You gain a concrete lab environment to experiment with LLMs, summarization, and information design.
+
+From an evidence-based perspective, you can say:
+
+The underlying pain points are real and studied.
+
+Current tools address parts of the problem but do not focus specifically on social media knowledge capture and structured resurfacing.
+
+Your approach is a plausible extension of second-brain ideas into a neglected input channel.
+
+What you cannot honestly claim yet is that:
+
+This product will reliably “fix” attention or procrastination.
+
+It will necessarily outperform existing tools for a broad audience.
+
+Those are open questions that only usage and data can answer.
+
+8. Bottom line
+
+Objectively:
+
+There is enough research and market activity to justify building a focused prototype for yourself.
+
+There is not enough hard evidence to guarantee this becomes a mass-market solution or a business by itself.
+
+The major risks are behavioral (people still do not review what they save) and competitive (overlap with existing stacks).
+
+If your primary goal is:
+
+To have a working second brain for your own social-media-driven learning,
+
+To test whether a daily review habit anchored in a single hub changes how much you actually use what you consume,
+
+then building this v1 is rational and low downside.

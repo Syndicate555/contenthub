@@ -1,0 +1,91 @@
+// ContentHub - Prisma Schema
+// Personal "second brain" for social media content
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  clerkId   String   @unique
+  email     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items             Item[]
+  socialConnections SocialConnection[]
+}
+
+// Social media account connections for bookmark sync
+model SocialConnection {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Connection details
+  provider        String   // "twitter" | "instagram" | "linkedin" etc.
+  providerUserId  String   // The user's ID on the provider platform
+  providerHandle  String?  // Username/handle on the platform
+
+  // OAuth tokens (encrypted at rest)
+  accessToken     String   @db.Text
+  refreshToken    String?  @db.Text
+  tokenExpiresAt  DateTime?
+
+  // Sync state
+  lastSyncAt      DateTime?
+  lastSyncCursor  String?  // For pagination/incremental sync
+  syncEnabled     Boolean  @default(true)
+
+  // Timestamps
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([userId, provider]) // One connection per provider per user
+  @@index([userId])
+  @@index([provider, syncEnabled])
+}
+
+model Item {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Original content
+  url        String
+  source     String?  // domain extracted (e.g., "twitter.com")
+  note       String?  // optional user note
+
+  // Import tracking (for synced bookmarks)
+  importSource String?  // "twitter" | "instagram" | "linkedin" etc. (null = manually added)
+  externalId   String?  // Original post ID from the platform
+
+  // Processed content
+  title      String?
+  summary    String?  // bullet points as text
+  tags       String[] // Postgres array
+  type       String?  // "learn" | "do" | "reference"
+  category   String?  // "tech" | "business" | "design" | "productivity" | "learning" | "lifestyle" | "entertainment" | "news" | "other"
+  rawContent String?  @db.Text // truncated extracted text
+  imageUrl   String?  // thumbnail/preview image URL
+
+  // Status management
+  status     String   @default("new") // "new" | "reviewed" | "pinned" | "deleted"
+
+  // Timestamps
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  reviewedAt DateTime?
+
+  @@unique([userId, importSource, externalId]) // Prevent duplicate imports
+  @@index([userId, status])
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([userId, category])
+}
