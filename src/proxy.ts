@@ -6,6 +6,7 @@ const isPublicRoute = createRouteMatcher([
   "/sign-up(.*)",
   "/api/webhooks(.*)",
   "/api/quick-add", // Uses bearer token auth instead
+  "/api/domains", // Public - domains are global, not user-specific
 ]);
 
 export default clerkMiddleware(async (auth, request) => {

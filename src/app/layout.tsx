@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "@/components/ui/sonner";
 import { SWRProvider } from "@/components/providers/swr-provider";
+import { WebVitals } from "@/components/web-vitals";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -34,6 +35,7 @@ export default function RootLayout({
         <body
           className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50 min-h-screen`}
         >
+          <WebVitals />
           <SWRProvider>
             {children}
           </SWRProvider>

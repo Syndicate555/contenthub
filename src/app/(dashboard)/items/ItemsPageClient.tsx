@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useMemo, useTransition } from "react";
+import { useState, useMemo, useTransition, useEffect, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { ItemCard } from "@/components/items/item-card";
+import { ItemCardGamified } from "@/components/items/item-card-gamified";
 import { TagBadge } from "@/components/items/tag-badge";
 import { FolderGrid } from "@/components/items/folder-grid";
 import { FilterBar } from "@/components/items/filter-bar";
@@ -57,6 +57,9 @@ export default function ItemsPage() {
   // Debounce search query to avoid too many API calls
   const debouncedSearchQuery = useDebouncedValue(searchQuery, 300);
 
+  // Batch URL updates to avoid excessive history pushes during rapid filter changes
+  const urlUpdateTimerRef = useRef<NodeJS.Timeout | null>(null);
+
   // Fetch categories with SWR (cached across navigations)
   const {
     categories,
@@ -98,32 +101,56 @@ export default function ItemsPage() {
     [items]
   );
 
-  // Update URL when filters change (non-blocking)
-  const updateUrl = (updates: Record<string, string | null>) => {
-    startTransition(() => {
-      const params = new URLSearchParams();
+  // Update URL when filters change (batched to avoid rapid history pushes)
+  const updateUrl = (updates: Record<string, string | null>, immediate = false) => {
+    // Clear existing timer
+    if (urlUpdateTimerRef.current) {
+      clearTimeout(urlUpdateTimerRef.current);
+    }
 
-      const newSearchQuery = updates.q !== undefined ? updates.q : searchQuery;
-      const newStatus =
-        updates.status !== undefined ? updates.status : statusFilter;
-      const newCategory =
-        updates.category !== undefined ? updates.category : categoryFilter;
-      const newPlatform =
-        updates.platform !== undefined ? updates.platform : platformFilter;
-      const newTag = updates.tag !== undefined ? updates.tag : tagFilter;
-      const newPage =
-        updates.page !== undefined ? updates.page : String(currentPage);
+    const performUpdate = () => {
+      startTransition(() => {
+        const params = new URLSearchParams();
 
-      if (newSearchQuery) params.set("q", newSearchQuery);
-      if (newStatus && newStatus !== "all") params.set("status", newStatus);
-      if (newCategory) params.set("category", newCategory);
-      if (newPlatform) params.set("platform", newPlatform);
-      if (newTag) params.set("tag", newTag);
-      if (newPage && parseInt(newPage) > 1) params.set("page", newPage);
+        const newSearchQuery = updates.q !== undefined ? updates.q : searchQuery;
+        const newStatus =
+          updates.status !== undefined ? updates.status : statusFilter;
+        const newCategory =
+          updates.category !== undefined ? updates.category : categoryFilter;
+        const newPlatform =
+          updates.platform !== undefined ? updates.platform : platformFilter;
+        const newTag = updates.tag !== undefined ? updates.tag : tagFilter;
+        const newPage =
+          updates.page !== undefined ? updates.page : String(currentPage);
 
-      router.replace(`/items?${params.toString()}`, { scroll: false });
-    });
+        if (newSearchQuery) params.set("q", newSearchQuery);
+        if (newStatus && newStatus !== "all") params.set("status", newStatus);
+        if (newCategory) params.set("category", newCategory);
+        if (newPlatform) params.set("platform", newPlatform);
+        if (newTag) params.set("tag", newTag);
+        if (newPage && parseInt(newPage) > 1) params.set("page", newPage);
+
+        router.replace(`/items?${params.toString()}`, { scroll: false });
+      });
+    };
+
+    // For immediate updates (like pagination), update right away
+    // For filter changes, batch with 100ms delay to catch rapid changes
+    if (immediate) {
+      performUpdate();
+    } else {
+      urlUpdateTimerRef.current = setTimeout(performUpdate, 100);
+    }
   };
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (urlUpdateTimerRef.current) {
+        clearTimeout(urlUpdateTimerRef.current);
+      }
+    };
+  }, []);
 
   // Handle status change with optimistic update
   const handleStatusChange = async (id: string, newStatus: string) => {
@@ -180,7 +207,7 @@ export default function ItemsPage() {
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    updateUrl({ page: String(page) });
+    updateUrl({ page: String(page) }, true); // Immediate update for pagination
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -379,11 +406,16 @@ export default function ItemsPage() {
                   {tagFilter && ` tagged "${tagFilter}"`}
                 </p>
                 {items.map((item) => (
-                  <ItemCard
+                  <ItemCardGamified
                     key={item.id}
                     item={item}
                     showActions={item.status === "new"}
                     onStatusChange={handleStatusChange}
+                    onTagClick={(tag) => {
+                      setTagFilter(tag);
+                      setCurrentPage(1);
+                      updateUrl({ tag, page: "1" });
+                    }}
                   />
                 ))}
 

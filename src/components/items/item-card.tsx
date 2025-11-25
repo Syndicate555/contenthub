@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -135,15 +136,18 @@ export function ItemCard({ item, showActions = true, onStatusChange, onTagClick 
         {item.imageUrl && (
           <button
             onClick={() => setIsImageModalOpen(true)}
-            className="block w-full relative bg-gray-50 overflow-hidden cursor-zoom-in group"
+            className="block w-full relative bg-gray-50 overflow-hidden cursor-zoom-in group min-h-[200px] max-h-80"
           >
-            <img
+            <Image
               src={item.imageUrl}
               alt={item.title || "Content preview"}
+              width={800}
+              height={600}
               className="w-full h-auto max-h-80 object-contain group-hover:scale-[1.02] transition-transform duration-300"
               loading="lazy"
+              quality={85}
               onError={(e) => {
-                (e.target as HTMLImageElement).parentElement!.style.display = 'none';
+                (e.target as HTMLImageElement).parentElement!.style.display = "none";
               }}
             />
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors" />

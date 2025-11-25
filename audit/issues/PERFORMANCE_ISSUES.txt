@@ -1,0 +1,53 @@
+Performance Audit Findings
+
+Route guarding overhead – src/middleware.ts runs on all (api|trpc) and pages; every navigation hits Clerk auth even for purely client-side views. Consider narrowing matcher or using public/soft-protected patterns to reduce middleware latency.
+Client-only heavy shells – src/app/(dashboard)/today/page.tsx, /items/ItemsPageClient.tsx, /profile/ProfilePageClient.tsx, /settings/SettingsPageClient.tsx are all client components. No data is fetched server-side, so first paint waits for client hydration + SWR fetch. Move initial data fetch to server components or fetch/cache() to stream data and reduce TTFB/LCP.
+Multiple parallel client fetches per page – Profile triggers two fetches (stats + badges) on mount; Settings triggers connections + focus-areas; Library triggers categories + items; Today triggers items. None are prefetched server-side, so every first visit does 2–3 round trips. Introduce RSC data loaders or route-level generateMetadata/fetch with next: { revalidate } to collapse requests and hydrate with data.
+No shared cache between server and client – API routes (/api/items, /api/categories, /api/domains) set cache headers, but client fetches are via SWR to API endpoints, not fetching directly with cache: 'force-cache'/revalidate. Consider server components hitting the DB directly or using next/revalidate to leverage Next’s fetch cache; SWR then hydrates from the server payload to avoid double work.
+Library view stalls on filter changes – useItems sets keepPreviousData: false, so switching filters shows skeletons even when cache exists, and every change re-fetches count+data. Costly because /api/items does a count plus findMany plus XPEvent query. Consider keeping previous data during filter transitions and deferring count or XP enrichment when filters churn.
+Items API work per request – src/app/api/items/route.ts does three queries (count, findMany, XPEvent) plus focus-area fetch, then merges XP data in JS. On high page/limit, this adds latency. Potential optimizations: select-only fields needed for the view; remove XP aggregation (or move to a lighter view) for list endpoints; batch count with window functions; cache focus areas for the request.
+Categories API N+1 by category – src/app/api/categories/route.ts runs groupBy then one findMany per category-with-items to gather thumbnails. With many categories, that’s N queries. Replace with a single query for latest items grouped in SQL or limit to top-N categories.
+Image handling costs – src/components/items/item-card.tsx renders full img without width/height and no Next Image. Large remote images can cause layout shift and network bloat. Using <Image> with proper sizing or blur placeholders would reduce CLS and bandwidth.
+Large client trees for static UI – Badge showcase, domain stats, folder grid, etc., are all client-rendered, though data is static per request. Converting them to server components would cut hydration cost and JS payload.
+Duplicate state/URL sync churn – ItemsPageClient maintains multiple useState + useTransition for filters and calls router.replace on each change. This can trigger multiple renders and potential re-fetch storms if user types quickly. Debounce helps for search, but other filters still fire immediately; consider batching updates or deferring URL sync until interaction settles.
+Prefetch limited to hover only – DashboardLayout only prefetches on nav hover. Initial load to Today/Library still waits for SWR. Route-level RSC data or prefetch via Next navigation could hide most latency.
+No lazy loading of secondary sections – Profile’s badges/activity, Settings’ focus areas, Library’s folder grid all render immediately. Splitting into Suspense boundaries with lazy imports (or streaming in RSC) would improve main content TTI.
+Hydration risk from dynamic date formatting – ItemCard formats dates in render; hydration mismatch is unlikely but possible with time drift. If SSR is added later, move date formatting to useMemo or server-side to avoid mismatches.
+External API latency not isolated – Pipeline calls OpenAI and external fetches inside request handlers (/api/items POST, twitter sync). There’s no timeout/circuit-breaker; slow LLM/extraction can tie up lambdas/Node. Add timeouts and background jobs for long-running work.
+Opportunities (quick wins)
+
+Server-render initial data for Today/Library/Profile/Settings and hydrate SWR with that payload.
+Keep previous data during filter transitions or split XP/count work into a lighter endpoint to reduce Library skeleton flashes.
+Collapse multi-query endpoints (/api/items, /api/categories) or cache their results per user for short windows.
+Use Next Image (or at least width/height) for item thumbnails to cut CLS and bytes.
+Add Suspense/lazy for non-critical panels (badges, focus areas, folder grid) and stream them separately.
+Narrow middleware matcher to skip static assets and, if possible, public routes that don’t need auth checks on every hit.
+
+
+
+All dashboard tabs are client components (src/app/(dashboard)/*/...PageClient.tsx) that fetch on mount with SWR hitting API routes. No server-rendered data or streaming, so each tab switch waits for hydration + 2–3 network round-trips (e.g., Settings: connections + focus-areas; Profile: stats + badges; Library: categories + items).
+Nav prefetch is minimal: src/app/(dashboard)/layout.tsx only calls SWR mutate on hover. Initial tab clicks still incur full fetch cost; no route-level prefetch or server-side data to hydrate immediately.
+Middleware runs on every route (src/middleware.ts matcher covers all (api|trpc) and pages except a few). Each navigation re-enters Clerk auth, adding overhead before the tab even begins rendering.
+Library page does heavy queries per view (/api/items count + find + XP events + focus areas; /api/categories groupBy + per-category thumbnail lookups) and useItems disables keepPreviousData, so filter/view toggles show skeletons and block rendering instead of reusing cached data.
+Profile and Settings trigger multiple sequential fetches (/api/user/stats + /api/user/badges; /api/connections + /api/user/focus-areas), with no Suspense splitting or lazy sections. The whole page waits for all responses before showing meaningful content.
+No persistent/shared cache between server and client: everything goes through API routes. Even with cache headers, SWR revalidates on tab change, so data isn’t reused across tabs or sessions, causing repeated loading states.
+Image and layout costs: item cards use plain <img> without sizing/Next Image, leading to layout shifts and heavier network payloads when lists render; unnecessary hydration work for static UI blocks (badge grids, folder grids) because they’re client-rendered.
+No concurrency control or background prefetch for tab-critical data; SWR dedupe helps but doesn’t avoid cold-start latency for non-hovered tabs.
+
+
+************************************************
+CHECK LIST OF THINGS TO FIX
+************************************************
+
+1. Add server-rendered data for tabs (Today/Library/Profile/Settings) and hydrate SWR with initial payloads to avoid client-only cold fetches.
+2. Prefetch tab data on navigation intent: use Next route prefetch or background SWR prefetch on viewport/idle, not just hover.
+3. Split heavy client pages into server components where possible; stream/lazy-load secondary panels (badges, focus areas, folder grid) behind Suspense.
+4. Reduce API round trips per tab: combine profile stats+badges; combine settings connections+focus areas or fetch in parallel with Suspense.
+5. Optimize /api/items: limit selected fields, defer XP enrichment/count when filtering, or provide a “light” list endpoint; enable keep-previous-data for filters.
+6. Optimize /api/categories: avoid per-category thumbnail queries; fetch thumbnails in one query or cap categories returned.
+7. Narrow middleware matcher to skip non-essential routes/assets and avoid unnecessary auth checks on every navigation.
+8. Introduce shared caching: use Next fetch cache/revalidate for server data and SWR hydration; tune SWR revalidation to avoid redundant calls on tab switches.
+9. Use Next Image or sized <img> for item thumbnails to prevent layout shift and cut payload.
+10. Batch URL/filter updates in Library to avoid re-fetch storms; debounce non-search filters or commit on apply.
+11. Add request timeouts/circuit breakers for external calls (OpenAI, extraction, Twitter sync) so slow upstreams don’t block responses.
+12. Measure and gate: instrument tab navigation times, API latency, and cache hit rates; add monitoring to verify improvements.

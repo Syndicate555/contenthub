@@ -31,37 +31,43 @@ export async function GET() {
       totalItems += c._count.id;
     });
 
-    // OPTIMIZATION: Only fetch thumbnails for categories that have items
-    // Fetch only 4 items per category for thumbnails (much more efficient)
-    const categoriesWithItems = Array.from(countMap.keys());
-
-    // Parallel fetch thumbnails for each category (limited to 4 per category)
-    const thumbnailPromises = categoriesWithItems.map(async (category) => {
-      const items = await db.item.findMany({
-        where: {
-          userId: user.id,
-          status: { not: "deleted" },
-          category: category === "other" ? null : category,
-        },
-        select: {
-          imageUrl: true,
-          title: true,
-        },
-        orderBy: { createdAt: "desc" },
-        take: 4, // Only get 4 items for thumbnails
-      });
-
-      return {
-        category,
-        thumbnails: items.filter((i) => i.imageUrl).map((i) => i.imageUrl!),
-        titles: items.map((i) => i.title || "Untitled"),
-      };
+    // OPTIMIZATION: Fetch all thumbnails in ONE query to eliminate N+1 pattern
+    // Get the most recent items per category (up to 100 total)
+    const allThumbnailItems = await db.item.findMany({
+      where: {
+        userId: user.id,
+        status: { not: "deleted" },
+      },
+      select: {
+        category: true,
+        imageUrl: true,
+        title: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: "desc" },
+      take: 100, // Fetch top 100 most recent items (will have 4+ per category)
     });
 
-    const thumbnailResults = await Promise.all(thumbnailPromises);
-    const thumbnailMap = new Map(
-      thumbnailResults.map((r) => [r.category, { thumbnails: r.thumbnails, titles: r.titles }])
-    );
+    // Group items by category in memory and take first 4 per category
+    const thumbnailMap = new Map<string, { thumbnails: string[]; titles: string[] }>();
+
+    for (const item of allThumbnailItems) {
+      const cat = item.category || "other";
+
+      if (!thumbnailMap.has(cat)) {
+        thumbnailMap.set(cat, { thumbnails: [], titles: [] });
+      }
+
+      const catData = thumbnailMap.get(cat)!;
+
+      // Only store up to 4 items per category
+      if (catData.titles.length < 4) {
+        catData.titles.push(item.title || "Untitled");
+        if (item.imageUrl) {
+          catData.thumbnails.push(item.imageUrl);
+        }
+      }
+    }
 
     // Build response with category metadata
     const categories = ITEM_CATEGORIES.map((cat) => {
@@ -106,11 +112,8 @@ export async function GET() {
     });
 
     // Add cache headers for browser caching (stale-while-revalidate pattern)
-    // Cache for 30 seconds, allow stale for 60 seconds while revalidating
-    response.headers.set(
-      "Cache-Control",
-      "private, max-age=30, stale-while-revalidate=60"
-    );
+    // User-specific view; do not allow browser caching across sessions
+    response.headers.set("Cache-Control", "no-store");
 
     return response;
   } catch (error) {

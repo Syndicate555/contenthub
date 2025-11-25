@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { ItemCard } from "@/components/items/item-card";
+import { ItemCardGamified } from "@/components/items/item-card-gamified";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CheckCircle2, Inbox, Sparkles, ArrowRight, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useTodayItems, updateItemStatus } from "@/hooks/use-items";
 import type { ItemStatus } from "@/types";
+import { TodaySidebar } from "@/components/today/TodaySidebar";
 
 export default function TodayPage() {
   const [processedToday, setProcessedToday] = useState(0);
@@ -52,8 +53,16 @@ export default function TodayPage() {
   const showSkeleton = isLoading && items.length === 0;
 
   return (
-    <div className="space-y-6">
-      {/* Header - Always visible immediately */}
+    <div className="w-full">
+      <div className="grid gap-6 lg:gap-8 lg:grid-cols-[280px_minmax(0,1.5fr)_280px]">
+        {/* Left Sidebar - User Profile & Stats */}
+        <aside className="hidden lg:block w-full">
+          <TodaySidebar />
+        </aside>
+
+        {/* Main Content - Wide Center Feed */}
+        <div className="w-full space-y-6">
+        {/* Header - Always visible immediately */}
       <div className="space-y-1">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -171,7 +180,7 @@ export default function TodayPage() {
                   )}
                   style={{ animationDelay: `${Math.min(index * 50, 200)}ms` }}
                 >
-                  <ItemCard
+                  <ItemCardGamified
                     item={item}
                     showActions={true}
                     onStatusChange={handleStatusChange}
@@ -187,6 +196,46 @@ export default function TodayPage() {
           )}
         </>
       )}
+        </div>
+
+        {/* Right Sidebar - AI Assistant Placeholder */}
+        <aside className="hidden lg:block w-full">
+          <div className="sticky top-20">
+            <div className="bg-white rounded-lg border border-gray-200 border-dashed p-6 shadow-sm">
+              <div className="text-center space-y-3">
+                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto">
+                  <svg
+                    className="w-6 h-6 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900 mb-1">
+                    AI Assistant
+                  </h3>
+                  <p className="text-xs text-gray-500">
+                    Chat with AI about your saved content
+                  </p>
+                </div>
+                <div className="pt-2">
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                    Coming Soon
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div>
     </div>
   );
 }

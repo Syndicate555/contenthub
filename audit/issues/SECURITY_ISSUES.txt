@@ -1,0 +1,35 @@
+Security audit observations (codebase review, no changes made)
+
+-Auth coverage – src/middleware.ts protects most routes but allows /api/domains and /api/quick-add publicly; quick-add relies solely on a static bearer secret. Any leak of QUICK_ADD_SECRET enables writing items as the first user. No IP/rate limiting or expiry/rotation.
+OAuth state/PKCE – Twitter auth (/api/auth/twitter) sets twitter_code_verifier and twitter_oauth_state cookies, but cookie options are only httpOnly, sameSite:lax, secure in prod. No explicit domain/path narrowing beyond /, and no max-age shortness confirmation; risk is low but worth tightening.
+-Token storage – Social tokens stored encrypted? There is src/lib/encryption.ts, but the SocialConnection model holds accessToken/refreshToken as text; need to verify encryption in persistence path (not shown in reviewed snippets). If stored plaintext, database compromise exposes tokens.
+-External fetch surface – extractor.ts fetches arbitrary URLs (Twitter/Instagram/LinkedIn/generic) without URL allow/deny lists, size limits, or timeout/circuit breakers. Potential for SSRF, large response attacks, and slowloris when users submit URLs.
+-LLM calls – OpenAI API key pulled from env; no guardrails on prompt length or token limits for user-supplied content; could cause cost spikes or prompt-injection leakage of system prompts (minor).
+-API input validation – Zod schemas cover items/quick-add/xp, but /api/connections and some user endpoints rely on auth + implicit assumptions; need to confirm validation for social connect/disconnect/sync endpoints.
+-Authorization checks – Items endpoints verify userId ownership before PATCH/GET. Need to confirm same for all user-scoped endpoints (connections sync/disconnect, focus-areas, badges, stats) to prevent cross-user access; Clerk auth + user lookup is used, but double-check for missing ownership filters.
+-CORS – Not explicitly configured; defaults to same-origin (good). Quick-add is intended for mobile shortcuts; still vulnerable if secret is leaked to third-party origins.
+-Error handling/logging – Many routes log errors to console; some return internal error messages. Ensure secrets (tokens, headers) are never logged; sanitize logs.
+-Webhooks – Clerk webhook verifies with Svix and secret; good. Missing replay attack protection window not obvious; relies on Svix headers (ok). Ensure CLERK_WEBHOOK_SECRET is set in all envs.
+-Rate limiting/abuse – No rate limiting on API routes, item creation, quick-add, or twitter sync. Risk of abuse/DoS or cost amplification (OpenAI).
+-HTTPS/session – Cookies use secure in production; ensure NEXT_PUBLIC_APP_URL is HTTPS and HSTS enabled at deploy layer.
+-Dependency risk – No audit run here; dependencies include OpenAI, Prisma, Clerk; should run npm audit/npm outdated routinely.
+-Data exposure – /api/domains is public by design. Ensure other public data doesn’t leak PII; items endpoints are protected. Profile/stats/badges are behind auth.
+-Secrets management – Many env vars (DB, Clerk keys, OpenAI, Twitter). Ensure not checked into repo and not exposed via next.config/client bundles (none observed).
+
+*******************
+Checklist to fix
+*******************
+
+
+-Guard quick-add: rotate QUICK_ADD_SECRET, add rate limiting, consider one-time tokens or scoped short-lived keys; validate host allowlist/URL size.
+-Add request timeouts and size limits to external fetches in extractor.ts; add SSRF protections (block localhost/internal IPs) and content-length caps; consider background job queue for long-running extraction/LLM.
+-Verify/enforce encryption at rest for social tokens; if plaintext, encrypt before writing and decrypt on use; restrict token scope to bookmarks-only.
+-Tighten Twitter OAuth cookies: set SameSite=Lax (already), minimal maxAge, and path to /api/auth/twitter; ensure secure in all deployed envs.
+-Add rate limiting/throttling for item creation, quick-add, twitter sync, and other POST endpoints to mitigate abuse and cost spikes.
+-Re-confirm authorization on all user-scoped endpoints (/api/connections*, /api/user/*, /api/xp/award): ensure queries filter by current user ID and do not leak cross-user data.
+-Sanitize logs: avoid logging tokens, headers, or raw errors from OAuth/LLM/fetch; standardize safe error responses.
+-Add input validation where missing (connections endpoints, any unvalidated POST bodies); keep using Zod for consistency.
+-Ensure production deployment enforces HTTPS, HSTS, secure cookies, and proper NEXT_PUBLIC_APP_URL.
+-Implement monitoring/alerts for OpenAI usage, sudden traffic spikes, and error rates; set reasonable token limits on LLM calls.
+-Run dependency and vuln scans (npm audit, npm outdated), and keep Clerk/OpenAI/Prisma updated.
+-Document secret rotation procedures (Clerk keys, OpenAI, Twitter, QUICK_ADD_SECRET) and ensure env vars aren’t exposed to the client bundle.

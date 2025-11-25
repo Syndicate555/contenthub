@@ -3,9 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
-import { Inbox, FolderOpen, Plus, Settings } from "lucide-react";
+import { Inbox, FolderOpen, Plus, Settings, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { prefetchTodayItems, prefetchCategories } from "@/hooks/use-items";
+import {
+  prefetchProfileData,
+  prefetchSettingsData,
+} from "@/hooks/use-dashboard";
 import { useCallback } from "react";
 
 export default function DashboardLayout({
@@ -24,6 +28,14 @@ export default function DashboardLayout({
     prefetchCategories();
   }, []);
 
+  const prefetchProfile = useCallback(() => {
+    prefetchProfileData();
+  }, []);
+
+  const prefetchSettings = useCallback(() => {
+    prefetchSettingsData();
+  }, []);
+
   const navItems = [
     {
       href: "/today",
@@ -39,6 +51,13 @@ export default function DashboardLayout({
       isActive: pathname === "/items" || pathname.startsWith("/items?"),
       onPrefetch: prefetchLibrary,
     },
+    {
+      href: "/profile",
+      label: "Profile",
+      icon: User,
+      isActive: pathname === "/profile",
+      onPrefetch: prefetchProfile,
+    },
   ];
 
   return (
@@ -49,10 +68,12 @@ export default function DashboardLayout({
           <div className="flex items-center justify-between">
             {/* Logo */}
             <Link href="/today" className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-gray-900 to-gray-700 rounded-lg flex items-center justify-center shadow-sm">
+              <div className="w-8 h-8 bg-linear-to-br from-gray-900 to-gray-700 rounded-lg flex items-center justify-center shadow-sm">
                 <span className="text-white font-bold text-sm">CH</span>
               </div>
-              <span className="font-semibold text-gray-900 hidden sm:inline">ContentHub</span>
+              <span className="font-semibold text-gray-900 hidden sm:inline">
+                ContentHub
+              </span>
             </Link>
 
             {/* Navigation */}
@@ -71,10 +92,9 @@ export default function DashboardLayout({
                       : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                   )}
                 >
-                  <item.icon className={cn(
-                    "w-4 h-4",
-                    item.isActive && "text-gray-900"
-                  )} />
+                  <item.icon
+                    className={cn("w-4 h-4", item.isActive && "text-gray-900")}
+                  />
                   <span className="hidden sm:inline">{item.label}</span>
                   {/* Active indicator */}
                   {item.isActive && (
@@ -95,6 +115,8 @@ export default function DashboardLayout({
             <div className="flex items-center gap-2">
               <Link
                 href="/settings"
+                onMouseEnter={prefetchSettings}
+                onFocus={prefetchSettings}
                 className={cn(
                   "p-2 rounded-lg transition-colors",
                   pathname === "/settings"
@@ -111,7 +133,9 @@ export default function DashboardLayout({
       </header>
 
       {/* Main Content */}
-      <main className="max-w-5xl mx-auto px-4 py-6">{children}</main>
+      <main className="max-w-7xl xl:max-w-[1300px] mx-auto px-4 md:px-8 lg:px-12 py-6">
+        {children}
+      </main>
     </div>
   );
 }

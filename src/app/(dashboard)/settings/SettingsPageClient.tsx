@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -15,6 +15,8 @@ import {
   Download,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import FocusAreasSection from "./FocusAreasSection";
+import { useSettingsData } from "@/hooks/use-dashboard";
 
 interface Connection {
   id: string;
@@ -50,10 +52,22 @@ const PLATFORMS = {
   // future platforms here
 };
 
-export default function SettingsPageClient() {
+interface SettingsPageClientProps {
+  fallbackData?: any;
+}
+
+export default function SettingsPageClient({ fallbackData }: SettingsPageClientProps) {
   const searchParams = useSearchParams();
-  const [connections, setConnections] = useState<Connection[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+
+  // Use SWR hook with optional server-rendered fallback data
+  const {
+    connections,
+    hasData,
+    isLoading,
+    error,
+    mutate: mutateSettings,
+  } = useSettingsData(fallbackData);
+
   const [syncingProvider, setSyncingProvider] = useState<string | null>(null);
   const [syncResult, setSyncResult] = useState<SyncResult | null>(null);
   const [notification, setNotification] = useState<{
@@ -93,25 +107,6 @@ export default function SettingsPageClient() {
     }
   }, [notification]);
 
-  const fetchConnections = useCallback(async () => {
-    try {
-      const response = await fetch("/api/connections");
-      const data = await response.json();
-
-      if (data.ok) {
-        setConnections(data.data);
-      }
-    } catch (error) {
-      console.error("Failed to fetch connections:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchConnections();
-  }, [fetchConnections]);
-
   const handleConnect = (provider: string) => {
     const platform = PLATFORMS[provider as keyof typeof PLATFORMS];
     if (platform) {
@@ -131,7 +126,7 @@ export default function SettingsPageClient() {
 
       if (data.ok) {
         setSyncResult(data.data);
-        fetchConnections();
+        mutateSettings();
       } else {
         setNotification({
           type: "error",
@@ -170,7 +165,7 @@ export default function SettingsPageClient() {
           type: "success",
           message: "Account disconnected successfully",
         });
-        fetchConnections();
+        mutateSettings();
       } else {
         setNotification({
           type: "error",
@@ -203,7 +198,7 @@ export default function SettingsPageClient() {
     return `${days}d ago`;
   };
 
-  if (isLoading) {
+  if (isLoading && !hasData) {
     return (
       <div className="space-y-6">
         <div className="space-y-2">
@@ -211,6 +206,22 @@ export default function SettingsPageClient() {
           <Skeleton className="h-4 w-64" />
         </div>
         <Skeleton className="h-48 w-full rounded-xl" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-[40vh]">
+        <div className="text-center">
+          <p className="text-red-600 font-medium">{error}</p>
+          <button
+            onClick={() => mutateSettings()}
+            className="mt-4 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
       </div>
     );
   }
@@ -383,6 +394,11 @@ export default function SettingsPageClient() {
             );
           })}
         </div>
+      </div>
+
+      {/* Focus Areas Section */}
+      <div className="border-t border-gray-200 pt-6">
+        <FocusAreasSection />
       </div>
 
       {/* Info Box */}

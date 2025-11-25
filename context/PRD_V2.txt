@@ -1,0 +1,348 @@
+ContentHub Product Requirements Document (PRD)
+1. Project Overview
+
+ContentHub is a web‑based personal knowledge and growth platform. It solves the problem of scattered saved content across multiple social media platforms by ingesting posts (currently manually via URL) and generating AI‑powered summaries. The goal of this project is to expand ContentHub from a simple bookmarking tool into a self‑improvement operating system: a unified hub that captures and transforms saved content into actionable knowledge, builds learning paths, tracks user progress through gamification, and provides a “Character Sheet” that quantifies personal development.
+
+The existing version of ContentHub allows a user to log in via Clerk, manually add a link from Twitter, Instagram, LinkedIn, etc., and automatically fetch basic metadata (author, text, media). An OpenAI GPT API call creates a short summary for the post, and the system stores the post in a Supabase/PostgreSQL database via Prisma. Users can search and filter posts via a simple UI built in Next.js. These basic features serve as the foundation for the new capabilities described in this document.
+
+This PRD follows industry best practices for agile PRDs: it defines the product’s purpose and outlines the features, behaviours and constraints
+atlassian.com
+. It includes project specifics, business objectives, background, assumptions, user stories, user interaction/design guidance, questions, and explicit out‑of‑scope items
+atlassian.com
+. The structure draws on Atlassian’s template for PRDs, which recommends clearly specifying participants, status, target release, goals, background, assumptions, user stories, user interaction, and what is not being built
+atlassian.com
+.
+
+2. Project Specifics
+
+The high‑level parameters for this project are summarised below. Keeping descriptions concise avoids long sentences in tables.
+
+Participants: product owner, full‑stack engineers, AI/ML specialist, designer, QA, LLM implementer, early adopters and stakeholders.
+
+Status: core bookmarking and AI summarisation built; new features are in the requirements definition stage.
+
+Target release: Phase 1 in Q1 2026 and Phase 2 in Q2 2026 (timezone: America/Toronto).
+
+Platforms: web application built with Next.js/React on both frontend and backend; Supabase/PostgreSQL with Prisma; Clerk for authentication; OpenAI GPT API for AI processing.
+
+Deployment: serverless hosting (Vercel/Netlify) with Supabase database; social media API access pending approval.
+
+3. Goals and Business Objectives
+
+Unify fragmented content: Automatically ingest a user’s saved or bookmarked posts from major platforms (Twitter/X, Instagram, YouTube, LinkedIn) into ContentHub.
+
+Transform consumption into growth: Use AI to summarise, tag, classify, and connect saved content, turning passive consumption into actionable knowledge and skills.
+
+Enable self‑reflection and accountability: Provide tools for users to set goals, define focus areas, and track progress toward those goals via gamified daily quests and XP systems.
+
+Deliver a personal learning lab: Build features that allow users to create learning paths, synthesize insights, and visualise connections in their content library.
+
+Establish a quantifiable growth system: Introduce a “Character Sheet” that assigns levels and XP to various domains (Finance, Career, Philosophy, Leadership, Boxing, Startups) based on processed content and real‑world actions.
+
+Enhance retention and engagement: Encourage daily return through rewarding loops (quests, streaks, levelling up) and provide meaningful value that differentiates ContentHub from other bookmarking tools. These objectives directly serve the users’ need to obtain more out of the content they consume, not just save it.
+
+4. Background and Strategic Fit
+
+The explosion of influencer and educational content across social media means that users are overwhelmed with valuable posts, threads, videos, and articles. While platforms provide bookmarking or save features, they lack a unified mechanism to revisit and integrate the content. Most users never return to their saved posts. ContentHub positions itself as the “second brain” that sits atop social networks, collecting and organising saved content and guiding users to turn that content into personal growth.
+
+The long‑term vision is to be a personal knowledge management and self‑development platform that complements mainstream social networks. The product fits into the broader strategy of building a tool suite (e.g., Risk Guardian) where personal data, content and behaviours are leveraged for personal and professional development.
+
+5. Assumptions
+
+Access to social media APIs will be granted or can be replaced by scraping/reserving manual input as fallback.
+
+Users are willing to authorise ContentHub to access their saved content via OAuth flows.
+
+OpenAI’s API remains accessible and financially viable for generating summaries, learning paths and Q&A.
+
+Supabase + Prisma can scale to handle more data; vector embeddings and AI models can be integrated with the database.
+
+Users accept gamification elements (XP, levels, streaks) and data insights without considering them intrusive or judgemental; appropriate tone and privacy options mitigate this risk.
+
+The product will initially target English‑speaking knowledge workers; multi‑language support may come later.
+
+The existing Next.js monorepo will serve both frontend and backend needs; integration of background tasks will rely on serverless functions, cron jobs or a queue (e.g., Cron on Vercel or Supabase Edge Functions).
+
+6. User Stories and Use Cases
+6.1 Onboarding and Integration
+
+US 1 – Connect social accounts: As a user, I want to connect my Twitter/X, Instagram, LinkedIn, and YouTube accounts so that ContentHub can automatically import and update my saved content. Acceptance criteria: OAuth flows implemented; system fetches bookmarks/saves/likes based on user permission; import runs daily or on demand.
+
+US 2 – Import saved posts manually: As a user, I want to paste a link to a post/video to create a ContentHub entry. Acceptance criteria: The system fetches metadata and uses GPT to generate a summary; entry appears in the feed with correct source icon, category and tags.
+
+US 3 – Ingest additional content types: As a user, I want to add PDFs, blog articles, or notes to ContentHub. Acceptance criteria: The system extracts text, summarises it, and classifies it alongside other posts.
+
+6.2 Content Processing & Classification
+
+US 4 – Automatic summarisation: As a user, I want the system to generate succinct summaries of my saved content. Acceptance criteria: Summaries are generated via OpenAI at ingestion; they are stored and displayed in the post card.
+
+US 5 – Topic tagging and difficulty scoring: As a user, I want ContentHub to auto‑assign topics (e.g., Finance, Career, Philosophy) and difficulty scores (beginner, intermediate, advanced) to each post. Acceptance criteria: Tags and scores appear on the post card; classification uses AI and is editable by the user.
+
+US 6 – Quality and relevance feedback: As a user, I want to know whether the content I saved aligns with my defined focus areas. Acceptance criteria: Each post receives a relevance score (0–10) based on focus areas; the system surfaces mismatches via notifications or daily quest feedback.
+
+US 7 – Manual tagging & editing: As a user, I can edit tags, categories, and relevance scores if AI misclassifies a post.
+
+6.3 Goals, Quests and Gamification
+
+US 8 – Define focus areas and goals: As a user, I want to select up to three active focus areas (e.g., Finance, Career, Fitness) and set daily or weekly goals for how many relevant posts I will process. Acceptance criteria: A settings page allows selection of focus areas and goal counts; goals are stored per user; the daily quest system references these goals.
+
+US 9 – Daily quests: As a user, I want a daily quest that prompts me to (a) find a certain number of relevant items and (b) process them (read summary, reflect, create notes). Acceptance criteria: The dashboard shows active daily quests; progress updates as posts are saved and processed; completion yields XP and streak increments.
+
+US 10 – Experience points and leveling: As a user, I want to earn XP for saving and processing content, complete quests and see my level increase in different domains. Acceptance criteria: XP is computed based on processed content; each domain has levels; the “Character Sheet” displays current levels and progress bars.
+
+US 11 – Streaks and rewards: As a user, I want to maintain a daily streak and receive badges or trophies for consistent engagement. Acceptance criteria: The system tracks consecutive days of quest completion; visual feedback (e.g., flame icon, badges) appears in the UI; losing a streak triggers friendly prompts to restart.
+
+6.4 Learning Lab and Knowledge Workbench
+
+US 12 – Topic map & skill tree: As a user, I want a visual topic map where each domain (Finance, Career, etc.) is represented as a node with sub‑skills and XP bars. Acceptance criteria: A “Skill Tree” page shows domains, levels, XP bars and trending indicators; clicking a domain reveals sub‑skills and associated content.
+
+US 13 – AI‑generated learning paths: As a user, I want to generate a short learning path (3–7 items) on a topic using my saved content. Acceptance criteria: The user selects a topic and timeframe; the system compiles items, summarises them, orders them logically, and presents the path with estimated time; the user can mark steps as complete and receive XP.
+
+US 14 – Idea forge & connections: As a user, I want to compare and connect concepts across topics or creators to find patterns, contradictions or synthesize insights. Acceptance criteria: The user selects two topics or two creators; the system uses GPT to analyse common themes and contradictions; outputs are displayed as bullet points or diagrams; insights can be saved as notes.
+
+US 15 – Reflection log: As a user, I want to record how each piece of processed content applies to my goals. Acceptance criteria: After processing a post, the user is prompted with one or two reflection questions; responses are stored in a reflection log; the log feeds XP and can be reviewed later.
+
+6.5 Character Sheet and Progress Tracking
+
+US 16 – Character sheet display: As a user, I want a dashboard showing my overall level, XP, streak and domain stats. Acceptance criteria: A “Character Sheet” page displays overall level and progress bar, streak count, domain list with levels, XP bars, trends (↑ rising, ↓ falling), and tags (“Risk Mind”, “Senior IC”, etc.) based on highest sub‑skill.
+
+US 17 – Domain details: As a user, I want to drill down into a domain to see sub‑skills, their levels and the content driving them. Acceptance criteria: Clicking a domain reveals a list of sub‑skills with XP bars and counts of processed vs unprocessed content; provides a quick link to start a crash course.
+
+US 18 – Stat updates from real actions: As a user, I want to link my real‑world actions (e.g., opening an investment account, shipping a startup experiment) to stat increases. Acceptance criteria: The system allows logging of actions via manual input or integration (future); actions mapped to domains yield XP.
+
+6.6 Search, Filter and Explore
+
+US 19 – Enhanced search and filters: As a user, I want advanced search across my content with filters for source, domain, sub‑skill, date, and relevance. Acceptance criteria: The search bar supports full‑text search; filters can be toggled; results update in real time.
+
+US 20 – Sort and prioritise content: As a user, I want to sort my posts by relevance, difficulty, length or recency. Acceptance criteria: Sorting options appear at the top of the feed; user selections persist.
+
+US 21 – Highlights & recommendations: As a user, I want recommendations for high‑impact content to process next, based on my goals and past behaviour. Acceptance criteria: The system surfaces “next to process” suggestions with a rational explanation; users can accept or dismiss suggestions.
+
+7. User Journey
+
+The user journey describes the typical flow from onboarding to daily use and learning lab exploration.
+
+7.1 Onboarding
+
+Sign up / sign in using Clerk. New users are prompted to authorise OAuth scopes for each supported platform (Twitter/X, YouTube, LinkedIn, Instagram). If a user skips integration, they can still manually add posts via URL.
+
+Set up focus areas. After import or manual addition, the user selects up to three focus areas (e.g., Finance, Career, Fitness) and sets daily goals (e.g., process 2 posts, save 5 relevant posts).
+
+Familiarise with dashboard. The home page presents imported posts with AI summaries. The user can filter by platform or domain. An introductory “daily quest” card shows progress for the day and explains the XP system.
+
+7.2 Daily Use
+
+Consume content. The user browses social media. When they bookmark a post or add one manually via the browser extension or share sheet, ContentHub ingests it automatically.
+
+Daily quest. In ContentHub, the user sees how many items they’ve saved and how many they need to process. They read summaries of selected posts, optionally watch the video or read the thread, and answer one or two reflective prompts. Completing the processing tasks yields XP, counts toward streaks, and updates domain stats.
+
+Feedback & Coaching. The system compares saved content with goals. If there is deviation (e.g., too much entertainment compared to Finance), the “AI coach” suggests adjustments (add a Fun bucket, adjust strictness) rather than judgment. Users can reconfigure focus areas or ask the AI for a plan to realign consumption.
+
+7.3 Learning Lab & Character Sheet
+
+Explore topic map. The user accesses the “Skill Tree” to see domain levels and sub‑skill progress. Colour coding indicates trends (rising, steady, declining). They choose a domain to drill into.
+
+Generate crash course. The user selects a topic (e.g., “Risk Management” in Finance) and taps “Build a path.” The system assembles a course with selected posts, summarises each, orders them logically, and suggests a timeline. The user processes items sequentially, earning XP and raising the domain level.
+
+Forge connections. The user picks two topics or creators to compare. The AI analyses the saved content and produces a synthesis with common themes, contradictions, and recommended next actions. The user can turn these results into notes or new learning paths.
+
+Reflection log. The user reviews their reflection log to see what actions they derived from processed content. They can search reflections or filter by domain.
+
+Character sheet review. The user looks at their overall level, domain levels, streak, and recent upgrades (e.g., “Risk Discipline II unlocked”). The sheet provides suggestions for balancing their quest plan.
+
+8. Functional Requirements
+
+The following describe what the system must do. They are grouped by feature module.
+
+8.1 Social Integrations
+
+Support OAuth flows for Twitter/X, YouTube, LinkedIn and Instagram. Use official APIs to fetch saved/bookmarked posts, liked videos, and saved posts. Where API limitations exist, provide a manual import or browser extension as fallback.
+
+Schedule regular background tasks (e.g., using Cron jobs, Supabase Edge functions or serverless functions) to pull new saved items and update existing ones (e.g., if an author edits their post).
+
+Store raw post metadata (URL, platform, author, content text, media links, timestamp, etc.) in the database. Create or update posts idempotently to avoid duplicates.
+
+8.2 Content Processing
+
+Automatically call the OpenAI GPT API to summarise new posts. Use a concise prompt that instructs the model to summarise the key ideas. Store the summary text and any extracted highlights in the database.
+
+Generate embedding vectors for each post using a suitable model (e.g., OpenAI embeddings or Hugging Face models) and store them in a vector database (could be Supabase’s built‑in functions or a separate service like Pinecone). These embeddings will support semantic search and similarity comparisons.
+
+Run classification models (or GPT) to assign topics, sub‑skills and difficulty scores to each post. Use a controlled vocabulary to map raw topics to high‑level domains (Finance, Career, Philosophy, etc.). Provide an interface for users to edit tags.
+
+Compute a relevance score (0–10) for each post based on the user’s selected focus areas and historical preferences. The scoring algorithm may consider factors like topic alignment, difficulty, estimated length, and recency. Provide transparency by showing how the score is determined or by allowing users to adjust strictness.
+
+8.3 Gamification & Quest System
+
+Goal management: store user focus areas and goal counts in the database; allow the user to update them at any time. Provide defaults (e.g., 2 processed posts per day, 5 saved posts per day) but allow overrides.
+
+Quest generation: At the start of each day (based on the user’s timezone), generate a set of quests: (a) number of posts to find/save; (b) number of posts to process; (c) optional special quests (e.g., “Reflect on a Philosophy item” if a domain is neglected). Persist quest data and update progress as users complete actions.
+
+XP calculation: assign XP values for actions (e.g., saving a relevant item, processing a post, completing a reflection). Consider giving more XP for processing than saving to avoid hoarding. Track XP per domain and total XP.
+
+Streak tracking: maintain a record of consecutive days where daily quests are fully completed. Reset streak if a day passes without completion. Provide friendly prompts and a streak meter.
+
+Levels & badges: define XP thresholds for each level (global and per domain). When a level threshold is reached, update the user’s level and trigger UI celebrations (e.g., confetti, badges unlocked). Maintain a list of badges with conditions (e.g., “Complete 5 crash courses” or “Maintain a 30‑day streak”).
+
+8.4 Learning Lab
+
+Topic map and skill tree: generate aggregated statistics per domain and sub‑skill. Compute levels using XP and thresholds; compute trends by comparing the past week’s XP gains with the previous week. Provide an API endpoint that returns structured data for the frontend to render the map. Support interactive drill‑down.
+
+Crash course generator: accept a domain or sub‑skill as input and time horizon (e.g., number of days or total minutes). Select relevant posts based on their importance, diversity and difficulty; order them logically (e.g., basics before advanced topics); and produce a sequence with estimated times. Use GPT to summarise each item and create 1–2 prompts or questions. Store crash courses in the database; allow users to mark them complete or abandon.
+
+Idea forge: allow users to select one or two topics or creators from their library. Retrieve the associated posts; feed them to GPT to derive common themes, contradictions, insights and recommended actions. Return a structured response (e.g., bullet list) for the frontend to display. Allow saving the output as notes or turning them into a new learning path.
+
+Reflection log: after a user processes a post (reads summary or uses the in‑app reader), present 1–2 open‑ended prompts (randomly chosen or based on the domain) such as “How can you apply this idea?” or “Do you agree with the argument?” Save responses in a separate table with links to the post. Provide endpoints to retrieve and search reflections. Award XP for completed reflections.
+
+8.5 Character Sheet
+
+Stat computation: compute global level, global XP bar, streak length, and domain stats based on accumulated XP. Map domains to tags (e.g., the highest sub‑skill can define the tag like “Risk Mind” for Finance). Compute trends by comparing recent XP gains with a trailing average.
+
+Frontend dashboard: provide an API endpoint delivering the structured data needed to render the character sheet (levels, XP bars, trend arrows, active quests). Include fields for recent upgrades/unlocks and coach feedback (see below).
+
+Coach feedback: generate weekly summaries using GPT, highlighting the distribution of processed content across domains (e.g., 41 % Finance, 23 % Career
+atlassian.com
+). Provide suggestions (e.g., increase Philosophy content) in a friendly tone. Store these summaries in the database and display them in the “AI coach” section.
+
+8.6 Search & Discovery
+
+Full‑text search: index the title, summary, tags and reflection content; support fuzzy and semantic search via the vector embeddings. Provide filters for source platform, domain, sub‑skill, timeframe, difficulty, and relevance score.
+
+Recommendations: implement a recommendation engine that suggests posts or crash courses based on the user’s goals and history. Use collaborative filtering or embeddings to find content similar to previously processed items but not yet consumed.
+
+Sorting: allow sorting by relevance, difficulty, date saved, date processed, or length. Provide UI controls on the feed.
+
+9. User Interaction and Design (High‑Level)
+9.1 Navigation & Layout
+
+Home/Feed page: Display a list of saved posts. Each card shows the platform icon, title/author, AI summary snippet, tags, difficulty and relevance score. Provide quick actions: “Process” (mark as processed and open summary), “Add note” and “Delete”. At the top, show a progress bar for the daily quest (e.g., 2/5 saved, 1/2 processed) and a streak indicator.
+
+Quest & Streak bar: A persistent component on the home page summarises the day’s tasks. Clicking it reveals details: items left to save, items left to process, optional special quests, and rewards earned.
+
+Search & filter: At the top of the feed, include a search bar with filter dropdowns. When a search is performed, highlight matches in the list.
+
+Learning Lab: A separate tab or page. It contains three main sections: (1) Topic Map / Skill Tree: interactive chart or list of domains/sub‑skills; (2) Crash Courses: list of available or completed courses; ability to generate new ones; (3) Idea Forge & Reflection Log: interfaces for generating insights and reviewing reflections.
+
+Character Sheet: A dedicated page summarising overall and domain stats, active quests, recent upgrades, and AI coach feedback. The design can mimic RPG character sheets: an avatar area, XP bar, domain table with levels/trends, and a log of recent achievements.
+
+Settings & Focus Areas: A settings page where users select focus areas, adjust goal strictness (gentle/honest/brutal), manage connected accounts, and control notifications.
+
+9.2 UI States
+
+Empty state: Show onboarding hints when the library is empty (e.g., “Connect your accounts or add a link to start collecting knowledge”).
+
+Loading states: Provide skeleton loaders for summarisation and background tasks; show progress bars when generating crash courses.
+
+Error states: Display user‑friendly messages if integration fetch fails (e.g., “Twitter API rate limit reached – try again later”) and allow manual retries.
+
+9.3 Accessibility & Internationalisation
+
+Ensure components are keyboard navigable and have proper ARIA labels.
+
+Use clear, simple language; avoid jargon. Support dark mode. Plan for future translation by externalising strings.
+
+10. Technical Design & Architecture
+10.1 Backend
+
+Next.js API Routes: Continue using serverless functions for API endpoints (e.g., create post, get posts, update tags, fetch quests). Use getServerSideProps or API for dynamic data. Secure endpoints using Clerk’s authentication middleware.
+
+Database schema: Extend the existing Prisma schema with new tables: PlatformAccount, PostTag, Domain, SubSkill, Quest, QuestProgress, XP, Badge, CrashCourse, Reflection, CharacterStat, CoachFeedback. Use relations to link posts to domains, quests and reflections. Consider using Supabase’s real‑time features to push updates to the client when quests update.
+
+Background tasks: Implement cron jobs or queue workers (e.g., with Supabase Edge Functions, Vercel cron or a separate Node worker) to perform social media imports and summarisation asynchronously. Use rate limiting and caching to respect API quotas. Ingestion tasks should be idempotent.
+
+AI services: Wrap OpenAI API calls in reusable helper functions. Optimise prompts to reduce tokens and cost (e.g., summarise using gpt-3.5-turbo and only use gpt-4 for complex tasks like crash course generation or idea forging). Use caching to avoid repeated processing of the same content.
+
+Embeddings & vector search: Choose a vector storage solution. Options include Supabase’s built‑in vector extension, a hosted service like Pinecone, or an internal service. Maintain an index for semantic search and similarity queries (for recommendations and idea forging).
+
+Event system: Use database triggers or event logs to update XP and quests when users process content or complete reflections. Alternatively, handle updates in the API layer to avoid database complexity.
+
+Security & privacy: Store access tokens securely (encrypted at rest). Provide users with options to delete data or disconnect accounts. Handle API errors gracefully. Comply with platform ToS and privacy regulations.
+
+10.2 Frontend
+
+State management: Use React context or a state management library (e.g., Redux, Zustand) to manage global states such as user profile, posts, quests, XP. Use SWR or React Query for data fetching and caching.
+
+Component library: Maintain or create a reusable component library for cards, progress bars, dialogs, modals and charts. Use a charting library (e.g., Chart.js, Recharts, D3) for the skill tree and XP progress. Avoid heavy dependencies; ensure components are mobile‑responsive.
+
+Realtime updates: Use websockets or Supabase’s real‑time features to update quest progress and XP without page refreshes.
+
+Performance: Lazy‑load large components (e.g., Learning Lab) and implement code splitting; prefetch data when possible. Use skeleton loaders for long‑running tasks.
+
+10.3 Scalability & Deployment
+
+Scalability: The system should handle thousands of users with hundreds of saved posts each. Use pagination and server‑side caching to limit memory usage. Offload heavy AI tasks to asynchronous workers. Scale the database vertically or horizontally as needed.
+
+Deployment: Use environment variables to manage API keys. Deploy to Vercel or Netlify with fallback to Node servers if necessary. Use a separate environment for staging and production.
+
+Monitoring: Integrate logging and monitoring services (e.g., Sentry, Datadog) to capture errors and performance metrics. Use analytics tools to track user engagement, quest completion rates and retention.
+
+11. Non‑Functional Requirements
+
+Performance: Summarisation and post creation should complete within a few seconds. Generating crash courses may take longer (up to ~10–20 s); the UI should display progress.
+
+Reliability: The system should gracefully handle API outages or rate limits. Provide fallback manual import when automated import fails.
+
+Security: Protect user credentials and tokens; implement proper CORS and CSRF protections; comply with platform policies.
+
+Privacy: Clarify data usage and allow users to delete content. Do not share user data with third parties without consent.
+
+Usability: Provide intuitive UI with minimal friction. Ensure daily quests feel motivating, not burdensome. Avoid judgmental language; emphasise progress and suggestions.
+
+Accessibility: Meet WCAG 2.1 AA standards; support screen readers and keyboard navigation.
+
+Maintainability: Keep code modular and documented. Use feature flags to roll out new features gradually.
+
+12. Risks and Mitigations
+Risk	Mitigation
+API changes or deprecations	Monitor platform API updates; abstract integration layers; have manual import fallback.
+High cost of AI calls	Use efficient models; summarise once per post; cache results; limit crash course generation frequency.
+User overwhelm with gamification	Provide adjustable strictness (gentle/honest/brutal); allow disabling certain features; ensure quests align with user‑defined goals.
+Data privacy concerns	Encrypt tokens; implement clear data deletion controls; avoid storing unnecessary personal information.
+Scope creep	Clearly define features in this PRD; track out‑of‑scope features separately.
+Performance issues with embeddings	Use a scalable vector database; limit vector operations to essential features; batch operations.
+Low adoption due to complexity	Prioritise a simple MVP; onboard users gradually; gather feedback early; iterate on UI.
+13. Out of Scope (for this phase)
+
+Real‑time in‑video summarisation (watching videos alongside the user) – considered for a future phase.
+
+Social features such as sharing posts or leaderboards outside optional accountability partner modes.
+
+Native mobile apps (initial release is web‑only; mobile views will be responsive).
+
+Integrations with productivity apps (e.g., Notion, Evernote) – potential Phase 3.
+
+Automatic detection of user mood or mental state. We will not infer or store sensitive personal data beyond content topics.
+
+14. Metrics and Success Criteria
+
+Daily active users (DAU): number of users logging in and processing content each day.
+
+Quest completion rate: percentage of daily quests fully completed.
+
+Average processed posts per user per day: indicates engagement and content digestion.
+
+Retention rate: proportion of users returning after 7 and 30 days.
+
+Crash course completion rate: measures the utility of learning paths.
+
+User satisfaction: qualitative feedback on the value of daily quests, learning lab, and character sheet.
+
+Time to first value: time between signup and first processed post; shorter times suggest smoother onboarding.
+
+Cost per user: primarily AI call costs; monitor and optimise prompts.
+
+15. Open Questions
+
+API access: which social media APIs will allow retrieval of saved posts or bookmarks without violating terms? LinkedIn and Instagram may have restrictions – a fallback manual import or browser extension must be designed.
+
+AI hallucinations: how to validate that AI‑generated learning paths are accurate and safe? Should human review be included or trust metrics assigned to AI outputs?
+
+Privacy settings: should the user have a private vs public profile? Will there be an option to share XP levels with others or participate in leaderboards?
+
+Real‑world action logging: what integration or manual input methods will record real actions (e.g., connecting to financial apps or workout trackers)? Is there appetite for integration with third‑party habit trackers?
+
+Future monetisation: will there be premium tiers for additional features (e.g., unlimited crash course generation, deeper insights) or is it free with optional contributions?
+
+16. Conclusion
+
+ContentHub has the potential to transcend ordinary bookmarking tools by turning saved content into a structured, gamified learning journey. This PRD outlines a comprehensive plan to integrate social media feeds, automatically process content using AI, set and track user goals, gamify the consumption process, provide a learning lab for synthesising knowledge, and present growth as a quantifiable “Character Sheet.” By following this roadmap and iterating based on user feedback, ContentHub can become the “second brain” that people return to daily because it drives real personal growth. Following the agile principles of providing just enough context, gathering feedback and progressively refining requirements, the team can build a unique and valuable product that helps users become better versions of themselves through meaningful content consumption.

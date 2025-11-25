@@ -65,15 +65,86 @@ export async function GET(request: NextRequest) {
     // Calculate pagination
     const skip = (query.page - 1) * query.limit;
 
-    // Get total count for pagination
-    const total = await db.item.count({ where });
+    // Fetch count and items in parallel for better performance
+    const [total, items] = await Promise.all([
+      db.item.count({ where }),
+      db.item.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: query.limit,
+        // Select fields needed for list view (optimized payload)
+        select: {
+          id: true,
+          url: true,
+          title: true,
+          summary: true,
+          imageUrl: true,
+          category: true,
+          type: true,
+          tags: true,
+          note: true,
+          source: true,
+          status: true,
+          domainId: true,
+          createdAt: true,
+          updatedAt: true,
+          userId: true,
+          domain: {
+            select: {
+              id: true,
+              name: true,
+              displayName: true,
+              icon: true,
+              color: true,
+            },
+          },
+        },
+      }),
+    ]);
 
-    const items = await db.item.findMany({
-      where,
-      orderBy: { createdAt: "desc" },
-      skip,
-      take: query.limit,
-    });
+    // Fetch XP events and focus areas in parallel
+    const itemIds = items.map(item => item.id);
+    const [xpEvents, focusAreas] = await Promise.all([
+      itemIds.length > 0
+        ? db.xPEvent.findMany({
+            where: {
+              userId: user.id,
+              itemId: { in: itemIds },
+            },
+            select: {
+              itemId: true,
+              action: true,
+              xpAmount: true,
+            },
+          })
+        : Promise.resolve([]),
+      db.focusArea.findMany({
+        where: { userId: user.id },
+        select: { domainId: true, priority: true },
+      }),
+    ]);
+
+    // Group XP by item
+    const xpByItem = xpEvents.reduce((acc, event) => {
+      if (!event.itemId) return acc;
+      if (!acc[event.itemId]) {
+        acc[event.itemId] = { total: 0, breakdown: {} };
+      }
+      acc[event.itemId].total += event.xpAmount;
+      acc[event.itemId].breakdown[event.action] = (acc[event.itemId].breakdown[event.action] || 0) + event.xpAmount;
+      return acc;
+    }, {} as Record<string, { total: number; breakdown: Record<string, number> }>);
+
+    const focusAreaDomainIds = new Set(focusAreas.map(fa => fa.domainId));
+
+    // Enrich items with gamification data
+    const enrichedItems = items.map(item => ({
+      ...item,
+      xpEarned: xpByItem[item.id]?.total || 0,
+      xpBreakdown: xpByItem[item.id]?.breakdown || {},
+      isInFocusArea: item.domainId ? focusAreaDomainIds.has(item.domainId) : false,
+    }));
 
     // Calculate pagination metadata
     const totalPages = Math.ceil(total / query.limit);
@@ -82,7 +153,7 @@ export async function GET(request: NextRequest) {
     // Create response with cache headers
     const response = NextResponse.json({
       ok: true,
-      data: items,
+      data: enrichedItems,
       meta: {
         total,
         page: query.page,
@@ -93,11 +164,8 @@ export async function GET(request: NextRequest) {
     });
 
     // Add cache headers for browser caching (stale-while-revalidate pattern)
-    // Short cache for items as they change more frequently
-    response.headers.set(
-      "Cache-Control",
-      "private, max-age=10, stale-while-revalidate=30"
-    );
+    // For user-specific data, avoid any shared browser caching
+    response.headers.set("Cache-Control", "no-store");
 
     return response;
   } catch (error) {

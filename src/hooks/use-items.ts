@@ -1,14 +1,28 @@
 "use client";
 
 import useSWR, { mutate } from "swr";
-import { useRef, useMemo } from "react";
+import { useAuth } from "@clerk/nextjs";
 import type { Item } from "@/generated/prisma";
 import type { ItemCategory, ItemStatus, PaginationMeta } from "@/types";
+
+// Enhanced Item type with gamification data
+export interface EnhancedItem extends Item {
+  domain?: {
+    id: string;
+    name: string;
+    displayName: string;
+    icon: string;
+    color: string;
+  } | null;
+  xpEarned: number;
+  xpBreakdown: Record<string, number>;
+  isInFocusArea: boolean;
+}
 
 // API Response types
 interface ItemsResponse {
   ok: boolean;
-  data: Item[];
+  data: EnhancedItem[];
   meta: PaginationMeta;
 }
 
@@ -46,7 +60,8 @@ function buildItemsUrl(params: ItemsQueryParams): string {
   const searchParams = new URLSearchParams();
 
   if (params.q) searchParams.set("q", params.q);
-  if (params.status && params.status !== "all") searchParams.set("status", params.status);
+  if (params.status && params.status !== "all")
+    searchParams.set("status", params.status);
   if (params.category) searchParams.set("category", params.category);
   if (params.platform) searchParams.set("platform", params.platform);
   if (params.tag) searchParams.set("tag", params.tag);
@@ -57,88 +72,55 @@ function buildItemsUrl(params: ItemsQueryParams): string {
 }
 
 /**
- * Generate a stable filter key to detect when filters change significantly
- * This helps us know when to show loading vs stale data
- */
-function getFilterKey(params: ItemsQueryParams): string {
-  return JSON.stringify({
-    q: params.q || "",
-    status: params.status || "all",
-    category: params.category || null,
-    platform: params.platform || null,
-    tag: params.tag || null,
-  });
-}
-
-/**
  * Hook to fetch items with filters and pagination
- * Uses SWR for automatic caching and stale-while-revalidate
- *
- * KEY FIX: Detects when filters change and shows loading instead of stale data
+ * REBUILT FROM SCRATCH - Simple, clean approach
  */
 export function useItems(params: ItemsQueryParams = {}) {
+  const { isLoaded, userId } = useAuth();
   const url = buildItemsUrl(params);
-  const currentFilterKey = getFilterKey(params);
 
-  // Track which filter key the last successful data was from
-  const lastSuccessfulFilterKeyRef = useRef<string | null>(null);
+  // Simple approach: only fetch if auth is ready
+  const shouldFetch = isLoaded && userId;
 
-  const { data, error, isLoading, isValidating, mutate: mutateItems } = useSWR<ItemsResponse>(
-    url,
-    {
-      // IMPORTANT: Don't keep previous data - it causes wrong data to flash
-      // when switching between different filter states
-      keepPreviousData: false,
-      // Don't revalidate on focus for list views
+  const { data, error, isLoading, isValidating, mutate: mutateItems } =
+    useSWR<ItemsResponse>(shouldFetch ? url : null, {
+      // Only validate on mount
       revalidateOnFocus: false,
-      // Dedupe rapid requests
-      dedupingInterval: 2000,
-    }
-  );
-
-  // Update the ref when we get successful data
-  if (data?.ok) {
-    lastSuccessfulFilterKeyRef.current = currentFilterKey;
-  }
-
-  // Determine if the current data matches the current filter
-  // This prevents showing stale data from a different filter
-  const isDataStale = data && lastSuccessfulFilterKeyRef.current !== currentFilterKey;
-
-  // Show loading when:
-  // 1. SWR is loading (no cached data for this key)
-  // 2. OR we have data but it's from a different filter key (stale)
-  const showLoading = isLoading || isDataStale;
+      revalidateOnMount: true,
+      revalidateOnReconnect: false,
+    });
 
   return {
-    items: showLoading ? [] : (data?.data || []),
-    pagination: showLoading ? null : (data?.meta || null),
-    isLoading: showLoading,
+    items: data?.data || [],
+    pagination: data?.meta || null,
+    isLoading: !shouldFetch || (isLoading && !data),
     isValidating,
     error: error?.message || null,
     mutate: mutateItems,
-    // Expose the URL for cache invalidation
-    cacheKey: url,
   };
 }
 
 /**
  * Hook to fetch "Today" items (new status)
- * This is a simpler case - no dynamic filters
+ * REBUILT FROM SCRATCH - Simple, clean approach
  */
 export function useTodayItems() {
-  const { data, error, isLoading, isValidating, mutate: mutateItems } = useSWR<ItemsResponse>(
-    "/api/items?status=new&limit=20",
-    {
-      // For Today view, we CAN use keepPreviousData since the query never changes
-      keepPreviousData: true,
+  const { isLoaded, userId } = useAuth();
+  const url = "/api/items?status=new&limit=20";
+
+  // Simple approach: only fetch if auth is ready
+  const shouldFetch = isLoaded && userId;
+
+  const { data, error, isLoading, isValidating, mutate: mutateItems } =
+    useSWR<ItemsResponse>(shouldFetch ? url : null, {
       revalidateOnFocus: false,
-    }
-  );
+      revalidateOnMount: true,
+      revalidateOnReconnect: false,
+    });
 
   return {
     items: data?.data || [],
-    isLoading: isLoading && !data,
+    isLoading: !shouldFetch || (isLoading && !data),
     isValidating,
     error: error?.message || null,
     mutate: mutateItems,
@@ -147,25 +129,29 @@ export function useTodayItems() {
 
 /**
  * Hook to fetch categories with counts and thumbnails
- * This is also a simpler case - no dynamic filters
+ * REBUILT FROM SCRATCH - Simple, clean approach
  */
 export function useCategories() {
-  const { data, error, isLoading, isValidating, mutate: mutateCategories } = useSWR<CategoriesResponse>(
-    "/api/categories",
-    {
-      // For categories, we CAN use keepPreviousData since the query never changes
-      keepPreviousData: true,
+  const { isLoaded, userId } = useAuth();
+  const url = "/api/categories";
+
+  // Simple approach: only fetch if auth is ready
+  const shouldFetch = isLoaded && userId;
+
+  const { data, error, isLoading, isValidating, mutate: mutateCategories } =
+    useSWR<CategoriesResponse>(shouldFetch ? url : null, {
       revalidateOnFocus: false,
-      // Categories change less frequently, can be cached longer
-      dedupingInterval: 10000,
-    }
-  );
+      revalidateOnMount: true,
+      revalidateOnReconnect: false,
+      // Cache categories a bit longer
+      dedupingInterval: 5000,
+    });
 
   return {
     categories: data?.data?.categories || [],
     totalItems: data?.data?.totalItems || 0,
     platforms: data?.data?.platforms || [],
-    isLoading: isLoading && !data,
+    isLoading: !shouldFetch || (isLoading && !data),
     isValidating,
     error: error?.message || null,
     mutate: mutateCategories,
@@ -193,12 +179,7 @@ export async function updateItemStatus(
     }
 
     // Revalidate all item-related caches
-    // This will update both Today and Library views
-    mutate((key) => typeof key === "string" && key.startsWith("/api/items"), undefined, {
-      revalidate: true,
-    });
-
-    // Also revalidate categories (counts may have changed)
+    mutate((key) => typeof key === "string" && key.startsWith("/api/items"));
     mutate("/api/categories");
 
     return true;
@@ -210,7 +191,6 @@ export async function updateItemStatus(
 
 /**
  * Prefetch data for instant navigation
- * Call this on hover/focus to preload data
  */
 export function prefetchItems(params: ItemsQueryParams = {}) {
   const url = buildItemsUrl(params);
@@ -226,10 +206,8 @@ export function prefetchCategories() {
 }
 
 /**
- * Invalidate all caches (useful after creating new items)
+ * Invalidate all caches
  */
 export function invalidateAllCaches() {
-  mutate((key) => typeof key === "string" && key.startsWith("/api/"), undefined, {
-    revalidate: true,
-  });
+  mutate(() => true);
 }

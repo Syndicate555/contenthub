@@ -21,6 +21,176 @@ model User {
 
   items             Item[]
   socialConnections SocialConnection[]
+  userDomains       UserDomain[]
+  focusAreas        FocusArea[]
+  xpEvents          XPEvent[]
+  stats             UserStats?
+  userBadges        UserBadge[]
+}
+
+// ============================================
+// GAMIFICATION MODELS
+// ============================================
+
+// Domain represents a knowledge/skill category (e.g., Finance, Career, Health)
+model Domain {
+  id          String   @id @default(cuid())
+  name        String   @unique // "finance", "career", "health", etc.
+  displayName String   // "Finance", "Career", "Health", etc.
+  description String?  // Brief description of the domain
+  icon        String?  // Emoji or icon identifier
+  color       String?  // Hex color for UI theming
+  order       Int      @default(0) // Display order
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  userDomains UserDomain[]
+  focusAreas  FocusArea[]
+  items       Item[]       // Items in this domain
+  xpEvents    XPEvent[]    // XP events in this domain
+  badges      Badge[]      // Domain-specific badges
+
+  @@index([name])
+}
+
+// UserDomain tracks a user's progress in a specific domain
+model UserDomain {
+  id       String @id @default(cuid())
+  userId   String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  domainId String
+  domain   Domain @relation(fields: [domainId], references: [id], onDelete: Cascade)
+
+  // Progress tracking
+  totalXp     Int @default(0) // Total XP earned in this domain
+  level       Int @default(1) // Current level (calculated from XP)
+  itemCount   Int @default(0) // Number of items processed in this domain
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, domainId]) // One record per user per domain
+  @@index([userId])
+  @@index([domainId])
+}
+
+// FocusArea tracks user's active focus areas (max 3)
+model FocusArea {
+  id       String @id @default(cuid())
+  userId   String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  domainId String
+  domain   Domain @relation(fields: [domainId], references: [id], onDelete: Cascade)
+
+  // Priority (1, 2, or 3 for primary, secondary, tertiary)
+  priority Int @default(1)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, domainId]) // Can't have same domain twice
+  @@unique([userId, priority]) // Each priority level is unique per user
+  @@index([userId])
+}
+
+// XPEvent tracks individual XP awards for audit trail and analytics
+model XPEvent {
+  id       String @id @default(cuid())
+  userId   String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // XP details
+  action   String  // "save_item", "process_item", "add_reflection", "complete_quest", etc.
+  xpAmount Int     // Amount of XP awarded
+  domainId String? // Optional: which domain this XP applies to
+  domain   Domain? @relation(fields: [domainId], references: [id])
+
+  // Reference to what triggered this XP (optional)
+  itemId   String? // If XP was from processing an item
+  questId  String? // If XP was from completing a quest (future)
+
+  // Metadata
+  metadata Json?   // Additional context (e.g., streak multiplier, bonus info)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([userId, action])
+  @@index([domainId])
+  @@index([itemId]) // For fetching XP by itemIds
+  @@index([userId, itemId]) // Composite for faster XP lookups
+}
+
+// UserStats tracks aggregate user statistics
+model UserStats {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Overall XP
+  totalXp      Int @default(0) // Sum of all XP across all domains
+  overallLevel Int @default(1) // Calculated from totalXp
+
+  // Activity stats
+  itemsSaved     Int @default(0)
+  itemsProcessed Int @default(0)
+  reflections    Int @default(0)
+  questsCompleted Int @default(0)
+
+  // Streak tracking (will be expanded in Feature 5)
+  currentStreak   Int      @default(0)
+  longestStreak   Int      @default(0)
+  lastActivityAt  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([totalXp(sort: Desc)]) // For leaderboards
+}
+
+// Badge represents an achievement that can be earned
+model Badge {
+  id          String  @id @default(cuid())
+  key         String  @unique // Unique identifier (e.g., "first_item", "week_warrior")
+  name        String  // Display name (e.g., "First Steps", "Week Warrior")
+  description String  // What the badge is for
+  icon        String? // Emoji or icon identifier
+  rarity      String  @default("common") // "common" | "rare" | "epic" | "legendary"
+
+  // Criteria
+  criteriaType  String // "item_count" | "streak" | "domain_level" | "xp_total" | "special"
+  criteriaValue Int?   // Threshold value (e.g., 10 for "save 10 items")
+  domainId      String? // Optional: domain-specific badge
+  domain        Domain? @relation(fields: [domainId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  userBadges UserBadge[]
+
+  @@index([key])
+  @@index([domainId])
+}
+
+// UserBadge tracks which badges a user has earned
+model UserBadge {
+  id      String @id @default(cuid())
+  userId  String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badgeId String
+  badge   Badge  @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+
+  // Award details
+  awardedAt DateTime @default(now())
+  progress  Int      @default(0) // For tracking progress toward badge (if applicable)
+
+  @@unique([userId, badgeId]) // Can't earn same badge twice
+  @@index([userId])
+  @@index([badgeId])
 }
 
 // Social media account connections for bookmark sync
@@ -76,6 +246,10 @@ model Item {
   rawContent String?  @db.Text // truncated extracted text
   imageUrl   String?  // thumbnail/preview image URL
 
+  // Domain classification (for gamification)
+  domainId   String?
+  domain     Domain?  @relation(fields: [domainId], references: [id])
+
   // Status management
   status     String   @default("new") // "new" | "reviewed" | "pinned" | "deleted"
 
@@ -88,4 +262,8 @@ model Item {
   @@index([userId, status])
   @@index([userId, createdAt(sort: Desc)])
   @@index([userId, category])
+  @@index([domainId])
+  @@index([userId, status, createdAt(sort: Desc)]) // Composite for filtered lists
+  @@index([userId, category, createdAt(sort: Desc)]) // Composite for category filtering
+  @@index([userId, domainId, createdAt(sort: Desc)]) // Composite for domain filtering
 }

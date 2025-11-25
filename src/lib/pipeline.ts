@@ -1,6 +1,10 @@
 import { db } from "./db";
 import { extractContent, truncateContent } from "./extractor";
 import { summarizeContent, summarizeWithVision } from "./openai";
+import { getDomainForContent } from "./domains";
+import { awardXP, XP_ACTIONS } from "./xp";
+import { updateStreak } from "./streak";
+import { checkAllBadges } from "./badges";
 import type { Item } from "@/generated/prisma";
 
 export interface ProcessItemInput {
@@ -46,6 +50,19 @@ export async function processItem(
     },
   });
 
+  // Award XP for saving the item (we don't know domain yet)
+  try {
+    await awardXP({
+      userId,
+      action: XP_ACTIONS.SAVE_ITEM,
+      itemId: item.id,
+      metadata: { url, source },
+    });
+  } catch (xpError) {
+    console.error("Failed to award save XP:", xpError);
+    // Don't fail the whole operation for XP errors
+  }
+
   try {
     // Step 2: Extract content from URL
     const extracted = await extractContent(url);
@@ -79,11 +96,14 @@ export async function processItem(
       });
     }
 
-    // Step 4: Update item with processed data
-    // Skip saving imageUrl for Instagram (cropped og:image is misleading)
-    const isInstagram = extracted.source.includes("instagram.com");
-    const imageUrlToSave = isInstagram ? undefined : extracted.imageUrl;
+    // Step 4: Determine domain from category and tags
+    const domainId = await getDomainForContent(
+      summarized.category,
+      summarized.tags
+    );
 
+    // Step 5: Update item with processed data including domain
+    console.log(`Pipeline: Saving item with imageUrl=${extracted.imageUrl ? 'YES: ' + extracted.imageUrl.substring(0, 80) + '...' : 'NO'}, domainId=${domainId || 'none'}`);
     const updatedItem = await db.item.update({
       where: { id: item.id },
       data: {
@@ -94,9 +114,48 @@ export async function processItem(
         category: summarized.category,
         rawContent: truncatedContent,
         source: extracted.source,
-        imageUrl: imageUrlToSave,
+        imageUrl: extracted.imageUrl,
+        domainId: domainId || undefined,
       },
     });
+
+    // Step 6: Award XP for processing the item (with domain for domain-specific leveling)
+    try {
+      await awardXP({
+        userId,
+        action: XP_ACTIONS.PROCESS_ITEM,
+        domainId: domainId || undefined,
+        itemId: item.id,
+        metadata: {
+          category: summarized.category,
+          tags: summarized.tags,
+          type: summarized.type,
+        },
+      });
+    } catch (xpError) {
+      console.error("Failed to award process XP:", xpError);
+      // Don't fail the whole operation for XP errors
+    }
+
+    // Step 7: Update user's streak (for daily activity tracking)
+    try {
+      const streakResult = await updateStreak(userId);
+      console.log(`Streak updated: current=${streakResult.currentStreak}, longest=${streakResult.longestStreak}, maintained=${streakResult.streakMaintained}`);
+    } catch (streakError) {
+      console.error("Failed to update streak:", streakError);
+      // Don't fail the whole operation for streak errors
+    }
+
+    // Step 8: Check and award eligible badges
+    try {
+      const newBadges = await checkAllBadges(userId);
+      if (newBadges.length > 0) {
+        console.log(`Badges awarded: ${newBadges.map(b => b.name).join(", ")}`);
+      }
+    } catch (badgeError) {
+      console.error("Failed to check badges:", badgeError);
+      // Don't fail the whole operation for badge errors
+    }
 
     return {
       item: updatedItem,

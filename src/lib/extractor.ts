@@ -1,5 +1,6 @@
 import { JSDOM } from "jsdom";
 import { Readability } from "@mozilla/readability";
+import { fetchWithTimeout } from "./utils/timeout";
 
 export interface ExtractedContent {
   title: string;
@@ -7,6 +8,7 @@ export interface ExtractedContent {
   source: string;
   author?: string;
   imageUrl?: string;
+  imageSource?: "oembed" | "microlink" | "og" | "scrape"; // Track where the image came from
 }
 
 /**
@@ -48,11 +50,15 @@ async function extractTwitterContent(url: string): Promise<ExtractedContent> {
     // Twitter oEmbed API - free, no auth required
     const oembedUrl = `https://publish.twitter.com/oembed?url=${encodeURIComponent(url)}&omit_script=true`;
 
-    const response = await fetch(oembedUrl, {
-      headers: {
-        "Accept": "application/json",
+    const response = await fetchWithTimeout(
+      oembedUrl,
+      {
+        headers: {
+          "Accept": "application/json",
+        },
       },
-    });
+      5000
+    );
 
     if (!response.ok) {
       console.error(`Twitter oEmbed failed: ${response.status}`);
@@ -137,64 +143,198 @@ interface MicrolinkResponse {
 }
 
 /**
- * Try Instagram's oEmbed API first (returns full thumbnail)
- * Falls back to Microlink if oEmbed fails
+ * Extract Instagram content using multiple fallback methods:
+ * 1. Instagram embed page (has consistent og tags)
+ * 2. Noembed.com (free oEmbed proxy service)
+ * 3. Direct page scraping
+ * 4. Microlink API fallback
  */
 async function extractInstagramContent(url: string): Promise<ExtractedContent> {
   const source = new URL(url).hostname;
 
-  // First try Instagram oEmbed API (better quality thumbnails)
+  // Extract post ID and author from URL
+  let urlAuthor: string | undefined;
+  let postId: string | undefined;
+
+  const postMatch = url.match(/instagram\.com\/(?:p|reel)\/([^\/\?]+)/i);
+  if (postMatch) {
+    postId = postMatch[1];
+  }
+
+  const profileMatch = url.match(/instagram\.com\/([^\/]+)\/(?:p|reel)\//i);
+  if (profileMatch && profileMatch[1] !== "p" && profileMatch[1] !== "reel") {
+    urlAuthor = profileMatch[1];
+  }
+
+  // Method 1: Try Instagram embed page (more consistent for og tags)
+  if (postId) {
+    try {
+      console.log("Instagram extraction - trying embed page");
+
+      // Instagram's embed endpoint returns a page with og:image
+      const embedUrl = `https://www.instagram.com/p/${postId}/embed/`;
+
+      const response = await fetchWithTimeout(
+        embedUrl,
+        {
+          headers: {
+            "User-Agent": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
+            "Accept": "text/html,application/xhtml+xml",
+          },
+        },
+        5000
+      );
+
+      if (response.ok) {
+        const html = await response.text();
+
+        // Extract image URL from the embed HTML
+        // The embed page contains image URLs in various places
+        let imageUrl: string | undefined;
+        let author: string | undefined;
+        let caption: string | undefined;
+
+        // Try to find image URL in the HTML (Instagram embed contains CDN URLs)
+        const imgMatch = html.match(/src="(https:\/\/[^"]*cdninstagram\.com[^"]*\.(?:jpg|jpeg|png|webp)[^"]*)"/i);
+        if (imgMatch) {
+          imageUrl = imgMatch[1].replace(/&amp;/g, '&');
+        }
+
+        // Try to extract from background-image style
+        if (!imageUrl) {
+          const bgMatch = html.match(/background-image:\s*url\(['"]?(https:\/\/[^'")\s]+cdninstagram\.com[^'")\s]+)['"]?\)/i);
+          if (bgMatch) {
+            imageUrl = bgMatch[1].replace(/&amp;/g, '&');
+          }
+        }
+
+        // Extract author from embed
+        const authorMatch = html.match(/@([a-zA-Z0-9_.]+)/);
+        if (authorMatch) {
+          author = authorMatch[1];
+        }
+
+        // Extract caption
+        const captionMatch = html.match(/<div[^>]*class="[^"]*Caption[^"]*"[^>]*>([^<]+)</i);
+        if (captionMatch) {
+          caption = captionMatch[1].trim();
+        }
+
+        author = author || urlAuthor;
+
+        if (imageUrl) {
+          console.log(`Instagram embed success: author=${author}, has image=true`);
+          return {
+            title: author ? `Instagram post by @${author}` : "Instagram Post",
+            content: caption || "Instagram post content.",
+            source,
+            author,
+            imageUrl,
+            imageSource: "scrape",
+          };
+        }
+      }
+    } catch (error) {
+      console.log("Instagram embed page failed:", error);
+    }
+  }
+
+  // Method 2: Try noembed.com (free oEmbed proxy)
   try {
-    console.log("Instagram extraction - trying oEmbed API first");
+    console.log("Instagram extraction - trying noembed.com");
 
-    const oembedUrl = `https://api.instagram.com/oembed/?url=${encodeURIComponent(url)}`;
+    const noembedUrl = `https://noembed.com/embed?url=${encodeURIComponent(url)}`;
 
-    const oembedResponse = await fetch(oembedUrl, {
-      headers: {
-        "Accept": "application/json",
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+    const response = await fetchWithTimeout(
+      noembedUrl,
+      {
+        headers: { "Accept": "application/json" },
       },
-    });
+      5000
+    );
 
-    if (oembedResponse.ok) {
-      const oembedData = await oembedResponse.json() as InstagramOEmbedResponse;
+    if (response.ok) {
+      const data = await response.json() as {
+        author_name?: string;
+        title?: string;
+        thumbnail_url?: string;
+        html?: string;
+      };
 
-      const author = oembedData.author_name || undefined;
-      const title = author ? `Instagram post by @${author}` : "Instagram Post";
-
-      // oEmbed title often contains the caption
-      const content = oembedData.title || "Instagram post content.";
-
-      // thumbnail_url from oEmbed is usually the full-size image
-      const imageUrl = oembedData.thumbnail_url;
-
-      console.log(`Instagram oEmbed success: author=${author}, has thumbnail=${!!imageUrl}`);
-
-      if (imageUrl) {
+      if (data.thumbnail_url) {
+        const author = data.author_name || urlAuthor;
+        console.log(`Instagram noembed success: author=${author}, has thumbnail=true`);
         return {
-          title,
-          content,
+          title: author ? `Instagram post by @${author}` : "Instagram Post",
+          content: data.title || "Instagram post content.",
           source,
           author,
-          imageUrl,
+          imageUrl: data.thumbnail_url,
+          imageSource: "oembed",
         };
       }
     }
   } catch (error) {
-    console.log("Instagram oEmbed failed, falling back to Microlink:", error);
+    console.log("Instagram noembed failed:", error);
   }
 
-  // Fallback to Microlink API
+  // Method 3: Direct page scraping
   try {
-    const microlinkUrl = `https://api.microlink.io?url=${encodeURIComponent(url)}`;
+    console.log("Instagram extraction - trying direct page scraping");
 
-    console.log("Instagram extraction - falling back to Microlink API");
-
-    const response = await fetch(microlinkUrl, {
+    const response = await fetch(url, {
       headers: {
-        "Accept": "application/json",
+        "User-Agent": "facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)",
+        "Accept": "text/html",
       },
     });
+
+    if (response.ok) {
+      const html = await response.text();
+      const dom = new JSDOM(html, { url });
+      const document = dom.window.document;
+
+      const ogImage = document.querySelector('meta[property="og:image"]')?.getAttribute("content");
+      const ogTitle = document.querySelector('meta[property="og:title"]')?.getAttribute("content");
+      const ogDesc = document.querySelector('meta[property="og:description"]')?.getAttribute("content");
+
+      let author = urlAuthor;
+      if (ogTitle) {
+        const authorMatch = ogTitle.match(/^@?(\w+)\s+on\s+Instagram/i);
+        if (authorMatch) {
+          author = authorMatch[1];
+        }
+      }
+
+      if (ogImage) {
+        console.log(`Instagram scrape success: author=${author}, has image=true`);
+        return {
+          title: author ? `Instagram post by @${author}` : "Instagram Post",
+          content: ogDesc || "Instagram post content.",
+          source,
+          author,
+          imageUrl: ogImage,
+          imageSource: "scrape",
+        };
+      }
+    }
+  } catch (error) {
+    console.log("Instagram direct scraping failed:", error);
+  }
+
+  // Method 4: Fallback to Microlink API
+  try {
+    console.log("Instagram extraction - falling back to Microlink API");
+
+    const microlinkUrl = `https://api.microlink.io?url=${encodeURIComponent(url)}`;
+
+    const response = await fetchWithTimeout(
+      microlinkUrl,
+      {
+        headers: { "Accept": "application/json" },
+      },
+      8000
+    );
 
     if (!response.ok) {
       throw new Error(`Microlink API failed: ${response.status}`);
@@ -208,11 +348,8 @@ async function extractInstagramContent(url: string): Promise<ExtractedContent> {
 
     const { title: rawTitle, description, author: rawAuthor, image } = data.data;
 
-    // Extract clean author name (remove @ if present)
-    let author = rawAuthor?.replace(/^@/, "") || undefined;
+    let author = rawAuthor?.replace(/^@/, "") || urlAuthor || undefined;
 
-    // If no author from API, try to extract from title
-    // Title format: "Username (@handle) • Instagram photo"
     if (!author && rawTitle) {
       const authorMatch = rawTitle.match(/\(@([^)]+)\)/);
       if (authorMatch) {
@@ -220,42 +357,26 @@ async function extractInstagramContent(url: string): Promise<ExtractedContent> {
       }
     }
 
-    // Build clean title
-    const title = author
-      ? `Instagram post by @${author}`
-      : "Instagram Post";
-
-    // Use description as content
-    const content = description || "Instagram post content.";
-
-    // Use og:image for Vision API analysis (even though it's cropped)
-    // The pipeline will skip saving it to DB so it won't display
     const imageUrl = image?.url;
 
-    console.log(`Instagram Microlink success: author=${author}, content length=${content.length}, has image=${!!image?.url}`);
+    console.log(`Instagram Microlink success: author=${author}, has image=${!!imageUrl}`);
 
     return {
-      title,
-      content,
+      title: author ? `Instagram post by @${author}` : "Instagram Post",
+      content: description || "Instagram post content.",
       source,
       author,
       imageUrl,
+      imageSource: "microlink",
     };
   } catch (error) {
     console.error("Instagram Microlink extraction failed:", error);
 
-    // Fallback: extract what we can from URL
-    let author: string | undefined;
-    const urlMatch = url.match(/instagram\.com\/([^\/]+)\/(?:p|reel)\//i);
-    if (urlMatch && urlMatch[1] !== "p" && urlMatch[1] !== "reel") {
-      author = urlMatch[1];
-    }
-
     return {
-      title: author ? `Instagram post by @${author}` : "Instagram Post",
+      title: urlAuthor ? `Instagram post by @${urlAuthor}` : "Instagram Post",
       content: "Instagram content could not be extracted. Please view the original post.",
       source,
-      author,
+      author: urlAuthor,
     };
   }
 }
@@ -365,11 +486,15 @@ async function extractLinkedInContent(url: string): Promise<ExtractedContent> {
 
     console.log("LinkedIn extraction - using Microlink API");
 
-    const response = await fetch(microlinkUrl, {
-      headers: {
-        "Accept": "application/json",
+    const response = await fetchWithTimeout(
+      microlinkUrl,
+      {
+        headers: {
+          "Accept": "application/json",
+        },
       },
-    });
+      8000
+    );
 
     if (!response.ok) {
       throw new Error(`Microlink API failed: ${response.status}`);
@@ -502,12 +627,16 @@ async function extractGenericContent(url: string): Promise<ExtractedContent> {
   const source = new URL(url).hostname;
 
   try {
-    const response = await fetch(url, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    const response = await fetchWithTimeout(
+      url,
+      {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        },
       },
-    });
+      10000
+    );
 
     if (!response.ok) {
       throw new Error(`Failed to fetch: ${response.status} ${response.statusText}`);

@@ -1,0 +1,377 @@
+┌───────────────────────────────────────────────────────────────────┐
+│  CONTENTHUB CHARACTER SHEET                                      │
+│  Name: Saffat                    Archetype: Strategist Founder   │
+│  Overall Level: 14               Streak: 9 days 🔥               │
+│  XP: █████████░░  72% to Lvl 15                                  │
+└───────────────────────────────────────────────────────────────────┘
+
+┌───────────────────── CORE STATS ─────────────────────┐
+│ Domain       Lvl   XP           Trend    Tag         │
+│------------------------------------------------------│
+│ Finance      11    ████████░░   ↗ steady  "Risk Mind"│
+│ Career       10    ██████░░░░   ↗ rising "Senior IC"│
+│ Philosophy   7     ████░░░░░░   → flat   "Systems"   │
+│ Leadership   6     ███░░░░░░░   ↗ slowly "Builder"   │
+│ Boxing       9     █████░░░░░   ↘ low    "Pressure"  │
+│ Startups     12    ███████░░░   ↗ sharp  "Founder"   │
+└───────────────────────────────────────────────────────┘
+
+Details
+- Finance: 11  | Sub skills: Risk (12), Investing Basics (10), Macro (7)
+- Career: 10   | Sub skills: Backend (11), System Design (9), Interview (8)
+- Philosophy: 7| Sub skills: Power (8), Ethics (6), Psychoanalysis (5)
+- Leadership: 6| Sub skills: Coaching (6), Conflict (7), Vision (5)
+- Boxing: 9    | Sub skills: Conditioning (10), Ring IQ (8), Defense (7)
+- Startups: 12 | Sub skills: Product (12), GTM (9), Fundraising (6)
+
+
+┌──────────────────── ACTIVE QUESTS ────────────────────┐
+│ Daily Quests                                           │
+│  ✔ Process 2 items in "Finance – Risk Management"      │
+│  ✔ Review 1 saved thread on microservices design       │
+│  □ Reflect on 1 “power / philosophy” piece             │
+│  □ Tag 1 startup idea video as "GTM" or "Product"      │
+│                                                        │
+│ Weekly Missions                                        │
+│  ▸ Complete "Risk Guardian: Retail Risk 101" path      │
+│  ▸ 3 boxing conditioning sessions logged this week     │
+│  ▸ Ship 1 startup experiment and write a debrief       │
+└────────────────────────────────────────────────────────┘
+
+
+┌────────────────── LEARNING LAB SNAPSHOT ──────────────────┐
+│ Current Focus Topics                                      │
+│  • Finance → Portfolio risk, macro regimes                │
+│  • Career  → Backend scaling, observability, interviews   │
+│  • Startups→ Distribution, content-led growth             │
+│                                                           │
+│ Recommended Crash Courses (auto-built from your saves)    │
+│  [Start] "Risk as a Skill" – 6 items • 35 min             │
+│  [Start] "Leadership for Engineers" – 5 items • 28 min    │
+│  [Start] "Founder GTM Sprint" – 7 items • 42 min          │
+└────────────────────────────────────────────────────────────┘
+
+
+┌──────────────────── RECENT UPGRADES ──────────────────────┐
+│ 🔓 Unlocked: "Risk Discipline II"                         │
+│     • Completed 3 finance lessons and logged 1 real move  │
+│       Action logged: Set automatic monthly investment     │
+│                                                           │
+│ 🔓 Trait Boost: "Systems Thinker +"                       │
+│     • Connected 2 philosophy notes with startup strategy  │
+│       Insight: You linked "power structures" to GTM moat  │
+│                                                           │
+│ 🥊 Boxing Note                                            │
+│     • Cardio session streak reset after 3 missed days     │
+│       Suggestion: Add 10 min roadwork after morning walk  │
+└────────────────────────────────────────────────────────────┘
+
+
+┌────────────────── AI COACH FEEDBACK ──────────────────────┐
+│ This week                                                 │
+│  • 41% of processed content → Finance and Startups        │
+│  • 23% → Career / Engineering                             │
+│  • 9%  → Philosophy / Power                               │
+│  • 27% → Pure entertainment                               │
+│                                                           │
+│ Coach Summary                                             │
+│  • Your startup and finance stats are climbing together.  │
+│  • Leadership and philosophy are underfed vs your goals.  │
+│  • Suggestion: Add 1 "power / leadership" item to each    │
+│    daily quest and reflect for 2 minutes.                 │
+└────────────────────────────────────────────────────────────┘
+****************************************************************************************************
+LL-01 – Learning Lab Home
+
+┌───────────────────────────────────────────────────────────────┐
+│ Top Nav: [Home] [Learning Lab] [Character Sheet] [Quests]    │
+└───────────────────────────────────────────────────────────────┘
+
+┌───────────────────── LEARNING LAB – OVERVIEW ────────────────┐
+│ [Title] Learning Lab                                         │
+│ [Subtitle] Turn your saved content into skills and XP        │
+└───────────────────────────────────────────────────────────────┘
+
+┌─────────────── LEFT: TOPIC MAP / SKILL TREE ─────────────────┐
+│ [Section Title] Your Topics                                  │
+│                                                             │
+│  Finance        Lvl 11   [████████░░]  ↑ steady             │
+│  Career         Lvl 10   [███████░░░]  ↑ rising             │
+│  Philosophy     Lvl  7   [████░░░░░░]  → flat               │
+│  Leadership     Lvl  6   [███░░░░░░░]  ↑ slow               │
+│  Boxing         Lvl  9   [█████░░░░░]  ↓ low activity       │
+│  Startups       Lvl 12   [████████░░]  ↑ sharp              │
+│                                                             │
+│  [Button] View full topic map →                             │
+└───────────────────────────────────────────────────────────────┘
+
+┌──────────── RIGHT: ACTIVE PATHS / SHORTCUTS ────────────────┐
+│ [Section] Active Learning Paths                              │
+│                                                             │
+│  1) Risk as a Skill (Finance)                               │
+│     Progress: Day 3 of 7    [█████░░░░]                     │
+│     Next step: YouTube: “Understanding drawdowns…”         │
+│     [Button] Resume   [Button] View path                    │
+│                                                             │
+│  2) Leadership for Engineers                                │
+│     Progress: Day 1 of 5    [██░░░░░░░]                     │
+│     Next step: Thread: “Hard conversations as IC”           │
+│     [Button] Resume   [Button] View path                    │
+│                                                             │
+│  [Button +icon] Build new path from my content              │
+└───────────────────────────────────────────────────────────────┘
+
+┌────────────── BOTTOM: QUICK INSIGHTS / CALL-TO-ACTION ──────┐
+│ [Card] This Week’s Focus                                     │
+│  • 42% of processed items → Finance + Startups              │
+│  • 18% → Career / engineering                               │
+│  • 9%  → Philosophy / power                                 │
+│  • 31% → Entertainment                                      │
+│                                                             │
+│ [Coach Hint] You said you want more Leadership + Philosophy │
+│  → Suggestion: Add 1 “power/leadership” lesson to today.    │
+│  [Button] Start a 10-minute focus session                   │
+└───────────────────────────────────────────────────────────────┘
+*************************************************************************************************************************
+LL-02 – Topic Detail & Skill Tree
+
+┌───────────────────────────────────────────────────────────────┐
+│ Top Nav: [Home] [Learning Lab] [Character Sheet] [Quests]    │
+└───────────────────────────────────────────────────────────────┘
+
+[Breadcrumb] Learning Lab  >  Finance
+
+┌──────────────── TOPIC HEADER ────────────────────────────────┐
+│ Topic: Finance                                               │
+│ Level: 11     XP: [████████░░]   Trend: ↑ steady             │
+│ Active goal: “Become a risk-aware long-term investor”        │
+│ [Button] Build crash course from my Finance content          │
+└───────────────────────────────────────────────────────────────┘
+
+┌────────────── LEFT: SUB-SKILL TREE ─────────────────────────┐
+│ [Title] Sub-skills                                           │
+│                                                             │
+│  • Risk Management   Lvl 12   [████████░░]                  │
+│  • Investing Basics  Lvl 10   [███████░░░]                  │
+│  • Macro Regimes     Lvl  7   [████░░░░░░]                  │
+│  • Behavioural Fin.  Lvl  5   [███░░░░░░░]                  │
+│                                                             │
+│  [Button] Expand skill tree (show more granularity)         │
+└───────────────────────────────────────────────────────────────┘
+
+┌──────────── RIGHT TOP: SOURCE ITEMS SNAPSHOT ───────────────┐
+│ [Title] Source items feeding Finance                         │
+│                                                             │
+│  [Filter: All | Threads | YouTube | Articles]               │
+│                                                             │
+│  - Tweet thread: “Risk vs volatility (10-tweet)”            │
+│    Source: Twitter   Status: Unprocessed                    │
+│    [Button] Process   [Icon] Saved summary                  │
+│                                                             │
+│  - YouTube: “Macro regimes and drawdowns – 18min”           │
+│    Source: YouTube   Status: In path: Risk as a Skill       │
+│    [Button] Open in session                                 │
+│                                                             │
+│  - LinkedIn post: “How to think in expected value”          │
+│    Source: LinkedIn  Status: Processed                      │
+│    [Button] View notes                                     │
+└───────────────────────────────────────────────────────────────┘
+
+┌──────────── RIGHT BOTTOM: RECOMMENDED ACTIONS ──────────────┐
+│ [Title] Recommended next steps                               │
+│  • Process 2 “Risk Management” items                         │
+│  • Add 1 behaviour/psychology-of-money piece                 │
+│  • Revisit 1 macro item from last week                       │
+│                                                             │
+│ [Button] Start 15-minute Finance session →                   │
+└───────────────────────────────────────────────────────────────┘
+**********************************************************************************************************************
+LL-03 – “Build Crash Course” Screen
+
+Goal: User picks a topic and lets AI build a path from their saved content (the user should have a minimum number of posts to qualify for this feature)
+
+┌───────────────────────────────────────────────────────────────┐
+│ Top Nav: [Home] [Learning Lab] [Character Sheet] [Quests]    │
+└───────────────────────────────────────────────────────────────┘
+
+[Breadcrumb] Learning Lab  >  Finance  >  Build Path
+
+┌───────────────── BUILD A CRASH COURSE ───────────────────────┐
+│ [Title] Build a crash course from your saved content         │
+│                                                             │
+│ Topic:  [Finance ▾]                                         │
+│ Sub-skill: [Risk Management ▾]                              │
+│ Duration: [ 7 days ▾ ]     Daily time: [ 15 min ▾ ]         │
+│                                                             │
+│ [Toggle] Use only high-quality, long-form items (videos,    │
+│          long threads, in-depth posts)                      │
+│ [Toggle] Include light “brain candy” as breaks              │
+│                                                             │
+│ [Button] Generate plan →                                    │
+└───────────────────────────────────────────────────────────────┘
+
+┌────────────────── GENERATED PLAN (PREVIEW) ──────────────────┐
+│ [After click “Generate plan”]                               │
+│                                                             │
+│ Plan name: Risk as a Skill – 7-day sprint                   │
+│ Total time: ~85 minutes                                    │
+│                                                             │
+│  Day 1                                                      │
+│   - Tweet thread: “What risk really means (10-tweet)”      │
+│     + Summary: 3-line bullet summary                        │
+│     + Exercise: “List 3 risks in your current portfolio.”   │
+│                                                             │
+│  Day 2                                                      │
+│   - YouTube: “Drawdowns explained – 12min”                  │
+│     + Summary + 2 reflection questions                      │
+│                                                             │
+│  Day 3                                                      │
+│   - LinkedIn article: “Expected value mindset”              │
+│   ...                                                       │
+│                                                             │
+│ [Button] Accept & save path                                 │
+│ [Button] Regenerate with different mix                      │
+└───────────────────────────────────────────────────────────────┘
+
+
+*************************************************************************************************************************
+LL-04 – Session Player (Processing a Piece of Content)
+Goal: Guided “processing session” that turns a single saved item into understanding, notes, and XP.
+
+┌───────────────────────────────────────────────────────────────┐
+│ Top Nav: [← Back to path]  [Learning Lab] [Character Sheet]  │
+└───────────────────────────────────────────────────────────────┘
+
+┌──────────────── SESSION HEADER ──────────────────────────────┐
+│ Day 3 / 7 – “Risk as a Skill”                               │
+│ Item: YouTube – “Drawdowns explained – 12min”               │
+│ Estimated time: 10–15 min                                   │
+└───────────────────────────────────────────────────────────────┘
+
+┌──────────── LEFT: CONTENT SUMMARY ──────────────────────────┐
+│ [Summary card]                                              │
+│  AI summary (4–6 bullets)                                   │
+│  • …                                                        │
+│                                                             │
+│ [Button] Open original (new tab)                            │
+│ [Meta] Source, length, creator                              │
+└───────────────────────────────────────────────────────────────┘
+
+┌──────────── RIGHT: INTERACTION AREA ────────────────────────┐
+│ Step 1 – Check your understanding                           │
+│  [Prompt] In your own words, what is a “drawdown”?          │
+│  [Textbox]                                                  │
+│                                                             │
+│  [Button] Submit                                           │
+│                                                             │
+│ Step 2 – AI feedback                                        │
+│  [After submit: GPT feedback & slight correction]           │
+│  “You captured X correctly. Consider adding Y.”             │
+│                                                             │
+│ Step 3 – Apply it                                           │
+│  [Prompt] Where in your real portfolio or plans could       │
+│          drawdowns hurt you the most?                       │
+│  [Textbox]                                                  │
+│                                                             │
+│  [Checkbox] Log an action:                                  │
+│   [ ] “Review portfolio drawdowns this weekend.”            │
+│                                                             │
+│ [Button] Finish session   [Label] +45 XP (Finance: Risk)    │
+└───────────────────────────────────────────────────────────────┘
+****************************************************************************************************************************
+LL-05 – Idea Forge (Connections View)
+Goal: Let user select topics/creators and generate synthesized insights and patterns.
+
+┌───────────────────────────────────────────────────────────────┐
+│ Top Nav: [Home] [Learning Lab] [Character Sheet] [Quests]    │
+└───────────────────────────────────────────────────────────────┘
+
+[Breadcrumb] Learning Lab  >  Idea Forge
+
+┌───────────────── CONFIG PANEL (LEFT) ───────────────────────┐
+│ [Title] Explore connections                                  │
+│                                                             │
+│ Compare:                                                    │
+│  Topic A: [Finance ▾]                                       │
+│  Topic B: [Startups ▾]    (optional)                        │
+│                                                             │
+│ Filter by creators (optional):                              │
+│  [ ] Naval   [ ] Taleb   [ ] Random others …                │
+│                                                             │
+│ Time range: [ Last 30 days ▾ ]                              │
+│                                                             │
+│ [Button] Analyze →                                          │
+└───────────────────────────────────────────────────────────────┘
+
+┌──────────────── RESULTS (RIGHT) ─────────────────────────────┐
+│ [Tab 1] Themes   [Tab 2] Tensions   [Tab 3] Playbook        │
+│                                                             │
+│ Tab: Themes                                                 │
+│  • Theme 1: “Risk as downside protection, not upside chase” │
+│    – Appears in: 3 finance threads, 2 startup videos        │
+│                                                             │
+│  • Theme 2: “Optionality and small bets”                    │
+│    – Appears in: 1 Taleb quote, 2 startup clips, 1 tweet    │
+│                                                             │
+│ Tab: Tensions                                               │
+│  • “Move fast and break things” vs “Risk of ruin”           │
+│    – Highlight posts arguing each side                      │
+│                                                             │
+│ Tab: Playbook                                               │
+│  [Generated checklist]                                      │
+│   1. Cap downside per bet at X%                             │
+│   2. Use small experiments in your startup work             │
+│   3. …                                                      │
+│                                                             │
+│ [Button] Save as “Idea Card” to Reflection Log              │
+└───────────────────────────────────────────────────────────────┘
+*********************************************************************************************************
+LL-06 – Reflection Log & Weekly Summary
+Goal: Show what you actually learned and did this week, plus suggestions.
+
+┌───────────────────────────────────────────────────────────────┐
+│ Top Nav: [Home] [Learning Lab] [Character Sheet] [Quests]    │
+└───────────────────────────────────────────────────────────────┘
+
+[Breadcrumb] Learning Lab  >  Reflection Log
+
+┌──────────────── WEEKLY SUMMARY HEADER ───────────────────────┐
+│ Week of Nov 17–23, 2025                                     │
+│                                                             │
+│  Processed sessions: 14                                     │
+│  New paths progressed: 3                                    │
+│  Logged real actions: 5                                     │
+│                                                             │
+│  Biggest stat changes:                                      │
+│   • Finance  +1   • Startups +1   • Leadership +0           │
+└───────────────────────────────────────────────────────────────┘
+
+┌──────────────── INSIGHTS FEED (CENTER) ─────────────────────┐
+│ [Insight Card]                                              │
+│  Source: Risk as a Skill – Day 2                            │
+│  Your note: “Drawdowns matter more than average returns.”   │
+│  AI distillation: “You’re shifting from upside-first to     │
+│  downside-first thinking.”                                  │
+│  [Tag] Finance [Tag] Mindset                                │
+│                                                             │
+│ [Insight Card]                                              │
+│  Source: Idea Forge – Finance x Startups                    │
+│  Your note: “My startups should mirror my risk rules.”      │
+│  AI distillation: “You’re aligning business bets with       │
+│  portfolio risk practices.”                                 │
+│  [Tag] Startups [Tag] Strategy                              │
+└───────────────────────────────────────────────────────────────┘
+
+
+┌──────────────── COACH RECOMMENDATION PANEL (RIGHT) ─────────┐
+│ [Title] Coach feedback                                      │
+│                                                             │
+│  • You fed Finance and Startups well this week.             │
+│  • Leadership and Philosophy are under your stated goals.   │
+│                                                             │
+│  Suggested next week:                                       │
+│   – Add 2 “power/leadership” pieces to your daily quests.   │
+│   – Run 1 reflection on “power dynamics in teams.”          │
+│                                                             │
+│  [Button] Create next-week focus plan                       │
+└───────────────────────────────────────────────────────────────┘
