@@ -113,9 +113,10 @@ export function useTodayItems() {
 
   const { data, error, isLoading, isValidating, mutate: mutateItems } =
     useSWR<ItemsResponse>(shouldFetch ? url : null, {
-      revalidateOnFocus: false,
+      revalidateOnFocus: true,  // Refresh when user returns to tab
       revalidateOnMount: true,
-      revalidateOnReconnect: false,
+      revalidateOnReconnect: true,  // Refresh when internet reconnects
+      refreshInterval: 30000,  // Poll every 30 seconds for new items
     });
 
   return {

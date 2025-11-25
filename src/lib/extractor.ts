@@ -703,6 +703,25 @@ function extractFallbackContent(document: Document): string {
  * Main extraction function - routes to platform-specific extractors
  */
 export async function extractContent(url: string): Promise<ExtractedContent> {
+  // Check if this is an email-sourced item (content already extracted by email processor)
+  try {
+    const parsedUrl = new URL(url);
+    const hostname = parsedUrl.hostname.toLowerCase();
+
+    // Email items use the sender domain as URL, but content is already in Item.rawContent
+    // The pipeline will use rawContent for AI summarization, so we return minimal data here
+    if (hostname === "email" || hostname.includes("resend") || hostname.includes("sendgrid") || hostname.includes("mailgun")) {
+      console.log(`Email-sourced item detected: ${url}, skipping URL fetch`);
+      return {
+        title: "Email Newsletter",
+        content: "",
+        source: hostname,
+      };
+    }
+  } catch {
+    // Invalid URL, will be caught by platform detection below
+  }
+
   const platform = detectPlatform(url);
 
   console.log(`Extracting content from ${platform}: ${url}`);

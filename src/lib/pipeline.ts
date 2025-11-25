@@ -64,12 +64,28 @@ export async function processItem(
   }
 
   try {
-    // Step 2: Extract content from URL
-    const extracted = await extractContent(url);
+    // Step 2: Extract content from URL (or use existing rawContent for emails)
+    let extracted;
+    let contentToSummarize;
+
+    // Check if this is an email item with pre-extracted content
+    if (item.rawContent && item.importSource === "email") {
+      console.log("Using pre-extracted email content from rawContent");
+      extracted = {
+        title: item.title || "Email Newsletter",
+        content: item.rawContent,
+        source: item.source || "email",
+      };
+      contentToSummarize = item.rawContent;
+    } else {
+      // Normal URL extraction
+      extracted = await extractContent(url);
+      contentToSummarize = extracted.content;
+    }
 
     // Step 3: Summarize with OpenAI
     // Use Vision API if content is short but we have an image (e.g., infographics)
-    const truncatedContent = truncateContent(extracted.content);
+    const truncatedContent = truncateContent(contentToSummarize);
     const hasShortContent = !truncatedContent || truncatedContent.length < 100;
     const hasImage = !!extracted.imageUrl;
 
