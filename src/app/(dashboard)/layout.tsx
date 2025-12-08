@@ -43,7 +43,7 @@ export default function DashboardLayout({
   const navItems = [
     {
       href: "/today",
-      label: "Today",
+      label: "Inbox",
       icon: Inbox,
       isActive: pathname === "/today",
       onPrefetch: prefetchToday,

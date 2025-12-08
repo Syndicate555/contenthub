@@ -11,10 +11,6 @@ import type { SocialConnection } from "@/generated/prisma";
 // Twitter API v2 base URL
 const TWITTER_API_BASE = "https://api.twitter.com/2";
 
-// Rate limit: 180 requests per 15 minutes for bookmark endpoints
-const RATE_LIMIT_REQUESTS = 180;
-const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
-
 // Tweet fields to request
 const TWEET_FIELDS = [
   "id",
@@ -40,12 +36,15 @@ const USER_FIELDS = [
   "profile_image_url",
 ].join(",");
 
-// Media fields to include
+// Media fields to include (add alt_text/size for better coverage)
 const MEDIA_FIELDS = [
   "media_key",
   "type",
   "url",
   "preview_image_url",
+  "alt_text",
+  "width",
+  "height",
 ].join(",");
 
 export interface TwitterBookmark {
@@ -201,6 +200,10 @@ export async function fetchBookmarks(
     type: string;
     url?: string;
     preview_image_url?: string;
+    variants?: Array<{
+      url?: string;
+      preview_image_url?: string;
+    }>;
   }
 
   // Create lookup maps
@@ -214,9 +217,22 @@ export async function fetchBookmarks(
   // Transform tweets to our format
   const bookmarks: TwitterBookmark[] = tweets.map((tweet: any) => {
     const author = userMap.get(tweet.author_id);
-    const tweetMedia = tweet.attachments?.media_keys?.map((key: string) =>
-      mediaMap.get(key)
-    ).filter(Boolean);
+    const tweetMedia = tweet.attachments?.media_keys
+      ?.map((key: string) => mediaMap.get(key))
+      .filter(Boolean);
+
+    const normalizedMedia =
+      tweetMedia?.map((m: TwitterApiMedia) => {
+        // Prefer direct image url; fallback to preview or variant previews
+        const variantPreview =
+          m.variants?.find((v) => v.preview_image_url)?.preview_image_url ||
+          m.variants?.find((v) => v.url)?.url;
+        return {
+          type: m.type,
+          url: m.url,
+          previewImageUrl: m.preview_image_url || variantPreview,
+        };
+      }) || [];
 
     return {
       id: tweet.id,
@@ -231,11 +247,7 @@ export async function fetchBookmarks(
             profileImageUrl: author.profile_image_url,
           }
         : undefined,
-      media: tweetMedia?.map((m: any) => ({
-        type: m.type,
-        url: m.url,
-        previewImageUrl: m.preview_image_url,
-      })),
+      media: normalizedMedia,
       url: `https://x.com/${author?.username || "i"}/status/${tweet.id}`,
       metrics: tweet.public_metrics
         ? {

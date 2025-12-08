@@ -65,8 +65,10 @@ async function importBookmark(
     });
 
     // Get the best available image from Twitter API media
-    // Prefer the actual media URL, fallback to preview image
-    const twitterMediaUrl = bookmark.media?.[0]?.url || bookmark.media?.[0]?.previewImageUrl;
+    // Prefer the actual media URL, fallback to preview image/variant
+    const twitterMediaUrl =
+      bookmark.media?.find((m) => m.url)?.url ||
+      bookmark.media?.find((m) => m.previewImageUrl)?.previewImageUrl;
 
     if (!result.success) {
       // Even if processing fails, update with import metadata and Twitter media

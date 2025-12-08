@@ -105,8 +105,18 @@ export function useItems(params: ItemsQueryParams = {}) {
  * REBUILT FROM SCRATCH - Simple, clean approach
  */
 export function useTodayItems() {
+  return useTodayItemsWithFilters({});
+}
+
+export function useTodayItemsWithFilters(params: { platform?: string | null; q?: string | null; page?: number }) {
   const { isLoaded, userId } = useAuth();
-  const url = "/api/items?status=new&limit=20";
+  const url = buildItemsUrl({
+    status: "new",
+    limit: 20,
+    page: params.page || 1,
+    platform: params.platform || undefined,
+    q: params.q || undefined,
+  });
 
   // Simple approach: only fetch if auth is ready
   const shouldFetch = isLoaded && userId;
@@ -117,10 +127,11 @@ export function useTodayItems() {
       revalidateOnMount: true,
       revalidateOnReconnect: true,  // Refresh when internet reconnects
       refreshInterval: 30000,  // Poll every 30 seconds for new items
-    });
+  });
 
   return {
     items: data?.data || [],
+    pagination: data?.meta || null,
     isLoading: !shouldFetch || (isLoading && !data),
     isValidating,
     error: error?.message || null,
@@ -199,7 +210,8 @@ export function prefetchItems(params: ItemsQueryParams = {}) {
 }
 
 export function prefetchTodayItems() {
-  mutate("/api/items?status=new&limit=20");
+  const url = buildItemsUrl({ status: "new", limit: 20 });
+  mutate(url);
 }
 
 export function prefetchCategories() {

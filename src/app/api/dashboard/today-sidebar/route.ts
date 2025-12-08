@@ -2,51 +2,16 @@ import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { getUserStats } from "@/lib/xp";
 import { db } from "@/lib/db";
+import {
+  PLATFORM_CONFIG,
+  getPlatformSlugFromSource,
+  PlatformSlug,
+} from "@/lib/platforms";
 
 /**
  * Map source domains to friendly display names and icons
  */
-function mapSourceToDisplay(source: string): { displayName: string; icon: string } {
-  const lowerSource = source.toLowerCase();
-
-  // Handle common platforms
-  if (lowerSource.includes("twitter.com") || lowerSource.includes("x.com")) {
-    return { displayName: "Twitter", icon: "𝕏" };
-  }
-  if (lowerSource.includes("linkedin.com")) {
-    return { displayName: "LinkedIn", icon: "💼" };
-  }
-  if (lowerSource.includes("instagram.com")) {
-    return { displayName: "Instagram", icon: "📸" };
-  }
-  if (lowerSource.includes("youtube.com")) {
-    return { displayName: "YouTube", icon: "▶️" };
-  }
-  if (lowerSource.includes("medium.com")) {
-    return { displayName: "Medium", icon: "📝" };
-  }
-  if (lowerSource.includes("github.com")) {
-    return { displayName: "GitHub", icon: "🐙" };
-  }
-  if (lowerSource.includes("reddit.com")) {
-    return { displayName: "Reddit", icon: "👽" };
-  }
-  if (lowerSource.includes("substack.com")) {
-    return { displayName: "Substack", icon: "📬" };
-  }
-
-  // Extract domain name for unknown sources
-  try {
-    const domain = source.replace(/^(https?:\/\/)?(www\.)?/, "").split("/")[0];
-    const displayName = domain.split(".")[0];
-    return {
-      displayName: displayName.charAt(0).toUpperCase() + displayName.slice(1),
-      icon: "🌐",
-    };
-  } catch {
-    return { displayName: source, icon: "🌐" };
-  }
-}
+const PLATFORM_ORDER = [...PLATFORM_CONFIG].sort((a, b) => a.order - b.order);
 
 /**
  * GET /api/dashboard/today-sidebar
@@ -83,16 +48,33 @@ export async function GET() {
       }),
     ]);
 
-    // Map sources to display format
-    const sources = sourceStats.map((stat) => {
-      const { displayName, icon } = mapSourceToDisplay(stat.source);
-      return {
-        source: stat.source,
-        displayName,
-        icon,
-        count: stat._count.id,
-      };
-    });
+    // Aggregate counts by normalized platform slug
+    const platformCount = new Map<PlatformSlug, number>();
+
+    for (const stat of sourceStats) {
+      const slug = getPlatformSlugFromSource(stat.source);
+      platformCount.set(slug, (platformCount.get(slug) || 0) + stat._count.id);
+    }
+
+    const sources = PLATFORM_ORDER.filter((p) => p.slug !== "other").map(
+      (platform) => ({
+        source: platform.slug,
+        displayName: platform.label,
+        icon: platform.icon,
+        count: platformCount.get(platform.slug) || 0,
+      })
+    );
+
+    // Optionally include "Other" if there are unclassified sources
+    const otherCount = platformCount.get("other") || 0;
+    if (otherCount > 0) {
+      sources.push({
+        source: "other",
+        displayName: "Other",
+        icon: "🌐",
+        count: otherCount,
+      });
+    }
 
     return NextResponse.json(
       {

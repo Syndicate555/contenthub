@@ -39,79 +39,153 @@ function extractTweetId(url: string): string | null {
   // Patterns:
   // https://twitter.com/user/status/123456789
   // https://x.com/user/status/123456789
-  const match = url.match(/(?:twitter\.com|x\.com)\/\w+\/status\/(\d+)/);
+  const match = url.match(/(?:twitter\.com|x\.com)\/[^\/]+\/status\/(\d+)/);
   return match ? match[1] : null;
 }
 
 /**
- * Extract content from Twitter/X using oEmbed API
+ * Best-effort fetch of tweet image without auth (syndication/oEmbed)
+ */
+async function fetchTwitterImage(url: string, tweetId?: string): Promise<string | undefined> {
+  const id = tweetId || extractTweetId(url);
+  if (!id) return undefined;
+
+  // Try public syndication endpoints (no auth required)
+  const endpoints = [
+    `https://cdn.syndication.twimg.com/tweet-result?id=${id}&lang=en`,
+    `https://cdn.syndication.twimg.com/tweet?id=${id}&lang=en`,
+  ];
+
+  for (const endpoint of endpoints) {
+    try {
+      const res = await fetchWithTimeout(
+        endpoint,
+        { headers: { Accept: "application/json" } },
+        8000
+      );
+
+      if (!res.ok) {
+        console.log("Twitter syndication non-200", { endpoint, status: res.status });
+        continue;
+      }
+
+      const json = (await res.json()) as {
+        photos?: Array<{ url?: string }>;
+        mediaDetails?: { photos?: Array<{ url?: string; media_url_https?: string }> };
+        mediaEntities?: Array<{ media_url_https?: string; url?: string }>;
+      };
+
+      const found =
+        json.photos?.[0]?.url ||
+        json.mediaDetails?.photos?.[0]?.url ||
+        json.mediaDetails?.photos?.[0]?.media_url_https ||
+        json.mediaEntities?.[0]?.media_url_https ||
+        json.mediaEntities?.[0]?.url;
+
+      if (found) return found;
+    } catch (err) {
+      console.log("Twitter syndication fetch failed", { endpoint, error: err });
+    }
+  }
+
+  // Fallback: oEmbed thumbnail
+  try {
+    const canonical = (() => {
+      const u = new URL(url);
+      u.search = "";
+      if (u.hostname.includes("x.com")) u.hostname = "twitter.com";
+      return u.toString();
+    })();
+
+    const oembedRes = await fetchWithTimeout(
+      `https://publish.twitter.com/oembed?url=${encodeURIComponent(canonical)}&omit_script=true`,
+      { headers: { Accept: "application/json" } },
+      6000
+    );
+
+    if (oembedRes.ok) {
+      const oembedJson = (await oembedRes.json()) as { thumbnail_url?: string };
+      if (oembedJson.thumbnail_url) return oembedJson.thumbnail_url;
+    }
+  } catch (err) {
+    console.log("Twitter oEmbed thumbnail fetch failed", err);
+  }
+
+  return undefined;
+}
+
+/**
+ * Extract content from Twitter/X using oEmbed and public endpoints
  */
 async function extractTwitterContent(url: string): Promise<ExtractedContent> {
   const source = new URL(url).hostname;
+  const tweetId = extractTweetId(url);
+
+  // Normalize the URL for oEmbed compatibility
+  const canonicalTweetUrl = (() => {
+    const safe = new URL(url);
+    safe.search = "";
+    if (safe.hostname.includes("x.com")) {
+      safe.hostname = "twitter.com";
+    }
+    return safe.toString();
+  })();
+
+  let imageUrl: string | undefined;
+  let tweetText = "";
+  let authorName = "Unknown";
 
   try {
-    // Twitter oEmbed API - free, no auth required
-    const oembedUrl = `https://publish.twitter.com/oembed?url=${encodeURIComponent(url)}&omit_script=true`;
-
+    // Primary: Twitter oEmbed for text/author and optional thumbnail
+    const oembedUrl = `https://publish.twitter.com/oembed?url=${encodeURIComponent(canonicalTweetUrl)}&omit_script=true`;
     const response = await fetchWithTimeout(
       oembedUrl,
-      {
-        headers: {
-          "Accept": "application/json",
-        },
-      },
-      5000
+      { headers: { Accept: "application/json" } },
+      6000
     );
 
-    if (!response.ok) {
-      console.error(`Twitter oEmbed failed: ${response.status}`);
-      throw new Error("Twitter oEmbed failed");
-    }
+    if (response.ok) {
+      const data = (await response.json()) as {
+        author_name?: string;
+        html?: string;
+        thumbnail_url?: string;
+      };
 
-    const data = await response.json() as {
-      author_name?: string;
-      author_url?: string;
-      html?: string;
-    };
-
-    // Extract text from the HTML response
-    // The HTML contains the tweet text in a blockquote
-    let tweetText = "";
-    let authorName = data.author_name || "Unknown";
-
-    if (data.html) {
-      // Parse the HTML to extract tweet text
-      const dom = new JSDOM(data.html);
-      const blockquote = dom.window.document.querySelector("blockquote");
-      if (blockquote) {
-        // Get all paragraph text (tweet content)
-        const paragraphs = blockquote.querySelectorAll("p");
-        tweetText = Array.from(paragraphs)
-          .map(p => p.textContent?.trim())
-          .filter(Boolean)
-          .join("\n\n");
+      // Extract plain text from the HTML payload
+      if (data.html) {
+        const dom = new JSDOM(data.html);
+        const blockquote = dom.window.document.querySelector("blockquote");
+        if (blockquote) {
+          const paragraphs = blockquote.querySelectorAll("p");
+          tweetText = Array.from(paragraphs)
+            .map((p) => p.textContent?.trim())
+            .filter(Boolean)
+            .join("\n\n");
+        }
       }
+
+      authorName = data.author_name || authorName;
+      imageUrl = data.thumbnail_url || imageUrl;
     }
-
-    // Create a descriptive title
-    const title = `Tweet by @${authorName}`;
-
-    return {
-      title,
-      content: tweetText || "Tweet content could not be extracted.",
-      source,
-      author: authorName,
-    };
-  } catch (error) {
-    console.error("Twitter extraction failed:", error);
-
-    // Return with indication that it's a Twitter post
-    return {
-      title: `Twitter Post`,
-      content: "This is a Twitter/X post. The content could not be automatically extracted. Please view the original post.",
-      source,
-    };
+  } catch (oembedError) {
+    console.error("Twitter oEmbed error:", oembedError);
   }
+
+  // Fallback: public syndication endpoints for images
+  if (!imageUrl) {
+    console.log("[extractTwitterContent] no image from oEmbed, trying syndication", { tweetId });
+    imageUrl = await fetchTwitterImage(url, tweetId || undefined);
+    console.log("[extractTwitterContent] syndication result", { imageUrl });
+  }
+
+  // Build response
+  return {
+    title: authorName ? `Tweet by @${authorName}` : "Twitter Post",
+    content: tweetText || "Tweet content could not be extracted.",
+    source,
+    author: authorName,
+    imageUrl,
+  };
 }
 
 /**

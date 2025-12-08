@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { processItem } from "@/lib/pipeline";
 import { createItemSchema, itemsQuerySchema } from "@/lib/schemas";
 import type { Prisma } from "@/generated/prisma";
+import { getPlatformDomains, normalizePlatformSlug } from "@/lib/platforms";
 
 // GET /api/items - List items with search and filters
 export async function GET(request: NextRequest) {
@@ -48,9 +49,34 @@ export async function GET(request: NextRequest) {
       where.category = query.category;
     }
 
-    // Platform filter (source contains the platform domain)
-    if (query.platform) {
-      where.source = { contains: query.platform, mode: "insensitive" };
+    // Platform filter (normalized domain-based filtering)
+    const platformSlug = normalizePlatformSlug(query.platform);
+    if (platformSlug) {
+      const platformFilters: Prisma.ItemWhereInput[] = [];
+      const domains = getPlatformDomains(platformSlug);
+
+      // Newsletter: include email import source
+      if (platformSlug === "newsletter") {
+        platformFilters.push({ importSource: "email" });
+      }
+
+      if (domains.length > 0) {
+        platformFilters.push({
+          OR: domains.map((domain) => ({
+            source: { contains: domain, mode: "insensitive" },
+          })),
+        });
+      }
+
+      if (platformFilters.length > 0) {
+        where.AND = [...(where.AND || []), ...platformFilters];
+      }
+    } else if (query.platform) {
+      // Fallback: substring match if unknown slug
+      where.AND = [
+        ...(where.AND || []),
+        { source: { contains: query.platform, mode: "insensitive" } },
+      ];
     }
 
     // Search query

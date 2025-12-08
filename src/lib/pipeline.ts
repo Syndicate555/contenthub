@@ -96,7 +96,19 @@ export async function processItem(
     // Use Vision API if content is short but we have an image (e.g., infographics)
     const truncatedContent = truncateContent(contentToSummarize);
     const hasShortContent = !truncatedContent || truncatedContent.length < 100;
-    const hasImage = !!extracted.imageUrl;
+    let hasImage = !!extracted.imageUrl;
+
+    // Twitter/X: attempt to fetch via connected Twitter API if available (and not rate limited)
+    // Validate supported image types for Vision; otherwise disable Vision
+    const allowedExtensions = [".jpg", ".jpeg", ".png", ".webp", ".gif"];
+    const isSupportedImage =
+      extracted.imageUrl &&
+      allowedExtensions.some((ext) => extracted.imageUrl!.toLowerCase().includes(ext));
+
+    if (!isSupportedImage) {
+      // Keep the image for display purposes but avoid sending unsupported types to Vision
+      hasImage = false;
+    }
 
     let summarized;
     if (hasShortContent && hasImage) {
