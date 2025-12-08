@@ -326,6 +326,7 @@ export async function getUserBadges(userId: string) {
     icon: ub.badge.icon,
     rarity: ub.badge.rarity,
     awardedAt: ub.awardedAt,
+    seenAt: ub.seenAt,
     domain: ub.badge.domain,
   }));
 }

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Loader2, Link as LinkIcon, Mail, Copy, Check } from "lucide-react";
+import { showMultipleBadgesNotification } from "@/components/badge-notification";
 interface AddPageClientProps {
   userId: string;
   inboundEmail: string;
@@ -53,6 +54,11 @@ export default function AddPageClient({ userId, inboundEmail }: AddPageClientPro
 
       if (!data.ok) {
         throw new Error(data.error || "Failed to save item");
+      }
+
+      // Show badge notifications if any badges were earned
+      if (data.newBadges && data.newBadges.length > 0) {
+        showMultipleBadgesNotification(data.newBadges);
       }
 
       toast.success("Item saved and processed!");

@@ -53,7 +53,7 @@ function ErrorMessage({ message }: { message: string }) {
     <div className="sticky top-20">
       <div className="bg-red-50 border border-red-200 rounded-lg p-4">
         <div className="flex items-start gap-2">
-          <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+          <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
           <div>
             <h3 className="text-sm font-semibold text-red-900 mb-1">
               Failed to load sidebar

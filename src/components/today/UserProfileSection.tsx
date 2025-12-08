@@ -46,7 +46,7 @@ export function UserProfileSection({
 
       {/* User Name */}
       <div className="text-center">
-        <h3 className="text-sm font-semibold text-gray-900 truncate max-w-[240px]">
+        <h3 className="text-sm font-semibold text-gray-900 truncate max-w-60">
           {user.fullName || user.username || "User"}
         </h3>
       </div>

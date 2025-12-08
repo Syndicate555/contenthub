@@ -206,7 +206,7 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json(
-      { ok: true, data: result.item },
+      { ok: true, data: result.item, newBadges: result.newBadges },
       { status: 201 }
     );
   } catch (error) {

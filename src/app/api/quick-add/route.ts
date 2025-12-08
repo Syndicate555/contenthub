@@ -51,6 +51,7 @@ export async function POST(request: NextRequest) {
       itemId: result.item.id,
       title: result.item.title,
       source: result.item.source,
+      newBadges: result.newBadges,
     });
   } catch (error) {
     console.error("POST /api/quick-add error:", error);

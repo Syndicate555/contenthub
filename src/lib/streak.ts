@@ -1,36 +1,23 @@
 // Streak Tracking Service
-// Manages daily activity streaks for users
+// Manages daily activity streaks for users with timezone-aware calculations
 
 import { db } from "@/lib/db";
 import { awardXP, XP_ACTIONS } from "@/lib/xp";
+import {
+  isSameDayInTimezone,
+  isConsecutiveDayInTimezone,
+} from "@/lib/timezone";
 
 /**
- * Check if two dates are on the same day (ignoring time)
+ * Get user's timezone from database
  */
-function isSameDay(date1: Date, date2: Date): boolean {
-  return (
-    date1.getFullYear() === date2.getFullYear() &&
-    date1.getMonth() === date2.getMonth() &&
-    date1.getDate() === date2.getDate()
-  );
-}
+async function getUserTimezone(userId: string): Promise<string> {
+  const stats = await db.userStats.findUnique({
+    where: { userId },
+    select: { timezone: true },
+  });
 
-/**
- * Check if two dates are consecutive days
- */
-function isConsecutiveDay(yesterday: Date, today: Date): boolean {
-  const dayBefore = new Date(yesterday);
-  dayBefore.setDate(dayBefore.getDate() + 1);
-  return isSameDay(dayBefore, today);
-}
-
-/**
- * Get the start of day in user's timezone (simplified - uses UTC for now)
- */
-function getStartOfDay(date: Date): Date {
-  const start = new Date(date);
-  start.setUTCHours(0, 0, 0, 0);
-  return start;
+  return stats?.timezone || "UTC";
 }
 
 export interface UpdateStreakResult {
@@ -43,13 +30,15 @@ export interface UpdateStreakResult {
 
 /**
  * Update user's streak when they perform an activity
- * - Maintains streak if activity on consecutive days
+ * - Maintains streak if activity on consecutive days (in user's timezone)
  * - Resets streak if more than 1 day gap
  * - Awards XP for maintaining streak
  */
 export async function updateStreak(userId: string): Promise<UpdateStreakResult> {
   const now = new Date();
-  const today = getStartOfDay(now);
+
+  // Get user's timezone
+  const timezone = await getUserTimezone(userId);
 
   // Get current stats
   let stats = await db.userStats.findUnique({
@@ -64,6 +53,7 @@ export async function updateStreak(userId: string): Promise<UpdateStreakResult> 
         currentStreak: 1,
         longestStreak: 1,
         lastActivityAt: now,
+        timezone,
       },
     });
 
@@ -76,9 +66,9 @@ export async function updateStreak(userId: string): Promise<UpdateStreakResult> 
     };
   }
 
-  // Check if this is the first activity today
+  // Check if this is the first activity today (in user's timezone)
   const lastActivity = stats.lastActivityAt;
-  const firstActivityToday = !lastActivity || !isSameDay(lastActivity, now);
+  const firstActivityToday = !lastActivity || !isSameDayInTimezone(lastActivity, now, timezone);
 
   // If not first activity today, just update lastActivityAt and return current streak
   if (!firstActivityToday) {
@@ -105,9 +95,8 @@ export async function updateStreak(userId: string): Promise<UpdateStreakResult> 
     // No previous activity - start new streak
     newCurrentStreak = 1;
   } else {
-    const lastActivityDay = getStartOfDay(lastActivity);
-
-    if (isConsecutiveDay(lastActivityDay, today)) {
+    // Check if yesterday and today are consecutive days in user's timezone
+    if (isConsecutiveDayInTimezone(lastActivity, now, timezone)) {
       // Consecutive day - maintain streak
       newCurrentStreak = stats.currentStreak + 1;
       streakMaintained = true;
@@ -119,13 +108,14 @@ export async function updateStreak(userId: string): Promise<UpdateStreakResult> 
           action: XP_ACTIONS.MAINTAIN_STREAK,
           metadata: {
             currentStreak: newCurrentStreak,
-            date: today.toISOString(),
+            date: now.toISOString(),
+            timezone,
           },
         });
       } catch (error) {
         console.error("Failed to award streak XP:", error);
       }
-    } else if (isSameDay(lastActivityDay, today)) {
+    } else if (isSameDayInTimezone(lastActivity, now, timezone)) {
       // Same day - no change (shouldn't happen due to earlier check)
       newCurrentStreak = stats.currentStreak;
     } else {
@@ -167,6 +157,7 @@ export async function getUserStreak(userId: string) {
       currentStreak: true,
       longestStreak: true,
       lastActivityAt: true,
+      timezone: true,
     },
   });
 
@@ -176,41 +167,53 @@ export async function getUserStreak(userId: string) {
       longestStreak: 0,
       lastActivityAt: null,
       isActive: false,
-      daysUntilReset: 0,
+      timezone: "UTC",
     };
   }
 
-  // Check if streak is still active (activity within last 24 hours)
+  // Check if streak is still active (activity within last 24 hours in user's timezone)
   const now = new Date();
-  const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-  const isActive = stats.lastActivityAt
-    ? stats.lastActivityAt > oneDayAgo
-    : false;
+  const timezone = stats.timezone || "UTC";
 
-  // Calculate days until reset (if no activity today)
-  let daysUntilReset = 0;
-  if (stats.lastActivityAt) {
-    const lastActivityDay = getStartOfDay(stats.lastActivityAt);
-    const today = getStartOfDay(now);
-    const daysSinceActivity = Math.floor(
-      (today.getTime() - lastActivityDay.getTime()) / (24 * 60 * 60 * 1000)
-    );
-
-    if (daysSinceActivity === 0) {
-      // Activity today - safe for rest of day
-      daysUntilReset = 0;
-    } else if (daysSinceActivity === 1) {
-      // Activity yesterday - need activity today to maintain
-      daysUntilReset = 0; // Already at risk
-    } else {
-      // Streak already broken
-      daysUntilReset = 0;
-    }
+  // If no last activity, streak is not active
+  if (!stats.lastActivityAt) {
+    return {
+      ...stats,
+      isActive: false,
+      timezone,
+    };
   }
+
+  // Check if last activity was today or yesterday in user's timezone
+  const isToday = isSameDayInTimezone(stats.lastActivityAt, now, timezone);
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const wasYesterday = isSameDayInTimezone(stats.lastActivityAt, yesterday, timezone);
+
+  const isActive = isToday || wasYesterday;
 
   return {
     ...stats,
     isActive,
-    daysUntilReset,
+    timezone,
   };
+}
+
+/**
+ * Update user's timezone preference
+ */
+export async function updateUserTimezone(
+  userId: string,
+  timezone: string
+): Promise<void> {
+  await db.userStats.upsert({
+    where: { userId },
+    create: {
+      userId,
+      timezone,
+    },
+    update: {
+      timezone,
+    },
+  });
 }

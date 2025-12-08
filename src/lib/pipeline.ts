@@ -3,7 +3,7 @@ import { extractContent, truncateContent } from "./extractor";
 import { summarizeContent, summarizeWithVision } from "./openai";
 import { getDomainForContent } from "./domains";
 import { awardXP, XP_ACTIONS } from "./xp";
-import { updateStreak } from "./streak";
+import { trackActivity, STREAK_ACTIVITIES } from "./activity";
 import { checkAllBadges } from "./badges";
 import type { Item } from "@/generated/prisma";
 
@@ -17,6 +17,7 @@ export interface ProcessItemResult {
   item: Item;
   success: boolean;
   error?: string;
+  newBadges?: Array<{ id: string; key: string; name: string; description: string; icon: string; rarity: string }>;
 }
 
 /**
@@ -61,6 +62,14 @@ export async function processItem(
   } catch (xpError) {
     console.error("Failed to award save XP:", xpError);
     // Don't fail the whole operation for XP errors
+  }
+
+  // Track SAVE_ITEM activity for streak maintenance
+  try {
+    await trackActivity(userId, STREAK_ACTIVITIES.SAVE_ITEM, { itemId: item.id });
+  } catch (activityError) {
+    console.error("Failed to track save activity:", activityError);
+    // Don't fail the whole operation for activity tracking errors
   }
 
   try {
@@ -153,20 +162,36 @@ export async function processItem(
       // Don't fail the whole operation for XP errors
     }
 
-    // Step 7: Update user's streak (for daily activity tracking)
+    // Step 7: Track activity (PROCESS_ITEM) for streak maintenance
     try {
-      const streakResult = await updateStreak(userId);
-      console.log(`Streak updated: current=${streakResult.currentStreak}, longest=${streakResult.longestStreak}, maintained=${streakResult.streakMaintained}`);
-    } catch (streakError) {
-      console.error("Failed to update streak:", streakError);
-      // Don't fail the whole operation for streak errors
+      const activityResult = await trackActivity(
+        userId,
+        STREAK_ACTIVITIES.PROCESS_ITEM,
+        { itemId: updatedItem.id }
+      );
+
+      if (activityResult.streakResult) {
+        console.log(`Activity tracked (PROCESS_ITEM): streak=${activityResult.streakResult.currentStreak}, maintained=${activityResult.streakResult.streakMaintained}`);
+      }
+    } catch (activityError) {
+      console.error("Failed to track activity:", activityError);
+      // Don't fail the whole operation for activity tracking errors
     }
 
     // Step 8: Check and award eligible badges
+    let awardedBadges: Array<{ id: string; key: string; name: string; description: string; icon: string; rarity: string }> = [];
     try {
       const newBadges = await checkAllBadges(userId);
       if (newBadges.length > 0) {
         console.log(`Badges awarded: ${newBadges.map(b => b.name).join(", ")}`);
+        awardedBadges = newBadges.map(badge => ({
+          id: badge.id,
+          key: badge.key,
+          name: badge.name,
+          description: badge.description,
+          icon: badge.icon || "",
+          rarity: badge.rarity,
+        }));
       }
     } catch (badgeError) {
       console.error("Failed to check badges:", badgeError);
@@ -176,6 +201,7 @@ export async function processItem(
     return {
       item: updatedItem,
       success: true,
+      newBadges: awardedBadges.length > 0 ? awardedBadges : undefined,
     };
   } catch (error) {
     console.error("Pipeline processing failed:", error);

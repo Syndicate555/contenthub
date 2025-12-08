@@ -14,7 +14,7 @@ export interface ExtractedContent {
 /**
  * Detects the platform from a URL
  */
-function detectPlatform(url: string): "twitter" | "instagram" | "linkedin" | "generic" {
+function detectPlatform(url: string): "twitter" | "instagram" | "linkedin" | "pinterest" | "generic" {
   const hostname = new URL(url).hostname.toLowerCase();
 
   if (hostname.includes("twitter.com") || hostname.includes("x.com")) {
@@ -25,6 +25,9 @@ function detectPlatform(url: string): "twitter" | "instagram" | "linkedin" | "ge
   }
   if (hostname.includes("linkedin.com")) {
     return "linkedin";
+  }
+  if (hostname.includes("pinterest.com")) {
+    return "pinterest";
   }
   return "generic";
 }
@@ -733,6 +736,13 @@ export async function extractContent(url: string): Promise<ExtractedContent> {
       return extractInstagramContent(url);
     case "linkedin":
       return extractLinkedInContent(url);
+    case "pinterest":
+      // Pinterest content comes from API during sync - skip scraping
+      return {
+        title: "Pinterest Pin",
+        content: "",
+        source: "pinterest.com",
+      };
     default:
       return extractGenericContent(url);
   }

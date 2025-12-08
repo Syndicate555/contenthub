@@ -36,9 +36,7 @@ export default function RootLayout({
           className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50 min-h-screen`}
         >
           <WebVitals />
-          <SWRProvider>
-            {children}
-          </SWRProvider>
+          <SWRProvider>{children}</SWRProvider>
           <Toaster richColors position="top-right" />
         </body>
       </html>

@@ -34,13 +34,13 @@ model User {
 
 // Domain represents a knowledge/skill category (e.g., Finance, Career, Health)
 model Domain {
-  id          String   @id @default(cuid())
-  name        String   @unique // "finance", "career", "health", etc.
-  displayName String   // "Finance", "Career", "Health", etc.
-  description String?  // Brief description of the domain
-  icon        String?  // Emoji or icon identifier
-  color       String?  // Hex color for UI theming
-  order       Int      @default(0) // Display order
+  id          String  @id @default(cuid())
+  name        String  @unique // "finance", "career", "health", etc.
+  displayName String // "Finance", "Career", "Health", etc.
+  description String? // Brief description of the domain
+  icon        String? // Emoji or icon identifier
+  color       String? // Hex color for UI theming
+  order       Int     @default(0) // Display order
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -48,9 +48,9 @@ model Domain {
   // Relations
   userDomains UserDomain[]
   focusAreas  FocusArea[]
-  items       Item[]       // Items in this domain
-  xpEvents    XPEvent[]    // XP events in this domain
-  badges      Badge[]      // Domain-specific badges
+  items       Item[] // Items in this domain
+  xpEvents    XPEvent[] // XP events in this domain
+  badges      Badge[] // Domain-specific badges
 
   @@index([name])
 }
@@ -64,9 +64,9 @@ model UserDomain {
   domain   Domain @relation(fields: [domainId], references: [id], onDelete: Cascade)
 
   // Progress tracking
-  totalXp     Int @default(0) // Total XP earned in this domain
-  level       Int @default(1) // Current level (calculated from XP)
-  itemCount   Int @default(0) // Number of items processed in this domain
+  totalXp   Int @default(0) // Total XP earned in this domain
+  level     Int @default(1) // Current level (calculated from XP)
+  itemCount Int @default(0) // Number of items processed in this domain
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -97,22 +97,22 @@ model FocusArea {
 
 // XPEvent tracks individual XP awards for audit trail and analytics
 model XPEvent {
-  id       String @id @default(cuid())
-  userId   String
-  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // XP details
-  action   String  // "save_item", "process_item", "add_reflection", "complete_quest", etc.
-  xpAmount Int     // Amount of XP awarded
+  action   String // "save_item", "process_item", "add_reflection", "complete_quest", etc.
+  xpAmount Int // Amount of XP awarded
   domainId String? // Optional: which domain this XP applies to
   domain   Domain? @relation(fields: [domainId], references: [id])
 
   // Reference to what triggered this XP (optional)
-  itemId   String? // If XP was from processing an item
-  questId  String? // If XP was from completing a quest (future)
+  itemId  String? // If XP was from processing an item
+  questId String? // If XP was from completing a quest (future)
 
   // Metadata
-  metadata Json?   // Additional context (e.g., streak multiplier, bonus info)
+  metadata Json? // Additional context (e.g., streak multiplier, bonus info)
 
   createdAt DateTime @default(now())
 
@@ -134,15 +134,16 @@ model UserStats {
   overallLevel Int @default(1) // Calculated from totalXp
 
   // Activity stats
-  itemsSaved     Int @default(0)
-  itemsProcessed Int @default(0)
-  reflections    Int @default(0)
+  itemsSaved      Int @default(0)
+  itemsProcessed  Int @default(0)
+  reflections     Int @default(0)
   questsCompleted Int @default(0)
 
   // Streak tracking (will be expanded in Feature 5)
-  currentStreak   Int      @default(0)
-  longestStreak   Int      @default(0)
-  lastActivityAt  DateTime?
+  currentStreak  Int       @default(0)
+  longestStreak  Int       @default(0)
+  lastActivityAt DateTime?
+  timezone       String    @default("UTC") // User's IANA timezone for accurate streak calculations
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -155,14 +156,14 @@ model UserStats {
 model Badge {
   id          String  @id @default(cuid())
   key         String  @unique // Unique identifier (e.g., "first_item", "week_warrior")
-  name        String  // Display name (e.g., "First Steps", "Week Warrior")
-  description String  // What the badge is for
+  name        String // Display name (e.g., "First Steps", "Week Warrior")
+  description String // What the badge is for
   icon        String? // Emoji or icon identifier
   rarity      String  @default("common") // "common" | "rare" | "epic" | "legendary"
 
   // Criteria
   criteriaType  String // "item_count" | "streak" | "domain_level" | "xp_total" | "special"
-  criteriaValue Int?   // Threshold value (e.g., 10 for "save 10 items")
+  criteriaValue Int? // Threshold value (e.g., 10 for "save 10 items")
   domainId      String? // Optional: domain-specific badge
   domain        Domain? @relation(fields: [domainId], references: [id])
 
@@ -185,38 +186,42 @@ model UserBadge {
   badge   Badge  @relation(fields: [badgeId], references: [id], onDelete: Cascade)
 
   // Award details
-  awardedAt DateTime @default(now())
-  progress  Int      @default(0) // For tracking progress toward badge (if applicable)
+  awardedAt DateTime  @default(now())
+  progress  Int       @default(0) // For tracking progress toward badge (if applicable)
+  seenAt    DateTime? // When user acknowledged/viewed the badge (for "NEW" indicator)
 
   @@unique([userId, badgeId]) // Can't earn same badge twice
   @@index([userId])
   @@index([badgeId])
+  @@index([userId, seenAt]) // For querying unseen badges
 }
 
 // Social media account connections for bookmark sync
 model SocialConnection {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // Connection details
-  provider        String   // "twitter" | "instagram" | "linkedin" etc.
-  providerUserId  String   // The user's ID on the provider platform
-  providerHandle  String?  // Username/handle on the platform
+  provider       String // "twitter" | "instagram" | "linkedin" etc.
+  providerUserId String // The user's ID on the provider platform
+  providerHandle String? // Username/handle on the platform
 
   // OAuth tokens (encrypted at rest)
-  accessToken     String   @db.Text
-  refreshToken    String?  @db.Text
-  tokenExpiresAt  DateTime?
+  accessToken    String    @db.Text
+  refreshToken   String?   @db.Text
+  tokenExpiresAt DateTime?
 
   // Sync state
   lastSyncAt      DateTime?
-  lastSyncCursor  String?  // For pagination/incremental sync
-  syncEnabled     Boolean  @default(true)
+  lastSyncCursor  String? // For pagination/incremental sync
+  syncEnabled     Boolean   @default(true)
+  syncPreferences Json? // Provider-specific sync preferences (e.g., selected boards, per-board cursors)
+  scopes          String[]  @default([]) // OAuth scopes granted by user (for auditing)
 
   // Timestamps
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([userId, provider]) // One connection per provider per user
   @@index([userId])
@@ -224,38 +229,39 @@ model SocialConnection {
 }
 
 model Item {
-  id         String   @id @default(cuid())
-  userId     String
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // Original content
-  url        String
-  source     String?  // domain extracted (e.g., "twitter.com")
-  note       String?  // optional user note
+  url    String
+  source String? // domain extracted (e.g., "twitter.com")
+  note   String? // optional user note
 
   // Import tracking (for synced bookmarks)
-  importSource String?  // "twitter" | "instagram" | "linkedin" etc. (null = manually added)
-  externalId   String?  // Original post ID from the platform
+  importSource   String? // "twitter" | "pinterest" | "instagram" | "linkedin" etc. (null = manually added)
+  externalId     String? // Original post ID from the platform
+  importMetadata Json? // Provider-specific metadata (e.g., Pinterest: boardId, boardName, pinUrl, mediaUrl)
 
   // Processed content
   title      String?
-  summary    String?  // bullet points as text
+  summary    String? // bullet points as text
   tags       String[] // Postgres array
-  type       String?  // "learn" | "do" | "reference"
-  category   String?  // "tech" | "business" | "design" | "productivity" | "learning" | "lifestyle" | "entertainment" | "news" | "other"
+  type       String? // "learn" | "do" | "reference"
+  category   String? // "tech" | "business" | "design" | "productivity" | "learning" | "lifestyle" | "entertainment" | "news" | "other"
   rawContent String?  @db.Text // truncated extracted text
-  imageUrl   String?  // thumbnail/preview image URL
+  imageUrl   String? // thumbnail/preview image URL
 
   // Domain classification (for gamification)
-  domainId   String?
-  domain     Domain?  @relation(fields: [domainId], references: [id])
+  domainId String?
+  domain   Domain? @relation(fields: [domainId], references: [id])
 
   // Status management
-  status     String   @default("new") // "new" | "reviewed" | "pinned" | "deleted"
+  status String @default("new") // "new" | "reviewed" | "pinned" | "deleted"
 
   // Timestamps
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
   reviewedAt DateTime?
 
   @@unique([userId, importSource, externalId]) // Prevent duplicate imports

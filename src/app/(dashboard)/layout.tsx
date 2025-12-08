@@ -11,6 +11,7 @@ import {
   prefetchSettingsData,
 } from "@/hooks/use-dashboard";
 import { useCallback } from "react";
+import { useTimezoneSync } from "@/hooks/use-timezone-sync";
 
 export default function DashboardLayout({
   children,
@@ -18,6 +19,9 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+
+  // Auto-detect and sync user's timezone for accurate streak tracking
+  useTimezoneSync();
 
   // Prefetch functions for instant navigation
   const prefetchToday = useCallback(() => {

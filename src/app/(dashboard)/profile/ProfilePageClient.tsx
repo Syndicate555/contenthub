@@ -6,6 +6,8 @@ import { DomainStats } from "./components/DomainStats";
 import { StatsCard } from "./components/StatsCard";
 import { useProfileData } from "@/hooks/use-dashboard";
 import { Skeleton } from "@/components/ui/skeleton";
+import { StreakWarning } from "@/components/streak-warning";
+import { StreakCalendar } from "@/components/streak-calendar";
 
 // Lazy load below-the-fold components for faster initial render
 const RecentActivity = lazy(() =>
@@ -86,6 +88,8 @@ export function ProfilePageClient({ fallbackData }: ProfilePageClientProps) {
     domains,
     recentActivity,
     earnedBadges,
+    allBadges,
+    badgeStats,
     isLoading,
     error,
     mutate
@@ -167,7 +171,7 @@ export function ProfilePageClient({ fallbackData }: ProfilePageClientProps) {
           icon={<Trophy className="w-5 h-5 text-yellow-500" />}
           label="Badges Earned"
           value={earnedBadges.length}
-          trend={earnedBadges.length > 0 ? `${Math.round((earnedBadges.length / 14) * 100)}%` : "0%"}
+          trend={badgeStats ? `${badgeStats.progress}%` : "0%"}
         />
         <StatsCard
           icon={<Flame className="w-5 h-5 text-orange-500" />}
@@ -187,15 +191,23 @@ export function ProfilePageClient({ fallbackData }: ProfilePageClientProps) {
         />
       </div>
 
+      {/* Streak Warning */}
+      <StreakWarning />
+
       {/* Main Content Grid */}
       <div className="grid lg:grid-cols-3 gap-6">
-        {/* Left Column - Domain Stats & Badges */}
+        {/* Left Column - Domain Stats, Badges & Calendar */}
         <div className="lg:col-span-2 space-y-6">
           <DomainStats domains={domains} />
 
           {/* Lazy load badges (below the fold) */}
           <Suspense fallback={<Skeleton className="h-96 w-full rounded-xl" />}>
-            <BadgeShowcase badges={earnedBadges} />
+            <BadgeShowcase badges={allBadges} badgeStats={badgeStats} userStats={stats} />
+          </Suspense>
+
+          {/* Streak Calendar */}
+          <Suspense fallback={<Skeleton className="h-32 w-full rounded-xl" />}>
+            <StreakCalendar days={60} />
           </Suspense>
         </div>
 

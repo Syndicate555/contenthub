@@ -1,6 +1,12 @@
 import { SignIn } from "@clerk/nextjs";
 import { Sora } from "next/font/google";
-import { Sparkles, ShieldCheck, Zap, Gauge, BotMessageSquare } from "lucide-react";
+import {
+  Sparkles,
+  ShieldCheck,
+  Zap,
+  Gauge,
+  BotMessageSquare,
+} from "lucide-react";
 
 const sora = Sora({
   subsets: ["latin"],
@@ -28,8 +34,8 @@ export default function SignInPage() {
               distilled social content.
             </h1>
             <p className="max-w-2xl text-lg text-gray-600">
-              Pick up where you left off. AI summaries, domain XP, and streaks are ready the moment
-              you land.
+              Pick up where you left off. AI summaries, domain XP, and streaks
+              are ready the moment you land.
             </p>
             <div className="grid gap-3 sm:grid-cols-2">
               {[
@@ -62,7 +68,9 @@ export default function SignInPage() {
                     <Icon className="h-5 w-5" />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-gray-900">{title}</p>
+                    <p className="text-sm font-semibold text-gray-900">
+                      {title}
+                    </p>
                     <p className="text-xs text-gray-600">{desc}</p>
                   </div>
                 </div>
@@ -71,7 +79,7 @@ export default function SignInPage() {
           </div>
 
           <div className="relative">
-            <div className="pointer-events-none absolute inset-x-0 -top-8 h-32 rounded-full bg-gradient-to-r from-indigo-200/50 via-blue-200/40 to-cyan-200/40 blur-3xl" />
+            <div className="pointer-events-none absolute inset-x-0 -top-8 h-32 rounded-full bg-linear-to-r from-indigo-200/50 via-blue-200/40 to-cyan-200/40 blur-3xl" />
             <div className="relative mx-auto w-full max-w-md">
               <SignIn
                 appearance={{
@@ -81,7 +89,7 @@ export default function SignInPage() {
                     colorInputBackground: "#f8fafc",
                     colorInputText: "#0f172a",
                     colorText: "#0f172a",
-                    colorNeutral: "#e2e8f0",
+                    colorNeutral: "#000000",
                     borderRadius: "16px",
                     spacingUnit: "10px",
                     fontFamily: "var(--font-geist-sans)",
@@ -92,18 +100,17 @@ export default function SignInPage() {
                   },
                   elements: {
                     rootBox: "w-full",
-                    card:
-                      "w-full shadow-none border-0 bg-white/90 backdrop-blur rounded-2xl ring-1 ring-gray-100 p-6",
+                    card: "w-full shadow-none border-0 bg-white/90 backdrop-blur rounded-2xl ring-1 ring-gray-100 p-6",
                     headerTitle: "text-base font-semibold text-gray-900",
                     headerSubtitle: "text-sm text-gray-600",
                     formFieldLabel: "hidden",
                     formFieldInput:
                       "bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500",
                     socialButtonsBlockButton:
-                      "border border-gray-200 bg-white text-gray-900 hover:border-indigo-200 hover:bg-indigo-50 shadow-sm",
+                      "border border-gray-200 bg-white text-gray-900 hover:border-indigo-200 hover:bg-indigo-50 shadow-sm text-base font-semibold",
                     socialButtonsBlockButton__google:
-                      "bg-white text-gray-900 border border-gray-200 hover:border-indigo-200 hover:bg-indigo-50 shadow-sm",
-                    socialButtonsBlockButtonText: "text-gray-900 font-medium",
+                      "bg-white text-gray-900 border border-gray-200 hover:border-indigo-200 hover:bg-indigo-50 shadow-sm text-base font-semibold",
+                    socialButtonsBlockButtonText: "text-gray-900 font-semibold",
                     socialButtonsBlockButtonIcon: "text-gray-900",
                     formButtonPrimary:
                       "bg-gradient-to-r from-indigo-600 to-blue-600 text-white hover:shadow-lg hover:shadow-indigo-200",
@@ -114,8 +121,6 @@ export default function SignInPage() {
                     identityPreviewEditButton: "hidden",
                   },
                 }}
-                routing="path"
-                path="/sign-in"
               />
             </div>
           </div>

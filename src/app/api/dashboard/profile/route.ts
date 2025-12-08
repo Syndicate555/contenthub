@@ -39,7 +39,7 @@ export async function GET() {
     // Map earned badges for quick lookup
     const earnedBadgeIds = new Set(earnedBadges.map((b) => b.id));
 
-    // Combine data: mark which badges are earned
+    // Combine data: mark which badges are earned and include seenAt
     const badgesWithProgress = allBadges.map((badge) => {
       const earned = earnedBadges.find((eb) => eb.id === badge.id);
 
@@ -55,6 +55,7 @@ export async function GET() {
         domain: badge.domain,
         earned: !!earned,
         awardedAt: earned?.awardedAt || null,
+        seenAt: earned?.seenAt || null,
       };
     });
 
@@ -118,6 +119,7 @@ export async function GET() {
             total: allBadges.length,
             earned: earnedBadges.length,
             progress: Math.round((earnedBadges.length / allBadges.length) * 100),
+            unseen: earnedBadges.filter((b) => !b.seenAt).length,
           },
         },
       },
