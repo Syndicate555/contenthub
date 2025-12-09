@@ -46,7 +46,7 @@ export interface SummarizeInput {
 }
 
 export async function summarizeContent(
-  input: SummarizeInput
+  input: SummarizeInput,
 ): Promise<SummarizerOutput> {
   const { title, content, url, source, userNote } = input;
 
@@ -111,8 +111,12 @@ ${content}
     // Validate and normalize the response
     return {
       title: parsed.title || title || url,
-      summary: Array.isArray(parsed.summary) ? parsed.summary : ["Summary unavailable."],
-      tags: Array.isArray(parsed.tags) ? parsed.tags.map((t) => t.toLowerCase()) : [],
+      summary: Array.isArray(parsed.summary)
+        ? parsed.summary
+        : ["Summary unavailable."],
+      tags: Array.isArray(parsed.tags)
+        ? parsed.tags.map((t) => t.toLowerCase())
+        : [],
       type: isValidType(parsed.type) ? parsed.type : "reference",
       category: isValidCategory(parsed.category) ? parsed.category : "other",
     };
@@ -134,7 +138,17 @@ function isValidType(type: unknown): type is ItemType {
 }
 
 function isValidCategory(category: unknown): category is ItemCategory {
-  const validCategories = ["tech", "business", "design", "productivity", "learning", "lifestyle", "entertainment", "news", "other"];
+  const validCategories = [
+    "tech",
+    "business",
+    "design",
+    "productivity",
+    "learning",
+    "lifestyle",
+    "entertainment",
+    "news",
+    "other",
+  ];
   return typeof category === "string" && validCategories.includes(category);
 }
 
@@ -193,7 +207,7 @@ export interface VisionInput {
  * Used when extracted text is minimal but image is available
  */
 export async function summarizeWithVision(
-  input: VisionInput
+  input: VisionInput,
 ): Promise<SummarizerOutput> {
   const { title, imageUrl, url, source, userNote, textContent } = input;
 
@@ -209,7 +223,9 @@ export async function summarizeWithVision(
       contextMessage += `\nExtracted Text: ${textContent.trim()}`;
     }
 
-    console.log(`Vision API - analyzing image: ${imageUrl.substring(0, 100)}...`);
+    console.log(
+      `Vision API - analyzing image: ${imageUrl.substring(0, 100)}...`,
+    );
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini", // Use gpt-4o-mini for vision (cost-effective)
@@ -251,8 +267,12 @@ export async function summarizeWithVision(
 
     return {
       title: parsed.title || title || "Image Content",
-      summary: Array.isArray(parsed.summary) ? parsed.summary : ["Image analyzed."],
-      tags: Array.isArray(parsed.tags) ? parsed.tags.map((t) => t.toLowerCase()) : [],
+      summary: Array.isArray(parsed.summary)
+        ? parsed.summary
+        : ["Image analyzed."],
+      tags: Array.isArray(parsed.tags)
+        ? parsed.tags.map((t) => t.toLowerCase())
+        : [],
       type: isValidType(parsed.type) ? parsed.type : "reference",
       category: isValidCategory(parsed.category) ? parsed.category : "other",
     };
@@ -262,7 +282,9 @@ export async function summarizeWithVision(
     // Fallback to basic info
     return {
       title: title || "Image Content",
-      summary: ["Image could not be analyzed. View the original post for details."],
+      summary: [
+        "Image could not be analyzed. View the original post for details.",
+      ],
       tags: [source.replace("www.", "").split(".")[0]],
       type: "reference",
       category: "other",

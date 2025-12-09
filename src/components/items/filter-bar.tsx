@@ -48,7 +48,10 @@ export function FilterBar({
   onClearAll,
 }: FilterBarProps) {
   const hasActiveFilters =
-    selectedCategory || selectedPlatform || selectedStatus !== "all" || selectedTag;
+    selectedCategory ||
+    selectedPlatform ||
+    selectedStatus !== "all" ||
+    selectedTag;
 
   const activeFilterCount = [
     selectedCategory,
@@ -74,11 +77,12 @@ export function FilterBar({
               size="sm"
               className={cn(
                 "h-8",
-                selectedCategory && "bg-gray-100 border-gray-300"
+                selectedCategory && "bg-gray-100 border-gray-300",
               )}
             >
               {selectedCategory
-                ? ITEM_CATEGORIES.find((c) => c.value === selectedCategory)?.label
+                ? ITEM_CATEGORIES.find((c) => c.value === selectedCategory)
+                    ?.label
                 : "Category"}
               <ChevronDown className="w-4 h-4 ml-1" />
             </Button>
@@ -108,7 +112,7 @@ export function FilterBar({
               size="sm"
               className={cn(
                 "h-8",
-                selectedPlatform && "bg-gray-100 border-gray-300"
+                selectedPlatform && "bg-gray-100 border-gray-300",
               )}
             >
               {selectedPlatform ? (
@@ -133,11 +137,13 @@ export function FilterBar({
                 onClick={() => onPlatformChange(p.platform)}
                 className={cn(
                   "flex items-center gap-2",
-                  selectedPlatform === p.platform && "bg-gray-100"
+                  selectedPlatform === p.platform && "bg-gray-100",
                 )}
               >
                 <PlatformIcon source={p.platform} size="sm" />
-                <span className="flex-1">{getPlatformInfo(p.platform).name}</span>
+                <span className="flex-1">
+                  {getPlatformInfo(p.platform).name}
+                </span>
                 <span className="text-xs text-gray-400">{p.count}</span>
               </DropdownMenuItem>
             ))}
@@ -152,7 +158,7 @@ export function FilterBar({
               size="sm"
               className={cn(
                 "h-8",
-                selectedStatus !== "all" && "bg-gray-100 border-gray-300"
+                selectedStatus !== "all" && "bg-gray-100 border-gray-300",
               )}
             >
               {statusOptions.find((s) => s.value === selectedStatus)?.label}
@@ -181,14 +187,17 @@ export function FilterBar({
                 size="sm"
                 className={cn(
                   "h-8",
-                  selectedTag && "bg-gray-100 border-gray-300"
+                  selectedTag && "bg-gray-100 border-gray-300",
                 )}
               >
                 {selectedTag || "Tag"}
                 <ChevronDown className="w-4 h-4 ml-1" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="max-h-60 overflow-y-auto">
+            <DropdownMenuContent
+              align="start"
+              className="max-h-60 overflow-y-auto"
+            >
               <DropdownMenuItem onClick={() => onTagChange(null)}>
                 All Tags
               </DropdownMenuItem>

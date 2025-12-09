@@ -66,7 +66,9 @@ export async function POST(request: NextRequest) {
     return new Response("OK", { status: 200 });
   }
 
-  console.log(`Received email webhook: from=${evt.data.from}, to=${evt.data.to}, subject="${evt.data.subject}"`);
+  console.log(
+    `Received email webhook: from=${evt.data.from}, to=${evt.data.to}, subject="${evt.data.subject}"`,
+  );
 
   // Process the email asynchronously
   try {

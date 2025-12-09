@@ -11,13 +11,19 @@ import { StreakCalendar } from "@/components/streak-calendar";
 
 // Lazy load below-the-fold components for faster initial render
 const RecentActivity = lazy(() =>
-  import("./components/RecentActivity").then((mod) => ({ default: mod.RecentActivity }))
+  import("./components/RecentActivity").then((mod) => ({
+    default: mod.RecentActivity,
+  })),
 );
 const BadgeShowcase = lazy(() =>
-  import("./components/BadgeShowcase").then((mod) => ({ default: mod.BadgeShowcase }))
+  import("./components/BadgeShowcase").then((mod) => ({
+    default: mod.BadgeShowcase,
+  })),
 );
 const QuestsPreview = lazy(() =>
-  import("./components/QuestsPreview").then((mod) => ({ default: mod.QuestsPreview }))
+  import("./components/QuestsPreview").then((mod) => ({
+    default: mod.QuestsPreview,
+  })),
 );
 
 interface UserStats {
@@ -92,7 +98,7 @@ export function ProfilePageClient({ fallbackData }: ProfilePageClientProps) {
     badgeStats,
     isLoading,
     error,
-    mutate
+    mutate,
   } = useProfileData(fallbackData);
 
   // Show loading only if we have nothing cached to render
@@ -177,7 +183,9 @@ export function ProfilePageClient({ fallbackData }: ProfilePageClientProps) {
           icon={<Flame className="w-5 h-5 text-orange-500" />}
           label="Current Streak"
           value={`${stats.currentStreak} days`}
-          trend={stats.longestStreak > 0 ? `Best: ${stats.longestStreak}` : undefined}
+          trend={
+            stats.longestStreak > 0 ? `Best: ${stats.longestStreak}` : undefined
+          }
         />
         <StatsCard
           icon={<TrendingUp className="w-5 h-5 text-green-500" />}
@@ -202,7 +210,11 @@ export function ProfilePageClient({ fallbackData }: ProfilePageClientProps) {
 
           {/* Lazy load badges (below the fold) */}
           <Suspense fallback={<Skeleton className="h-96 w-full rounded-xl" />}>
-            <BadgeShowcase badges={allBadges} badgeStats={badgeStats} userStats={stats} />
+            <BadgeShowcase
+              badges={allBadges}
+              badgeStats={badgeStats}
+              userStats={stats}
+            />
           </Suspense>
 
           {/* Streak Calendar */}

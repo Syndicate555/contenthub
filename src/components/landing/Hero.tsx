@@ -1,5 +1,11 @@
 import Link from "next/link";
-import { ArrowRight, Sparkles, ShieldCheck, LineChart, Clock3 } from "lucide-react";
+import {
+  ArrowRight,
+  Sparkles,
+  ShieldCheck,
+  LineChart,
+  Clock3,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface HeroProps {
@@ -26,13 +32,19 @@ export function Hero({ displayFontClass }: HeroProps) {
               Level up every day.
             </h1>
             <p className="max-w-2xl text-lg text-gray-600">
-              ContentHub automatically distills links, tweets, reels, and newsletters into clear
-              takeaways—then turns your reading habit into XP, streaks, and badges. Focus on what
-              matters, not on tabs.
+              ContentHub automatically distills links, tweets, reels, and
+              newsletters into clear takeaways—then turns your reading habit
+              into XP, streaks, and badges. Focus on what matters, not on tabs.
             </p>
             <div className="flex flex-wrap items-center gap-3">
-              <Button asChild className="px-5 text-base shadow-lg shadow-indigo-200">
-                <Link href="/sign-in" className="inline-flex items-center gap-2">
+              <Button
+                asChild
+                className="px-5 text-base shadow-lg shadow-indigo-200"
+              >
+                <Link
+                  href="/sign-in"
+                  className="inline-flex items-center gap-2"
+                >
                   Sign in to start
                   <ArrowRight className="h-4 w-4" />
                 </Link>
@@ -42,7 +54,10 @@ export function Hero({ displayFontClass }: HeroProps) {
                 variant="outline"
                 className="px-5 text-base border-gray-200 hover:border-gray-300 hover:bg-white/70"
               >
-                <Link href="#features" className="inline-flex items-center gap-2 text-gray-700">
+                <Link
+                  href="#features"
+                  className="inline-flex items-center gap-2 text-gray-700"
+                >
                   See how it works
                   <ArrowRight className="h-4 w-4" />
                 </Link>
@@ -60,16 +75,29 @@ export function Hero({ displayFontClass }: HeroProps) {
             </div>
             <div className="grid gap-3 sm:grid-cols-3 text-sm text-gray-700">
               {[
-                { label: "Capture from anywhere", value: "Links • Twitter • Instagram • Email" },
-                { label: "AI distillation", value: "Summaries, tags, domains, previews" },
-                { label: "Progress that sticks", value: "XP, streaks, badges, focus areas" },
+                {
+                  label: "Capture from anywhere",
+                  value: "Links • Twitter • Instagram • Email",
+                },
+                {
+                  label: "AI distillation",
+                  value: "Summaries, tags, domains, previews",
+                },
+                {
+                  label: "Progress that sticks",
+                  value: "XP, streaks, badges, focus areas",
+                },
               ].map((item) => (
                 <div
                   key={item.label}
                   className="rounded-2xl bg-white/80 p-4 shadow-sm ring-1 ring-gray-100 backdrop-blur animate-fade-up"
                 >
-                  <p className="text-xs uppercase tracking-[0.08em] text-gray-500">{item.label}</p>
-                  <p className="mt-1 font-semibold text-gray-900">{item.value}</p>
+                  <p className="text-xs uppercase tracking-[0.08em] text-gray-500">
+                    {item.label}
+                  </p>
+                  <p className="mt-1 font-semibold text-gray-900">
+                    {item.value}
+                  </p>
                 </div>
               ))}
             </div>
@@ -84,7 +112,9 @@ export function Hero({ displayFontClass }: HeroProps) {
                     CH
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-gray-900">Today Inbox</p>
+                    <p className="text-sm font-semibold text-gray-900">
+                      Today Inbox
+                    </p>
                     <p className="text-xs text-gray-500">AI summaries ready</p>
                   </div>
                 </div>
@@ -96,17 +126,20 @@ export function Hero({ displayFontClass }: HeroProps) {
                 {[
                   {
                     title: "Figma auto layout tips from @sarahdesign",
-                    summary: "5 rules to ship faster UI with constraints, spacing, and tokens.",
+                    summary:
+                      "5 rules to ship faster UI with constraints, spacing, and tokens.",
                     tags: ["design", "productivity"],
                   },
                   {
                     title: "Naval on compounding knowledge",
-                    summary: "Curate inputs → reflect daily → level up your domain XP.",
+                    summary:
+                      "Curate inputs → reflect daily → level up your domain XP.",
                     tags: ["philosophy", "learning"],
                   },
                   {
                     title: "AI tools for builders",
-                    summary: "Prompt packs, API starters, and code review workflows.",
+                    summary:
+                      "Prompt packs, API starters, and code review workflows.",
                     tags: ["tech", "ai"],
                   },
                 ].map((card, idx) => (
@@ -117,8 +150,12 @@ export function Hero({ displayFontClass }: HeroProps) {
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <p className="font-semibold text-gray-900">{card.title}</p>
-                        <p className="mt-1 text-sm text-gray-600">{card.summary}</p>
+                        <p className="font-semibold text-gray-900">
+                          {card.title}
+                        </p>
+                        <p className="mt-1 text-sm text-gray-600">
+                          {card.summary}
+                        </p>
                       </div>
                       <span className="rounded-full bg-indigo-50 px-2.5 py-1 text-[11px] font-semibold text-indigo-700">
                         New
@@ -145,9 +182,14 @@ export function Hero({ displayFontClass }: HeroProps) {
                   </div>
                   <p className="mt-2 text-lg font-bold">Level 7 • 1,950 XP</p>
                   <div className="mt-3 h-2 w-full rounded-full bg-white/20">
-                    <div className="h-2 rounded-full bg-white/90" style={{ width: "62%" }} />
+                    <div
+                      className="h-2 rounded-full bg-white/90"
+                      style={{ width: "62%" }}
+                    />
                   </div>
-                  <p className="mt-2 text-xs text-white/80">Daily streak active • +10 XP</p>
+                  <p className="mt-2 text-xs text-white/80">
+                    Daily streak active • +10 XP
+                  </p>
                 </div>
               </div>
             </div>

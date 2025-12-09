@@ -16,7 +16,8 @@ export function CTASection() {
                 Start your daily review in minutes.
               </h3>
               <p className="text-gray-600">
-                Sign in with Google, drop your first links, and watch ContentHub do the heavy lifting.
+                Sign in with Google, drop your first links, and watch ContentHub
+                do the heavy lifting.
               </p>
               <div className="flex items-center gap-2 text-xs font-semibold text-gray-600">
                 <ShieldCheck className="h-4 w-4 text-emerald-600" />
@@ -25,12 +26,17 @@ export function CTASection() {
             </div>
             <div className="flex flex-col items-start gap-3 sm:items-end">
               <Button asChild size="lg" className="shadow-lg shadow-indigo-200">
-                <Link href="/sign-in" className="inline-flex items-center gap-2">
+                <Link
+                  href="/sign-in"
+                  className="inline-flex items-center gap-2"
+                >
                   Sign in
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
-              <p className="text-xs text-gray-500">No onboarding friction. Straight to your Today feed.</p>
+              <p className="text-xs text-gray-500">
+                No onboarding friction. Straight to your Today feed.
+              </p>
             </div>
           </div>
         </div>

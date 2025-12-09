@@ -8,11 +8,11 @@ import { cache, cacheKeys } from "@/lib/cache";
  * Badge criteria types
  */
 export const BADGE_CRITERIA = {
-  ITEM_COUNT: "item_count",         // Total items saved
-  STREAK: "streak",                 // Consecutive days streak
-  DOMAIN_LEVEL: "domain_level",     // Reach level X in a domain
-  XP_TOTAL: "xp_total",            // Total XP earned
-  SPECIAL: "special",               // Custom special criteria
+  ITEM_COUNT: "item_count", // Total items saved
+  STREAK: "streak", // Consecutive days streak
+  DOMAIN_LEVEL: "domain_level", // Reach level X in a domain
+  XP_TOTAL: "xp_total", // Total XP earned
+  SPECIAL: "special", // Custom special criteria
 } as const;
 
 /**
@@ -172,7 +172,7 @@ async function checkBadgeCriteria(
   userId: string,
   criteriaType: string,
   criteriaValue: number,
-  domainId?: string | null
+  domainId?: string | null,
 ): Promise<boolean> {
   const stats = await db.userStats.findUnique({
     where: { userId },
@@ -185,7 +185,10 @@ async function checkBadgeCriteria(
       return stats.itemsProcessed >= criteriaValue;
 
     case BADGE_CRITERIA.STREAK:
-      return stats.currentStreak >= criteriaValue || stats.longestStreak >= criteriaValue;
+      return (
+        stats.currentStreak >= criteriaValue ||
+        stats.longestStreak >= criteriaValue
+      );
 
     case BADGE_CRITERIA.XP_TOTAL:
       return stats.totalXp >= criteriaValue;
@@ -220,7 +223,7 @@ async function checkBadgeCriteria(
  */
 export async function checkAndAwardBadge(
   userId: string,
-  badgeKey: string
+  badgeKey: string,
 ): Promise<{ awarded: boolean; badge?: any }> {
   // Get badge definition
   const badge = await db.badge.findUnique({
@@ -251,7 +254,7 @@ export async function checkAndAwardBadge(
     userId,
     badge.criteriaType,
     badge.criteriaValue || 0,
-    badge.domainId
+    badge.domainId,
   );
 
   if (!meetsCriteria) {
@@ -354,6 +357,6 @@ export async function getAllBadges() {
 
       return badges;
     },
-    3600 // 1 hour TTL
+    3600, // 1 hour TTL
   );
 }

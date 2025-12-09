@@ -29,9 +29,12 @@ const RARITY_CONFETTI_COLORS: Record<string, string[]> = {
  * Trigger confetti celebration based on badge rarity
  */
 function triggerConfetti(rarity: string) {
-  const colors = RARITY_CONFETTI_COLORS[rarity] || RARITY_CONFETTI_COLORS.common;
-  const duration = rarity === "legendary" ? 5000 : rarity === "epic" ? 3000 : 2000;
-  const particleCount = rarity === "legendary" ? 150 : rarity === "epic" ? 100 : 50;
+  const colors =
+    RARITY_CONFETTI_COLORS[rarity] || RARITY_CONFETTI_COLORS.common;
+  const duration =
+    rarity === "legendary" ? 5000 : rarity === "epic" ? 3000 : 2000;
+  const particleCount =
+    rarity === "legendary" ? 150 : rarity === "epic" ? 100 : 50;
 
   const end = Date.now() + duration;
 
@@ -73,7 +76,11 @@ function triggerConfetti(rarity: string) {
 /**
  * Full-screen celebration modal for epic and legendary badges
  */
-export function BadgeCelebration({ badge, isOpen, onClose }: BadgeCelebrationProps) {
+export function BadgeCelebration({
+  badge,
+  isOpen,
+  onClose,
+}: BadgeCelebrationProps) {
   useEffect(() => {
     if (isOpen) {
       // Trigger confetti
@@ -118,15 +125,17 @@ export function BadgeCelebration({ badge, isOpen, onClose }: BadgeCelebrationPro
             <span className="text-sm font-bold text-yellow-800 uppercase tracking-wide">
               {badge.rarity} Badge
             </span>
-            {badge.rarity === "legendary" && <span className="text-yellow-600">⭐</span>}
-            {badge.rarity === "epic" && <span className="text-purple-600">👑</span>}
+            {badge.rarity === "legendary" && (
+              <span className="text-yellow-600">⭐</span>
+            )}
+            {badge.rarity === "epic" && (
+              <span className="text-purple-600">👑</span>
+            )}
           </div>
 
           {/* Congratulations Message */}
           <p className="text-2xl">🎉</p>
-          <p className="text-sm text-gray-500">
-            Click anywhere to continue
-          </p>
+          <p className="text-sm text-gray-500">Click anywhere to continue</p>
         </div>
       </div>
     </div>

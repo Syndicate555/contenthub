@@ -9,7 +9,10 @@ interface PlatformIconProps {
 }
 
 // Platform configurations with colors and icons
-const platforms: Record<string, { name: string; color: string; bgColor: string; borderColor: string }> = {
+const platforms: Record<
+  string,
+  { name: string; color: string; bgColor: string; borderColor: string }
+> = {
   "twitter.com": {
     name: "Twitter",
     color: "#1DA1F2",
@@ -186,11 +189,18 @@ export function getPlatformInfo(source: string) {
   };
 }
 
-export function PlatformIcon({ source, size = "md", showLabel = false }: PlatformIconProps) {
+export function PlatformIcon({
+  source,
+  size = "md",
+  showLabel = false,
+}: PlatformIconProps) {
   const platform = getPlatformInfo(source);
   const sizeClass = sizeClasses[size];
 
-  const iconComponents: Record<string, React.ComponentType<{ className?: string }>> = {
+  const iconComponents: Record<
+    string,
+    React.ComponentType<{ className?: string }>
+  > = {
     "twitter.com": TwitterIcon,
     "x.com": TwitterIcon,
     "linkedin.com": LinkedInIcon,

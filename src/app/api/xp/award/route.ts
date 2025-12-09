@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     if (!user) {
       return NextResponse.json(
         { ok: false, error: "Unauthorized" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
           error: "Validation failed",
           details: parsed.error.flatten().fieldErrors,
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
     console.error("POST /api/xp/award error:", error);
     return NextResponse.json(
       { ok: false, error: "Failed to award XP" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -118,7 +118,7 @@ export async function GET() {
     console.error("GET /api/xp/award error:", error);
     return NextResponse.json(
       { ok: false, error: "Failed to fetch XP actions" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

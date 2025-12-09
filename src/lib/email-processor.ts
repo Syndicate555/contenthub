@@ -83,7 +83,7 @@ export async function processEmailItem(emailData: EmailData): Promise<void> {
 
   if (existingItem) {
     console.log(
-      `Duplicate email detected (Message-ID: ${messageId}), skipping`
+      `Duplicate email detected (Message-ID: ${messageId}), skipping`,
     );
     return;
   }
@@ -96,7 +96,7 @@ export async function processEmailItem(emailData: EmailData): Promise<void> {
 
     if (!emailContent) {
       console.error(
-        "❌ Failed to fetch email content from Resend API. Cannot process email without content."
+        "❌ Failed to fetch email content from Resend API. Cannot process email without content.",
       );
       return; // STOP PROCESSING - no content means no value to the user
     }
@@ -113,7 +113,7 @@ export async function processEmailItem(emailData: EmailData): Promise<void> {
     console.error("❌ CRITICAL: Email content is too short or empty");
     console.error(`Content length: ${content.text?.length || 0} characters`);
     console.error(
-      "Cannot provide value to user without substantive content. Aborting."
+      "Cannot provide value to user without substantive content. Aborting.",
     );
     return; // STOP PROCESSING - minimal content isn't worth saving
   }
@@ -129,8 +129,8 @@ export async function processEmailItem(emailData: EmailData): Promise<void> {
   console.log(
     `Creating email item: subject="${emailData.subject.substring(
       0,
-      50
-    )}...", source=${senderDomain}`
+      50,
+    )}...", source=${senderDomain}`,
   );
 
   // Step 8: Create Item record with email metadata
@@ -177,7 +177,7 @@ export async function processEmailItem(emailData: EmailData): Promise<void> {
     // Step 11: Determine domain from category and tags
     const domainId = await getDomainForContent(
       summarized.category,
-      summarized.tags
+      summarized.tags,
     );
 
     // Step 12: Update item with AI-processed data
@@ -224,7 +224,7 @@ export async function processEmailItem(emailData: EmailData): Promise<void> {
       const newBadges = await checkAllBadges(userId);
       if (newBadges.length > 0) {
         console.log(
-          `Badges awarded: ${newBadges.map((b) => b.name).join(", ")}`
+          `Badges awarded: ${newBadges.map((b) => b.name).join(", ")}`,
         );
       }
     } catch (badgeError) {
@@ -365,7 +365,7 @@ function cleanEmailText(text: string): string {
  * @returns Email content (html and text) or null if fetch fails
  */
 async function fetchEmailFromResend(
-  emailId: string
+  emailId: string,
 ): Promise<{ html: string; text: string } | null> {
   const apiKey = process.env.RESEND_API_KEY;
 
@@ -384,13 +384,13 @@ async function fetchEmailFromResend(
           Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
         },
-      }
+      },
     );
 
     if (!response.ok) {
       const errorText = await response.text();
       console.error(
-        `Failed to fetch email from Resend: ${response.status} ${response.statusText}`
+        `Failed to fetch email from Resend: ${response.status} ${response.statusText}`,
       );
       console.error(`Response: ${errorText}`);
       return null;
@@ -407,7 +407,7 @@ async function fetchEmailFromResend(
     console.log(
       `✅ Successfully fetched email content: ${
         data.text?.length || 0
-      } chars text, ${data.html?.length || 0} chars HTML`
+      } chars text, ${data.html?.length || 0} chars HTML`,
     );
 
     return {

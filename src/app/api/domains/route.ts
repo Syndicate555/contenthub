@@ -23,7 +23,7 @@ export async function GET() {
           },
         });
       },
-      3600 // 1 hour TTL
+      3600, // 1 hour TTL
     );
 
     // Cache domains since they rarely change
@@ -35,7 +35,7 @@ export async function GET() {
     // Cache for 1 hour since domains rarely change
     response.headers.set(
       "Cache-Control",
-      "public, max-age=3600, stale-while-revalidate=86400"
+      "public, max-age=3600, stale-while-revalidate=86400",
     );
 
     return response;
@@ -43,7 +43,7 @@ export async function GET() {
     console.error("GET /api/domains error:", error);
     return NextResponse.json(
       { ok: false, error: "Failed to fetch domains" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

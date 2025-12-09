@@ -35,43 +35,135 @@ export const CATEGORY_TO_DOMAIN: Record<string, string> = {
 // These keywords in tags can override the category-based domain
 export const TAG_DOMAIN_KEYWORDS: Record<string, string[]> = {
   finance: [
-    "investing", "investment", "stocks", "crypto", "bitcoin", "money",
-    "budgeting", "wealth", "financial", "economy", "economics", "trading",
-    "portfolio", "assets", "savings", "retirement", "401k", "ira"
+    "investing",
+    "investment",
+    "stocks",
+    "crypto",
+    "bitcoin",
+    "money",
+    "budgeting",
+    "wealth",
+    "financial",
+    "economy",
+    "economics",
+    "trading",
+    "portfolio",
+    "assets",
+    "savings",
+    "retirement",
+    "401k",
+    "ira",
   ],
   career: [
-    "career", "job", "interview", "resume", "linkedin", "networking",
-    "salary", "promotion", "workplace", "professional", "hiring",
-    "management", "leadership", "mentor", "skill"
+    "career",
+    "job",
+    "interview",
+    "resume",
+    "linkedin",
+    "networking",
+    "salary",
+    "promotion",
+    "workplace",
+    "professional",
+    "hiring",
+    "management",
+    "leadership",
+    "mentor",
+    "skill",
   ],
   health: [
-    "health", "fitness", "workout", "exercise", "gym", "nutrition",
-    "diet", "mental health", "meditation", "sleep", "wellness",
-    "yoga", "running", "weight", "muscle"
+    "health",
+    "fitness",
+    "workout",
+    "exercise",
+    "gym",
+    "nutrition",
+    "diet",
+    "mental health",
+    "meditation",
+    "sleep",
+    "wellness",
+    "yoga",
+    "running",
+    "weight",
+    "muscle",
   ],
   philosophy: [
-    "philosophy", "wisdom", "mindset", "stoic", "thinking", "ethics",
-    "life", "meaning", "happiness", "psychology", "cognitive", "bias",
-    "decision", "thinking"
+    "philosophy",
+    "wisdom",
+    "mindset",
+    "stoic",
+    "thinking",
+    "ethics",
+    "life",
+    "meaning",
+    "happiness",
+    "psychology",
+    "cognitive",
+    "bias",
+    "decision",
+    "thinking",
   ],
   relationships: [
-    "relationship", "dating", "marriage", "family", "social",
-    "communication", "friendship", "love", "parenting", "children"
+    "relationship",
+    "dating",
+    "marriage",
+    "family",
+    "social",
+    "communication",
+    "friendship",
+    "love",
+    "parenting",
+    "children",
   ],
   productivity: [
-    "productivity", "habit", "routine", "time management", "focus",
-    "efficiency", "workflow", "automation", "tools", "notion",
-    "obsidian", "todoist", "calendar"
+    "productivity",
+    "habit",
+    "routine",
+    "time management",
+    "focus",
+    "efficiency",
+    "workflow",
+    "automation",
+    "tools",
+    "notion",
+    "obsidian",
+    "todoist",
+    "calendar",
   ],
   creativity: [
-    "design", "art", "creative", "writing", "music", "photography",
-    "video", "animation", "illustration", "ux", "ui", "figma",
-    "adobe", "photoshop"
+    "design",
+    "art",
+    "creative",
+    "writing",
+    "music",
+    "photography",
+    "video",
+    "animation",
+    "illustration",
+    "ux",
+    "ui",
+    "figma",
+    "adobe",
+    "photoshop",
   ],
   technology: [
-    "programming", "coding", "software", "ai", "machine learning",
-    "web", "app", "developer", "javascript", "python", "react",
-    "api", "database", "cloud", "startup", "tech"
+    "programming",
+    "coding",
+    "software",
+    "ai",
+    "machine learning",
+    "web",
+    "app",
+    "developer",
+    "javascript",
+    "python",
+    "react",
+    "api",
+    "database",
+    "cloud",
+    "startup",
+    "tech",
   ],
 };
 
@@ -89,7 +181,7 @@ async function getDomainId(domainName: string): Promise<string | null> {
     const domains = await db.domain.findMany({
       select: { id: true, name: true },
     });
-    domainCache = new Map(domains.map(d => [d.name, d.id]));
+    domainCache = new Map(domains.map((d) => [d.name, d.id]));
   }
 
   return domainCache.get(domainName) || null;
@@ -101,18 +193,24 @@ async function getDomainId(domainName: string): Promise<string | null> {
  */
 export async function getDomainForContent(
   category: string | null,
-  tags: string[]
+  tags: string[],
 ): Promise<string | null> {
   // Normalize tags for matching
-  const normalizedTags = tags.map(t => t.toLowerCase().trim());
+  const normalizedTags = tags.map((t) => t.toLowerCase().trim());
 
   // Score each domain based on tag matches
   const domainScores: Record<string, number> = {};
 
   // Priority order for checking domains (technology first since it has specific keywords)
   const domainOrder = [
-    "technology", "finance", "productivity", "creativity",
-    "health", "career", "philosophy", "relationships"
+    "technology",
+    "finance",
+    "productivity",
+    "creativity",
+    "health",
+    "career",
+    "philosophy",
+    "relationships",
   ];
 
   for (const domainName of domainOrder) {
@@ -128,15 +226,20 @@ export async function getDomainForContent(
           score += 3;
         }
         // Tag starts with keyword (e.g., "programming" matches tag "programming language")
-        else if (tag.startsWith(lowerKeyword + " ") || tag.endsWith(" " + lowerKeyword)) {
+        else if (
+          tag.startsWith(lowerKeyword + " ") ||
+          tag.endsWith(" " + lowerKeyword)
+        ) {
           score += 2;
         }
         // Tag contains keyword as a word (word boundary matching)
-        else if (tag.includes(lowerKeyword) &&
-                 (tag === lowerKeyword ||
-                  tag.startsWith(lowerKeyword + " ") ||
-                  tag.endsWith(" " + lowerKeyword) ||
-                  tag.includes(" " + lowerKeyword + " "))) {
+        else if (
+          tag.includes(lowerKeyword) &&
+          (tag === lowerKeyword ||
+            tag.startsWith(lowerKeyword + " ") ||
+            tag.endsWith(" " + lowerKeyword) ||
+            tag.includes(" " + lowerKeyword + " "))
+        ) {
           score += 1;
         }
       }

@@ -17,7 +17,14 @@ export interface ProcessItemResult {
   item: Item;
   success: boolean;
   error?: string;
-  newBadges?: Array<{ id: string; key: string; name: string; description: string; icon: string; rarity: string }>;
+  newBadges?: Array<{
+    id: string;
+    key: string;
+    name: string;
+    description: string;
+    icon: string;
+    rarity: string;
+  }>;
 }
 
 /**
@@ -28,7 +35,7 @@ export interface ProcessItemResult {
  * 4. Update item with processed data
  */
 export async function processItem(
-  input: ProcessItemInput
+  input: ProcessItemInput,
 ): Promise<ProcessItemResult> {
   const { url, note, userId } = input;
 
@@ -66,7 +73,9 @@ export async function processItem(
 
   // Track SAVE_ITEM activity for streak maintenance
   try {
-    await trackActivity(userId, STREAK_ACTIVITIES.SAVE_ITEM, { itemId: item.id });
+    await trackActivity(userId, STREAK_ACTIVITIES.SAVE_ITEM, {
+      itemId: item.id,
+    });
   } catch (activityError) {
     console.error("Failed to track save activity:", activityError);
     // Don't fail the whole operation for activity tracking errors
@@ -103,7 +112,9 @@ export async function processItem(
     const allowedExtensions = [".jpg", ".jpeg", ".png", ".webp", ".gif"];
     const isSupportedImage =
       extracted.imageUrl &&
-      allowedExtensions.some((ext) => extracted.imageUrl!.toLowerCase().includes(ext));
+      allowedExtensions.some((ext) =>
+        extracted.imageUrl!.toLowerCase().includes(ext),
+      );
 
     if (!isSupportedImage) {
       // Keep the image for display purposes but avoid sending unsupported types to Vision
@@ -136,11 +147,13 @@ export async function processItem(
     // Step 4: Determine domain from category and tags
     const domainId = await getDomainForContent(
       summarized.category,
-      summarized.tags
+      summarized.tags,
     );
 
     // Step 5: Update item with processed data including domain
-    console.log(`Pipeline: Saving item with imageUrl=${extracted.imageUrl ? 'YES: ' + extracted.imageUrl.substring(0, 80) + '...' : 'NO'}, domainId=${domainId || 'none'}`);
+    console.log(
+      `Pipeline: Saving item with imageUrl=${extracted.imageUrl ? "YES: " + extracted.imageUrl.substring(0, 80) + "..." : "NO"}, domainId=${domainId || "none"}`,
+    );
     const updatedItem = await db.item.update({
       where: { id: item.id },
       data: {
@@ -179,11 +192,13 @@ export async function processItem(
       const activityResult = await trackActivity(
         userId,
         STREAK_ACTIVITIES.PROCESS_ITEM,
-        { itemId: updatedItem.id }
+        { itemId: updatedItem.id },
       );
 
       if (activityResult.streakResult) {
-        console.log(`Activity tracked (PROCESS_ITEM): streak=${activityResult.streakResult.currentStreak}, maintained=${activityResult.streakResult.streakMaintained}`);
+        console.log(
+          `Activity tracked (PROCESS_ITEM): streak=${activityResult.streakResult.currentStreak}, maintained=${activityResult.streakResult.streakMaintained}`,
+        );
       }
     } catch (activityError) {
       console.error("Failed to track activity:", activityError);
@@ -191,12 +206,21 @@ export async function processItem(
     }
 
     // Step 8: Check and award eligible badges
-    let awardedBadges: Array<{ id: string; key: string; name: string; description: string; icon: string; rarity: string }> = [];
+    let awardedBadges: Array<{
+      id: string;
+      key: string;
+      name: string;
+      description: string;
+      icon: string;
+      rarity: string;
+    }> = [];
     try {
       const newBadges = await checkAllBadges(userId);
       if (newBadges.length > 0) {
-        console.log(`Badges awarded: ${newBadges.map(b => b.name).join(", ")}`);
-        awardedBadges = newBadges.map(badge => ({
+        console.log(
+          `Badges awarded: ${newBadges.map((b) => b.name).join(", ")}`,
+        );
+        awardedBadges = newBadges.map((badge) => ({
           id: badge.id,
           key: badge.key,
           name: badge.name,
@@ -223,7 +247,8 @@ export async function processItem(
       where: { id: item.id },
       data: {
         title: url,
-        summary: "Failed to process this URL. You can view the original content.",
+        summary:
+          "Failed to process this URL. You can view the original content.",
         tags: ["processing_failed"],
       },
     });

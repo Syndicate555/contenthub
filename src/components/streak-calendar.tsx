@@ -29,7 +29,7 @@ interface DayCell {
  */
 function generateCalendarGrid(
   days: number,
-  activityDates: Set<string>
+  activityDates: Set<string>,
 ): DayCell[][] {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -130,7 +130,7 @@ function calculateCurrentStreak(activityDates: Set<string>): number {
 export function StreakCalendar({ days = 60 }: { days?: number }) {
   const { data, error, isLoading } = useSWR<CalendarData>(
     `/api/streak/calendar?days=${days}`,
-    fetcher
+    fetcher,
   );
 
   const calendarGrid = useMemo(() => {
@@ -160,7 +160,20 @@ export function StreakCalendar({ days = 60 }: { days?: number }) {
   }
 
   const weekDays = ["S", "M", "T", "W", "T", "F", "S"];
-  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const monthNames = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
 
   // Get month labels for the calendar
   const getMonthLabel = (weekIndex: number) => {
@@ -231,12 +244,12 @@ export function StreakCalendar({ days = 60 }: { days?: number }) {
                         cell.isFuture
                           ? "bg-gray-50"
                           : cell.hasActivity
-                          ? cell.isToday
-                            ? "bg-orange-500 ring-1 ring-orange-400"
-                            : "bg-green-500 hover:bg-green-600 hover:scale-110"
-                          : "bg-gray-200 hover:bg-gray-300"
+                            ? cell.isToday
+                              ? "bg-orange-500 ring-1 ring-orange-400"
+                              : "bg-green-500 hover:bg-green-600 hover:scale-110"
+                            : "bg-gray-200 hover:bg-gray-300"
                       }`}
-                      title={`${cell.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}${
+                      title={`${cell.date.toLocaleDateString("en-US", { month: "short", day: "numeric" })}${
                         cell.hasActivity ? " ✓" : ""
                       }${cell.isToday ? " (Today)" : ""}`}
                     />
@@ -260,8 +273,11 @@ export function StreakCalendar({ days = 60 }: { days?: number }) {
           </div>
 
           <div className="text-[11px] text-gray-600">
-            <span className="font-medium">{data.totalActiveDays}</span> active • {" "}
-            <span className="font-medium">{Math.round((data.totalActiveDays / days) * 100)}%</span> consistency
+            <span className="font-medium">{data.totalActiveDays}</span> active •{" "}
+            <span className="font-medium">
+              {Math.round((data.totalActiveDays / days) * 100)}%
+            </span>{" "}
+            consistency
           </div>
         </div>
       </div>

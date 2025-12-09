@@ -14,7 +14,7 @@ export async function GET() {
     if (!user) {
       return NextResponse.json(
         { ok: false, error: "Unauthorized" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -60,7 +60,7 @@ export async function GET() {
 
     // Create import count map
     const countMap = new Map<string, number>(
-      importCounts.map((c) => [c.importSource!, c._count])
+      importCounts.map((c) => [c.importSource!, c._count]),
     );
 
     return NextResponse.json(
@@ -89,13 +89,13 @@ export async function GET() {
         headers: {
           "Cache-Control": "private, max-age=300, stale-while-revalidate=600",
         },
-      }
+      },
     );
   } catch (error) {
     console.error("GET /api/dashboard/settings error:", error);
     return NextResponse.json(
       { ok: false, error: "Failed to fetch settings data" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

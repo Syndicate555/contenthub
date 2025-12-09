@@ -39,19 +39,19 @@ export default function ItemsPage() {
   // Filter state (local, synced to URL)
   const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
   const [statusFilter, setStatusFilter] = useState<ItemStatus | "all">(
-    (searchParams.get("status") as ItemStatus | "all") || "all"
+    (searchParams.get("status") as ItemStatus | "all") || "all",
   );
   const [categoryFilter, setCategoryFilter] = useState<ItemCategory | null>(
-    (searchParams.get("category") as ItemCategory) || null
+    (searchParams.get("category") as ItemCategory) || null,
   );
   const [platformFilter, setPlatformFilter] = useState<string | null>(
-    searchParams.get("platform") || null
+    searchParams.get("platform") || null,
   );
   const [tagFilter, setTagFilter] = useState<string | null>(
-    searchParams.get("tag") || null
+    searchParams.get("tag") || null,
   );
   const [currentPage, setCurrentPage] = useState(
-    parseInt(searchParams.get("page") || "1", 10)
+    parseInt(searchParams.get("page") || "1", 10),
   );
 
   // Debounce search query to avoid too many API calls
@@ -98,11 +98,14 @@ export default function ItemsPage() {
   // Collect unique tags from items for the filter dropdown
   const allTags = useMemo(
     () => [...new Set(items.flatMap((item) => item.tags || []))],
-    [items]
+    [items],
   );
 
   // Update URL when filters change (batched to avoid rapid history pushes)
-  const updateUrl = (updates: Record<string, string | null>, immediate = false) => {
+  const updateUrl = (
+    updates: Record<string, string | null>,
+    immediate = false,
+  ) => {
     // Clear existing timer
     if (urlUpdateTimerRef.current) {
       clearTimeout(urlUpdateTimerRef.current);
@@ -112,7 +115,8 @@ export default function ItemsPage() {
       startTransition(() => {
         const params = new URLSearchParams();
 
-        const newSearchQuery = updates.q !== undefined ? updates.q : searchQuery;
+        const newSearchQuery =
+          updates.q !== undefined ? updates.q : searchQuery;
         const newStatus =
           updates.status !== undefined ? updates.status : statusFilter;
         const newCategory =
@@ -171,11 +175,11 @@ export default function ItemsPage() {
         return {
           ...current,
           data: current.data.map((item) =>
-            item.id === id ? { ...item, status: newStatus } : item
+            item.id === id ? { ...item, status: newStatus } : item,
           ),
         };
       },
-      { revalidate: false }
+      { revalidate: false },
     );
 
     // Make the actual API call
@@ -253,7 +257,7 @@ export default function ItemsPage() {
               "p-2 rounded-md transition-colors",
               viewMode === "folders" && !hasActiveFilters
                 ? "bg-white shadow-sm text-gray-900"
-                : "text-gray-500 hover:text-gray-700"
+                : "text-gray-500 hover:text-gray-700",
             )}
           >
             <Grid3X3 className="w-4 h-4" />
@@ -264,7 +268,7 @@ export default function ItemsPage() {
               "p-2 rounded-md transition-colors",
               isInListMode
                 ? "bg-white shadow-sm text-gray-900"
-                : "text-gray-500 hover:text-gray-700"
+                : "text-gray-500 hover:text-gray-700",
             )}
           >
             <List className="w-4 h-4" />
@@ -361,7 +365,7 @@ export default function ItemsPage() {
           <div
             className={cn(
               "transition-opacity duration-150",
-              isItemsValidating && !isItemsLoading ? "opacity-75" : ""
+              isItemsValidating && !isItemsLoading ? "opacity-75" : "",
             )}
           >
             {/* Loading state - show skeletons when loading (including filter changes) */}

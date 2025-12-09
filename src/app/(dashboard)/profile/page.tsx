@@ -19,13 +19,14 @@ async function getProfileData() {
     if (!user) return null;
 
     // Fetch all profile data in parallel (same as API route)
-    const [stats, domainStats, recentEvents, earnedBadges, allBadges] = await Promise.all([
-      getUserStats(user.id),
-      getUserDomainStats(user.id),
-      getRecentXPEvents(user.id, 10),
-      getUserBadges(user.id),
-      getAllBadges(),
-    ]);
+    const [stats, domainStats, recentEvents, earnedBadges, allBadges] =
+      await Promise.all([
+        getUserStats(user.id),
+        getUserDomainStats(user.id),
+        getRecentXPEvents(user.id, 10),
+        getUserBadges(user.id),
+        getAllBadges(),
+      ]);
 
     const earnedBadgeIds = new Set(earnedBadges.map((b) => b.id));
     const badgesWithProgress = allBadges.map((badge) => {

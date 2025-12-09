@@ -45,7 +45,9 @@ export function RecentActivity({ events }: RecentActivityProps) {
         <h2 className="text-lg font-semibold mb-4">Recent Activity</h2>
         <div className="text-center py-8 text-gray-500">
           <p className="text-sm">No recent activity yet</p>
-          <p className="text-xs mt-1">Process your first item to get started!</p>
+          <p className="text-xs mt-1">
+            Process your first item to get started!
+          </p>
         </div>
       </div>
     );

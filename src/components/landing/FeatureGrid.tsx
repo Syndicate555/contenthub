@@ -1,40 +1,53 @@
-import { Sparkles, Inbox, Zap, ShieldCheck, BotMessageSquare, Gauge } from "lucide-react";
+import {
+  Sparkles,
+  Inbox,
+  Zap,
+  ShieldCheck,
+  BotMessageSquare,
+  Gauge,
+} from "lucide-react";
 
 export function FeatureGrid() {
   const features = [
     {
       title: "Capture from anywhere",
-      description: "Drop in links from Twitter, Instagram, LinkedIn, or any web page. Forward newsletters to your personal email address.",
+      description:
+        "Drop in links from Twitter, Instagram, LinkedIn, or any web page. Forward newsletters to your personal email address.",
       icon: Inbox,
       tone: "from-indigo-500/15 to-indigo-500/5",
     },
     {
       title: "AI distillation",
-      description: "Automatic extraction, summaries, tags, domains, and image previews. Uses GPT-4.1-mini and 4o-mini for vision.",
+      description:
+        "Automatic extraction, summaries, tags, domains, and image previews. Uses GPT-4.1-mini and 4o-mini for vision.",
       icon: BotMessageSquare,
       tone: "from-emerald-500/15 to-emerald-500/5",
     },
     {
       title: "Daily review mode",
-      description: "A focused Today inbox to Pin, Archive, or Delete quickly—no more scroll fatigue or lost tabs.",
+      description:
+        "A focused Today inbox to Pin, Archive, or Delete quickly—no more scroll fatigue or lost tabs.",
       icon: Gauge,
       tone: "from-cyan-500/15 to-cyan-500/5",
     },
     {
       title: "Built-in safety & control",
-      description: "Clerk auth, token encryption, webhook signature verification, and platform-specific fallbacks.",
+      description:
+        "Clerk auth, token encryption, webhook signature verification, and platform-specific fallbacks.",
       icon: ShieldCheck,
       tone: "from-slate-500/15 to-slate-500/5",
     },
     {
       title: "Gamified retention",
-      description: "Earn XP, keep streaks alive, unlock badges, and see domain-level progress for your focus areas.",
+      description:
+        "Earn XP, keep streaks alive, unlock badges, and see domain-level progress for your focus areas.",
       icon: Sparkles,
       tone: "from-amber-500/15 to-amber-500/5",
     },
     {
       title: "Fast and responsive",
-      description: "Prefetching, SWR caching, optimized queries, and smooth micro-interactions for instant navigation.",
+      description:
+        "Prefetching, SWR caching, optimized queries, and smooth micro-interactions for instant navigation.",
       icon: Zap,
       tone: "from-blue-500/15 to-blue-500/5",
     },
@@ -51,8 +64,9 @@ export function FeatureGrid() {
             A thoughtful pipeline from capture to clarity to action.
           </h2>
           <p className="text-lg text-gray-600">
-            Purpose-built for creators and operators who live across social feeds and newsletters.
-            Everything is distilled, searchable, and tracked.
+            Purpose-built for creators and operators who live across social
+            feeds and newsletters. Everything is distilled, searchable, and
+            tracked.
           </p>
         </div>
         <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">

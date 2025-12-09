@@ -15,7 +15,10 @@ export async function GET() {
     const { userId: clerkId } = await auth();
 
     if (!clerkId) {
-      return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { ok: false, error: "Unauthorized" },
+        { status: 401 },
+      );
     }
 
     // Get user from database
@@ -24,17 +27,21 @@ export async function GET() {
     });
 
     if (!user) {
-      return NextResponse.json({ ok: false, error: "User not found" }, { status: 404 });
+      return NextResponse.json(
+        { ok: false, error: "User not found" },
+        { status: 404 },
+      );
     }
 
     // Fetch all profile data in parallel for maximum performance
-    const [stats, domainStats, recentEvents, earnedBadges, allBadges] = await Promise.all([
-      getUserStats(user.id),
-      getUserDomainStats(user.id),
-      getRecentXPEvents(user.id, 10),
-      getUserBadges(user.id),
-      getAllBadges(),
-    ]);
+    const [stats, domainStats, recentEvents, earnedBadges, allBadges] =
+      await Promise.all([
+        getUserStats(user.id),
+        getUserDomainStats(user.id),
+        getRecentXPEvents(user.id, 10),
+        getUserBadges(user.id),
+        getAllBadges(),
+      ]);
 
     // Map earned badges for quick lookup
     const earnedBadgeIds = new Set(earnedBadges.map((b) => b.id));
@@ -118,7 +125,9 @@ export async function GET() {
           badgeStats: {
             total: allBadges.length,
             earned: earnedBadges.length,
-            progress: Math.round((earnedBadges.length / allBadges.length) * 100),
+            progress: Math.round(
+              (earnedBadges.length / allBadges.length) * 100,
+            ),
             unseen: earnedBadges.filter((b) => !b.seenAt).length,
           },
         },
@@ -127,13 +136,13 @@ export async function GET() {
         headers: {
           "Cache-Control": "private, max-age=60, stale-while-revalidate=300",
         },
-      }
+      },
     );
   } catch (error) {
     console.error("GET /api/dashboard/profile error:", error);
     return NextResponse.json(
       { ok: false, error: "Failed to fetch profile data" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

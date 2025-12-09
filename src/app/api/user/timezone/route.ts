@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     if (!user) {
       return NextResponse.json(
         { ok: false, error: "Unauthorized" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -29,14 +29,14 @@ export async function POST(request: NextRequest) {
     if (!timezone || typeof timezone !== "string") {
       return NextResponse.json(
         { ok: false, error: "Timezone is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (!isValidTimezone(timezone)) {
       return NextResponse.json(
         { ok: false, error: "Invalid IANA timezone identifier" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -59,9 +59,9 @@ export async function POST(request: NextRequest) {
       {
         ok: false,
         error: "Failed to update timezone",
-        details: error instanceof Error ? error.message : "Unknown error"
+        details: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

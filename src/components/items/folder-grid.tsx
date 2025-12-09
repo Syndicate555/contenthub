@@ -45,7 +45,9 @@ export function FolderGrid({
         <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
           <FolderOpen className="w-8 h-8 text-gray-400" />
         </div>
-        <h2 className="text-lg font-medium text-gray-900 mb-2">No categories yet</h2>
+        <h2 className="text-lg font-medium text-gray-900 mb-2">
+          No categories yet
+        </h2>
         <p className="text-gray-500">
           Add some content to see your items organized by category.
         </p>
@@ -60,7 +62,8 @@ export function FolderGrid({
         <div>
           <h2 className="text-lg font-semibold text-gray-900">Categories</h2>
           <p className="text-sm text-gray-500">
-            {totalItems} total item{totalItems !== 1 ? "s" : ""} across {categories.length} categories
+            {totalItems} total item{totalItems !== 1 ? "s" : ""} across{" "}
+            {categories.length} categories
           </p>
         </div>
         {selectedCategory && (
@@ -85,9 +88,11 @@ export function FolderGrid({
             thumbnails={cat.thumbnails}
             titles={cat.titles}
             isSelected={selectedCategory === cat.category}
-            onClick={() => onCategorySelect(
-              selectedCategory === cat.category ? null : cat.category
-            )}
+            onClick={() =>
+              onCategorySelect(
+                selectedCategory === cat.category ? null : cat.category,
+              )
+            }
           />
         ))}
       </div>

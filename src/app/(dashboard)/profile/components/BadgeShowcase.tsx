@@ -110,22 +110,33 @@ function sortBadges(badges: Badge[]): Badge[] {
   });
 }
 
-export function BadgeShowcase({ badges, badgeStats, userStats }: BadgeShowcaseProps) {
+export function BadgeShowcase({
+  badges,
+  badgeStats,
+  userStats,
+}: BadgeShowcaseProps) {
   const [selectedBadge, setSelectedBadge] = useState<Badge | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const total = badgeStats?.total || badges.length || 14;
-  const earned = badgeStats?.earned || badges.filter(b => b.earned).length;
+  const earned = badgeStats?.earned || badges.filter((b) => b.earned).length;
 
   // Mark badge as seen when modal opens
   useEffect(() => {
-    if (isModalOpen && selectedBadge && selectedBadge.earned && !selectedBadge.seenAt) {
+    if (
+      isModalOpen &&
+      selectedBadge &&
+      selectedBadge.earned &&
+      !selectedBadge.seenAt
+    ) {
       // Mark this badge as seen
       fetch("/api/badges/mark-seen", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ badgeIds: [selectedBadge.id] }),
-      }).catch(error => console.error("Failed to mark badge as seen:", error));
+      }).catch((error) =>
+        console.error("Failed to mark badge as seen:", error),
+      );
     }
   }, [isModalOpen, selectedBadge]);
 
@@ -192,7 +203,9 @@ export function BadgeShowcase({ badges, badgeStats, userStats }: BadgeShowcasePr
                     <span className="flex h-6 w-6">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                       <span className="relative inline-flex rounded-full h-6 w-6 bg-red-500 items-center justify-center">
-                        <span className="text-[10px] font-bold text-white">NEW</span>
+                        <span className="text-[10px] font-bold text-white">
+                          NEW
+                        </span>
                       </span>
                     </span>
                   </div>

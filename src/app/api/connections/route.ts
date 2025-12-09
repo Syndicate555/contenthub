@@ -14,7 +14,7 @@ export async function GET() {
     if (!clerkId) {
       return NextResponse.json(
         { ok: false, error: "Unauthorized" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -26,7 +26,7 @@ export async function GET() {
     if (!user) {
       return NextResponse.json(
         { ok: false, error: "User not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -54,14 +54,26 @@ export async function GET() {
     });
 
     const countMap = new Map<string | null, number>(
-      importCounts.map((c: { importSource: string | null; _count: number }) => [c.importSource, c._count])
+      importCounts.map((c: { importSource: string | null; _count: number }) => [
+        c.importSource,
+        c._count,
+      ]),
     );
 
     // Enrich connections with import counts
-    const enrichedConnections = connections.map((conn: { id: string; provider: string; providerHandle: string | null; syncEnabled: boolean; lastSyncAt: Date | null; createdAt: Date }) => ({
-      ...conn,
-      importedCount: countMap.get(conn.provider) || 0,
-    }));
+    const enrichedConnections = connections.map(
+      (conn: {
+        id: string;
+        provider: string;
+        providerHandle: string | null;
+        syncEnabled: boolean;
+        lastSyncAt: Date | null;
+        createdAt: Date;
+      }) => ({
+        ...conn,
+        importedCount: countMap.get(conn.provider) || 0,
+      }),
+    );
 
     return NextResponse.json({
       ok: true,
@@ -71,7 +83,7 @@ export async function GET() {
     console.error("Error fetching connections:", error);
     return NextResponse.json(
       { ok: false, error: "Failed to fetch connections" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

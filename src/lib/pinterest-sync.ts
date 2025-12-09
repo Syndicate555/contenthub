@@ -30,7 +30,7 @@ interface SyncOptions {
  */
 async function isPinImported(
   userId: string,
-  externalId: string
+  externalId: string,
 ): Promise<boolean> {
   const existing = await prisma.item.findFirst({
     where: {
@@ -47,7 +47,7 @@ async function isPinImported(
  */
 async function importPin(
   userId: string,
-  pin: PinterestPin
+  pin: PinterestPin,
 ): Promise<{ success: boolean; error?: string }> {
   try {
     // Check for duplicate
@@ -127,7 +127,7 @@ async function importPin(
  */
 export async function syncPinterestPins(
   userId: string,
-  options: SyncOptions = {}
+  options: SyncOptions = {},
 ): Promise<SyncResult> {
   const { maxPins = 50, selectedBoards } = options;
 
@@ -167,7 +167,7 @@ export async function syncPinterestPins(
     }
 
     console.log(
-      `Syncing ${boardsToSync.length} boards (max ${maxPins} pins)...`
+      `Syncing ${boardsToSync.length} boards (max ${maxPins} pins)...`,
     );
 
     let totalPinsProcessed = 0;
@@ -183,7 +183,7 @@ export async function syncPinterestPins(
         board.id,
         board.name,
         undefined,
-        Math.min(25, maxPins - totalPinsProcessed)
+        Math.min(25, maxPins - totalPinsProcessed),
       );
 
       // Process pins
@@ -231,14 +231,14 @@ export async function syncPinterestPins(
 
     result.success = true;
     console.log(
-      `Pinterest sync complete: ${result.synced} synced, ${result.skipped} skipped, ${result.failed} failed`
+      `Pinterest sync complete: ${result.synced} synced, ${result.skipped} skipped, ${result.failed} failed`,
     );
 
     return result;
   } catch (error) {
     console.error("Pinterest sync failed:", error);
     result.errors.push(
-      error instanceof Error ? error.message : "Unknown error"
+      error instanceof Error ? error.message : "Unknown error",
     );
     return result;
   }

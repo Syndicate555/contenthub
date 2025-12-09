@@ -12,7 +12,13 @@ interface ImageModalProps {
   sourceUrl?: string;
 }
 
-export function ImageModal({ isOpen, onClose, imageUrl, alt, sourceUrl }: ImageModalProps) {
+export function ImageModal({
+  isOpen,
+  onClose,
+  imageUrl,
+  alt,
+  sourceUrl,
+}: ImageModalProps) {
   // Handle escape key
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -20,7 +26,7 @@ export function ImageModal({ isOpen, onClose, imageUrl, alt, sourceUrl }: ImageM
         onClose();
       }
     },
-    [onClose]
+    [onClose],
   );
 
   useEffect(() => {
@@ -93,7 +99,9 @@ export function ImageModal({ isOpen, onClose, imageUrl, alt, sourceUrl }: ImageM
 
       {/* Close hint */}
       <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-white/50 text-sm">
-        Press <kbd className="px-1.5 py-0.5 bg-white/10 rounded text-xs">ESC</kbd> or click outside to close
+        Press{" "}
+        <kbd className="px-1.5 py-0.5 bg-white/10 rounded text-xs">ESC</kbd> or
+        click outside to close
       </div>
     </div>
   );

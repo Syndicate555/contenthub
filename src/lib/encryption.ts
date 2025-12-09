@@ -20,7 +20,7 @@ function getEncryptionKey(): Buffer {
   if (!key) {
     throw new Error(
       "TOKEN_ENCRYPTION_KEY environment variable is required for token encryption. " +
-      "Generate one with: openssl rand -hex 32"
+        "Generate one with: openssl rand -hex 32",
     );
   }
 
@@ -35,7 +35,7 @@ function getEncryptionKey(): Buffer {
   }
 
   throw new Error(
-    "TOKEN_ENCRYPTION_KEY must be either 64 hex characters or 32 raw characters"
+    "TOKEN_ENCRYPTION_KEY must be either 64 hex characters or 32 raw characters",
   );
 }
 

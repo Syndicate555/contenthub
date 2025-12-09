@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
     if (!token || token !== process.env.QUICK_ADD_SECRET) {
       return NextResponse.json(
         { ok: false, error: "Invalid or missing authorization" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     if (!parsed.success) {
       return NextResponse.json(
         { ok: false, error: "Invalid input", details: parsed.error.flatten() },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -34,8 +34,11 @@ export async function POST(request: NextRequest) {
 
     if (!user) {
       return NextResponse.json(
-        { ok: false, error: "No user found. Please sign in to the web app first." },
-        { status: 404 }
+        {
+          ok: false,
+          error: "No user found. Please sign in to the web app first.",
+        },
+        { status: 404 },
       );
     }
 
@@ -57,7 +60,7 @@ export async function POST(request: NextRequest) {
     console.error("POST /api/quick-add error:", error);
     return NextResponse.json(
       { ok: false, error: "Failed to add item" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

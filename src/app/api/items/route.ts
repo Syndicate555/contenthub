@@ -13,7 +13,10 @@ export async function GET(request: NextRequest) {
     const user = await getCurrentUser();
 
     if (!user) {
-      return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { ok: false, error: "Unauthorized" },
+        { status: 401 },
+      );
     }
 
     // Parse query params
@@ -40,8 +43,8 @@ export async function GET(request: NextRequest) {
       const existing = Array.isArray(where.AND)
         ? where.AND
         : where.AND
-        ? [where.AND]
-        : [];
+          ? [where.AND]
+          : [];
       where.AND = [...existing, ...filters];
     };
 
@@ -82,7 +85,9 @@ export async function GET(request: NextRequest) {
       appendAndFilters(platformFilters);
     } else if (query.platform) {
       // Fallback: substring match if unknown slug
-      appendAndFilters([{ source: { contains: query.platform, mode: "insensitive" } }]);
+      appendAndFilters([
+        { source: { contains: query.platform, mode: "insensitive" } },
+      ]);
     }
 
     // Search query
@@ -136,7 +141,7 @@ export async function GET(request: NextRequest) {
     ]);
 
     // Fetch XP events and focus areas in parallel
-    const itemIds = items.map(item => item.id);
+    const itemIds = items.map((item) => item.id);
     const [xpEvents, focusAreas] = await Promise.all([
       itemIds.length > 0
         ? db.xPEvent.findMany({
@@ -158,24 +163,33 @@ export async function GET(request: NextRequest) {
     ]);
 
     // Group XP by item
-    const xpByItem = xpEvents.reduce((acc, event) => {
-      if (!event.itemId) return acc;
-      if (!acc[event.itemId]) {
-        acc[event.itemId] = { total: 0, breakdown: {} };
-      }
-      acc[event.itemId].total += event.xpAmount;
-      acc[event.itemId].breakdown[event.action] = (acc[event.itemId].breakdown[event.action] || 0) + event.xpAmount;
-      return acc;
-    }, {} as Record<string, { total: number; breakdown: Record<string, number> }>);
+    const xpByItem = xpEvents.reduce(
+      (acc, event) => {
+        if (!event.itemId) return acc;
+        if (!acc[event.itemId]) {
+          acc[event.itemId] = { total: 0, breakdown: {} };
+        }
+        acc[event.itemId].total += event.xpAmount;
+        acc[event.itemId].breakdown[event.action] =
+          (acc[event.itemId].breakdown[event.action] || 0) + event.xpAmount;
+        return acc;
+      },
+      {} as Record<
+        string,
+        { total: number; breakdown: Record<string, number> }
+      >,
+    );
 
-    const focusAreaDomainIds = new Set(focusAreas.map(fa => fa.domainId));
+    const focusAreaDomainIds = new Set(focusAreas.map((fa) => fa.domainId));
 
     // Enrich items with gamification data
-    const enrichedItems = items.map(item => ({
+    const enrichedItems = items.map((item) => ({
       ...item,
       xpEarned: xpByItem[item.id]?.total || 0,
       xpBreakdown: xpByItem[item.id]?.breakdown || {},
-      isInFocusArea: item.domainId ? focusAreaDomainIds.has(item.domainId) : false,
+      isInFocusArea: item.domainId
+        ? focusAreaDomainIds.has(item.domainId)
+        : false,
     }));
 
     // Calculate pagination metadata
@@ -204,7 +218,7 @@ export async function GET(request: NextRequest) {
     console.error("GET /api/items error:", error);
     return NextResponse.json(
       { ok: false, error: "Failed to fetch items" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -216,7 +230,10 @@ export async function POST(request: NextRequest) {
     const user = await getCurrentUser();
 
     if (!user) {
-      return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { ok: false, error: "Unauthorized" },
+        { status: 401 },
+      );
     }
 
     // Parse and validate body
@@ -226,7 +243,7 @@ export async function POST(request: NextRequest) {
     if (!parsed.success) {
       return NextResponse.json(
         { ok: false, error: "Invalid input", details: parsed.error.flatten() },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -239,13 +256,13 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(
       { ok: true, data: result.item, newBadges: result.newBadges },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error) {
     console.error("POST /api/items error:", error);
     return NextResponse.json(
       { ok: false, error: "Failed to create item" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

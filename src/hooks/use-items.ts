@@ -82,13 +82,18 @@ export function useItems(params: ItemsQueryParams = {}) {
   // Simple approach: only fetch if auth is ready
   const shouldFetch = isLoaded && userId;
 
-  const { data, error, isLoading, isValidating, mutate: mutateItems } =
-    useSWR<ItemsResponse>(shouldFetch ? url : null, {
-      // Only validate on mount
-      revalidateOnFocus: false,
-      revalidateOnMount: true,
-      revalidateOnReconnect: false,
-    });
+  const {
+    data,
+    error,
+    isLoading,
+    isValidating,
+    mutate: mutateItems,
+  } = useSWR<ItemsResponse>(shouldFetch ? url : null, {
+    // Only validate on mount
+    revalidateOnFocus: false,
+    revalidateOnMount: true,
+    revalidateOnReconnect: false,
+  });
 
   return {
     items: data?.data || [],
@@ -108,7 +113,11 @@ export function useTodayItems() {
   return useTodayItemsWithFilters({});
 }
 
-export function useTodayItemsWithFilters(params: { platform?: string | null; q?: string | null; page?: number }) {
+export function useTodayItemsWithFilters(params: {
+  platform?: string | null;
+  q?: string | null;
+  page?: number;
+}) {
   const { isLoaded, userId } = useAuth();
   const url = buildItemsUrl({
     status: "new",
@@ -121,12 +130,17 @@ export function useTodayItemsWithFilters(params: { platform?: string | null; q?:
   // Simple approach: only fetch if auth is ready
   const shouldFetch = isLoaded && userId;
 
-  const { data, error, isLoading, isValidating, mutate: mutateItems } =
-    useSWR<ItemsResponse>(shouldFetch ? url : null, {
-      revalidateOnFocus: true,  // Refresh when user returns to tab
-      revalidateOnMount: true,
-      revalidateOnReconnect: true,  // Refresh when internet reconnects
-      refreshInterval: 30000,  // Poll every 30 seconds for new items
+  const {
+    data,
+    error,
+    isLoading,
+    isValidating,
+    mutate: mutateItems,
+  } = useSWR<ItemsResponse>(shouldFetch ? url : null, {
+    revalidateOnFocus: true, // Refresh when user returns to tab
+    revalidateOnMount: true,
+    revalidateOnReconnect: true, // Refresh when internet reconnects
+    refreshInterval: 30000, // Poll every 30 seconds for new items
   });
 
   return {
@@ -150,14 +164,19 @@ export function useCategories() {
   // Simple approach: only fetch if auth is ready
   const shouldFetch = isLoaded && userId;
 
-  const { data, error, isLoading, isValidating, mutate: mutateCategories } =
-    useSWR<CategoriesResponse>(shouldFetch ? url : null, {
-      revalidateOnFocus: false,
-      revalidateOnMount: true,
-      revalidateOnReconnect: false,
-      // Cache categories a bit longer
-      dedupingInterval: 5000,
-    });
+  const {
+    data,
+    error,
+    isLoading,
+    isValidating,
+    mutate: mutateCategories,
+  } = useSWR<CategoriesResponse>(shouldFetch ? url : null, {
+    revalidateOnFocus: false,
+    revalidateOnMount: true,
+    revalidateOnReconnect: false,
+    // Cache categories a bit longer
+    dedupingInterval: 5000,
+  });
 
   return {
     categories: data?.data?.categories || [],
@@ -175,7 +194,7 @@ export function useCategories() {
  */
 export async function updateItemStatus(
   itemId: string,
-  newStatus: ItemStatus
+  newStatus: ItemStatus,
 ): Promise<boolean> {
   try {
     const response = await fetch(`/api/items/${itemId}`, {

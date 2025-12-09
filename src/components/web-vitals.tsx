@@ -61,7 +61,6 @@ export function WebVitals() {
 function sendToAnalytics(metric: any) {
   // Example: Send to Vercel Analytics
   // window.va?.track(metric.name, { value: metric.value });
-
   // Example: Send to Google Analytics
   // window.gtag?.('event', metric.name, {
   //   value: Math.round(metric.value),
@@ -69,7 +68,6 @@ function sendToAnalytics(metric: any) {
   //   event_label: metric.id,
   //   non_interaction: true,
   // });
-
   // Example: Send to custom endpoint
   // fetch('/api/analytics', {
   //   method: 'POST',

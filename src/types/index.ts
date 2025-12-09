@@ -15,7 +15,11 @@ export type ItemCategory =
   | "news"
   | "other";
 
-export const ITEM_CATEGORIES: { value: ItemCategory; label: string; icon: string }[] = [
+export const ITEM_CATEGORIES: {
+  value: ItemCategory;
+  label: string;
+  icon: string;
+}[] = [
   { value: "tech", label: "Technology", icon: "Cpu" },
   { value: "business", label: "Business", icon: "Briefcase" },
   { value: "design", label: "Design", icon: "Palette" },

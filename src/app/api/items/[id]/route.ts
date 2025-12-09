@@ -12,7 +12,10 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
     const user = await getCurrentUser();
     if (!user) {
-      return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { ok: false, error: "Unauthorized" },
+        { status: 401 },
+      );
     }
 
     const { id } = await params;
@@ -23,11 +26,17 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     });
 
     if (!item) {
-      return NextResponse.json({ ok: false, error: "Item not found" }, { status: 404 });
+      return NextResponse.json(
+        { ok: false, error: "Item not found" },
+        { status: 404 },
+      );
     }
 
     if (item.userId !== user.id) {
-      return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
+      return NextResponse.json(
+        { ok: false, error: "Forbidden" },
+        { status: 403 },
+      );
     }
 
     // Parse and validate body
@@ -37,7 +46,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     if (!parsed.success) {
       return NextResponse.json(
         { ok: false, error: "Invalid input", details: parsed.error.flatten() },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -52,7 +61,10 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     if (parsed.data.status !== undefined) {
       updateData.status = parsed.data.status;
       // Set reviewedAt when marking as reviewed or pinned
-      if (parsed.data.status === "reviewed" || parsed.data.status === "pinned") {
+      if (
+        parsed.data.status === "reviewed" ||
+        parsed.data.status === "pinned"
+      ) {
         updateData.reviewedAt = new Date();
       }
     }
@@ -76,7 +88,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     console.error("PATCH /api/items/:id error:", error);
     return NextResponse.json(
       { ok: false, error: "Failed to update item" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -86,7 +98,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const user = await getCurrentUser();
     if (!user) {
-      return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { ok: false, error: "Unauthorized" },
+        { status: 401 },
+      );
     }
 
     const { id } = await params;
@@ -96,11 +111,17 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     });
 
     if (!item) {
-      return NextResponse.json({ ok: false, error: "Item not found" }, { status: 404 });
+      return NextResponse.json(
+        { ok: false, error: "Item not found" },
+        { status: 404 },
+      );
     }
 
     if (item.userId !== user.id) {
-      return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
+      return NextResponse.json(
+        { ok: false, error: "Forbidden" },
+        { status: 403 },
+      );
     }
 
     return NextResponse.json({ ok: true, data: item });
@@ -108,7 +129,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     console.error("GET /api/items/:id error:", error);
     return NextResponse.json(
       { ok: false, error: "Failed to fetch item" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -29,7 +29,7 @@ export async function GET() {
     const { userId } = await auth();
     if (!userId) {
       return NextResponse.redirect(
-        new URL("/sign-in", process.env.NEXT_PUBLIC_APP_URL)
+        new URL("/sign-in", process.env.NEXT_PUBLIC_APP_URL),
       );
     }
 
@@ -48,7 +48,7 @@ export async function GET() {
     const authorizationUrl = buildAuthorizationUrl(
       redirectUri,
       state,
-      codeChallenge
+      codeChallenge,
     );
 
     return NextResponse.redirect(authorizationUrl);
@@ -57,8 +57,8 @@ export async function GET() {
     return NextResponse.redirect(
       new URL(
         "/settings?error=oauth_init_failed",
-        process.env.NEXT_PUBLIC_APP_URL
-      )
+        process.env.NEXT_PUBLIC_APP_URL,
+      ),
     );
   }
 }

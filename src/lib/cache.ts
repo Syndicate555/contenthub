@@ -93,7 +93,7 @@ class InMemoryCache {
   async wrap<T>(
     key: string,
     fn: () => Promise<T>,
-    ttlSeconds: number = 300
+    ttlSeconds: number = 300,
   ): Promise<T> {
     // Check cache first
     const cached = this.get<T>(key);

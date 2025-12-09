@@ -41,16 +41,16 @@ export function showMultipleBadgesNotification(badges: Badge[]) {
     return;
   }
 
-  const badgeNames = badges.map(b => b.name).join(", ");
-  const hasLegendary = badges.some(b => b.rarity === "legendary");
-  const hasEpic = badges.some(b => b.rarity === "epic");
+  const badgeNames = badges.map((b) => b.name).join(", ");
+  const hasLegendary = badges.some((b) => b.rarity === "legendary");
+  const hasEpic = badges.some((b) => b.rarity === "epic");
 
   const emoji = hasLegendary ? "⭐" : hasEpic ? "👑" : "🎉";
   const rarityClass = hasLegendary
     ? "border-yellow-400"
     : hasEpic
-    ? "border-purple-400"
-    : "border-blue-400";
+      ? "border-purple-400"
+      : "border-blue-400";
 
   toast.success(`${emoji} ${badges.length} Badges Unlocked!`, {
     description: badgeNames,

@@ -75,13 +75,13 @@ export async function GET() {
         headers: {
           "Cache-Control": "private, max-age=300, stale-while-revalidate=600",
         },
-      }
+      },
     );
   } catch (error) {
     console.error("Error fetching user badges:", error);
     return NextResponse.json(
       { error: "Failed to fetch badges" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -70,7 +70,7 @@ export function generateState(): string {
 export function buildAuthorizationUrl(
   redirectUri: string,
   state: string,
-  codeChallenge: string
+  codeChallenge: string,
 ): string {
   const clientId = process.env.TWITTER_CLIENT_ID;
 
@@ -97,7 +97,7 @@ export function buildAuthorizationUrl(
 export async function exchangeCodeForToken(
   code: string,
   codeVerifier: string,
-  redirectUri: string
+  redirectUri: string,
 ): Promise<TokenResponse> {
   const clientId = process.env.TWITTER_CLIENT_ID;
   const clientSecret = process.env.TWITTER_CLIENT_SECRET;
@@ -107,7 +107,9 @@ export async function exchangeCodeForToken(
   }
 
   // Create Basic Auth header
-  const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
+  const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString(
+    "base64",
+  );
 
   const response = await fetch(TWITTER_TOKEN_URL, {
     method: "POST",
@@ -136,7 +138,7 @@ export async function exchangeCodeForToken(
  * Refresh an access token using a refresh token
  */
 export async function refreshAccessToken(
-  refreshToken: string
+  refreshToken: string,
 ): Promise<TokenResponse> {
   const clientId = process.env.TWITTER_CLIENT_ID;
   const clientSecret = process.env.TWITTER_CLIENT_SECRET;
@@ -145,7 +147,9 @@ export async function refreshAccessToken(
     throw new Error("Twitter client credentials not configured");
   }
 
-  const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
+  const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString(
+    "base64",
+  );
 
   const response = await fetch(TWITTER_TOKEN_URL, {
     method: "POST",
@@ -179,7 +183,9 @@ export async function revokeToken(token: string): Promise<void> {
     throw new Error("Twitter client credentials not configured");
   }
 
-  const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
+  const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString(
+    "base64",
+  );
 
   await fetch(TWITTER_REVOKE_URL, {
     method: "POST",
@@ -196,7 +202,9 @@ export async function revokeToken(token: string): Promise<void> {
 /**
  * Get the authenticated user's info from Twitter
  */
-export async function getTwitterUser(accessToken: string): Promise<TwitterUser> {
+export async function getTwitterUser(
+  accessToken: string,
+): Promise<TwitterUser> {
   const response = await fetch("https://api.twitter.com/2/users/me", {
     headers: {
       Authorization: `Bearer ${accessToken}`,

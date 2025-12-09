@@ -51,7 +51,7 @@ export default function FocusAreasSection() {
         setFocusAreas(focusAreasData.data.focusAreas);
         // Set initial selected IDs from current focus areas
         setSelectedIds(
-          focusAreasData.data.focusAreas.map((fa: FocusArea) => fa.domain.id)
+          focusAreasData.data.focusAreas.map((fa: FocusArea) => fa.domain.id),
         );
       }
     } catch (error) {
@@ -189,7 +189,7 @@ export default function FocusAreasSection() {
             "flex items-center gap-2 p-3 rounded-lg text-sm",
             notification.type === "success"
               ? "bg-green-50 text-green-800"
-              : "bg-red-50 text-red-800"
+              : "bg-red-50 text-red-800",
           )}
         >
           {notification.type === "success" ? (
@@ -215,7 +215,7 @@ export default function FocusAreasSection() {
                 "relative p-4 rounded-xl border-2 transition-all text-left",
                 isSelected
                   ? "border-blue-500 bg-blue-50"
-                  : "border-gray-200 bg-white hover:border-gray-300"
+                  : "border-gray-200 bg-white hover:border-gray-300",
               )}
             >
               {/* Priority Badge */}

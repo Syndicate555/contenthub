@@ -24,7 +24,7 @@ export async function GET() {
     if (!user) {
       return NextResponse.json(
         { ok: false, error: "Unauthorized" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -62,7 +62,7 @@ export async function GET() {
         displayName: platform.label,
         icon: platform.icon,
         count: platformCount.get(platform.slug) || 0,
-      })
+      }),
     );
 
     // Optionally include "Other" if there are unclassified sources
@@ -95,13 +95,13 @@ export async function GET() {
         headers: {
           "Cache-Control": "private, max-age=60, stale-while-revalidate=300",
         },
-      }
+      },
     );
   } catch (error) {
     console.error("GET /api/dashboard/today-sidebar error:", error);
     return NextResponse.json(
       { ok: false, error: "Failed to fetch sidebar data" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

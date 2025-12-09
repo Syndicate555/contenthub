@@ -14,7 +14,10 @@ interface StreakStatus {
   timezone: string;
 }
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json()).then((data) => data.data);
+const fetcher = (url: string) =>
+  fetch(url)
+    .then((r) => r.json())
+    .then((data) => data.data);
 
 /**
  * Streak Warning Component
@@ -32,7 +35,7 @@ export function StreakWarning() {
     {
       refreshInterval: 5 * 60 * 1000, // Refresh every 5 minutes
       revalidateOnFocus: true,
-    }
+    },
   );
 
   // Don't show anything while loading or if there's an error
@@ -52,7 +55,8 @@ export function StreakWarning() {
             {status.currentStreak}-day streak maintained!
           </h3>
           <p className="text-sm text-green-700 mt-1">
-            Great job! You've completed your daily activity. Keep up the momentum.
+            Great job! You've completed your daily activity. Keep up the
+            momentum.
           </p>
         </div>
       </div>
@@ -70,9 +74,7 @@ export function StreakWarning() {
   return (
     <div
       className={`border rounded-lg p-4 flex items-start gap-3 ${
-        isUrgent
-          ? "bg-red-50 border-red-200"
-          : "bg-yellow-50 border-yellow-200"
+        isUrgent ? "bg-red-50 border-red-200" : "bg-yellow-50 border-yellow-200"
       }`}
     >
       <AlertCircle
@@ -108,13 +110,9 @@ export function StreakWarning() {
  * Compact streak warning for use in headers/sidebars
  */
 export function CompactStreakWarning() {
-  const { data: status } = useSWR<StreakStatus>(
-    "/api/streak/status",
-    fetcher,
-    {
-      refreshInterval: 5 * 60 * 1000,
-    }
-  );
+  const { data: status } = useSWR<StreakStatus>("/api/streak/status", fetcher, {
+    refreshInterval: 5 * 60 * 1000,
+  });
 
   if (!status || status.currentStreak === 0 || status.hasActivityToday) {
     return null;
@@ -127,9 +125,7 @@ export function CompactStreakWarning() {
   return (
     <div
       className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm ${
-        isUrgent
-          ? "bg-red-100 text-red-900"
-          : "bg-yellow-100 text-yellow-900"
+        isUrgent ? "bg-red-100 text-red-900" : "bg-yellow-100 text-yellow-900"
       }`}
     >
       <Flame className="w-4 h-4" />

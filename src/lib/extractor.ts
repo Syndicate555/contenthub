@@ -15,7 +15,9 @@ export interface ExtractedContent {
 /**
  * Detects the platform from a URL
  */
-function detectPlatform(url: string): "twitter" | "instagram" | "linkedin" | "pinterest" | "generic" {
+function detectPlatform(
+  url: string,
+): "twitter" | "instagram" | "linkedin" | "pinterest" | "generic" {
   const hostname = new URL(url).hostname.toLowerCase();
 
   if (hostname.includes("twitter.com") || hostname.includes("x.com")) {
@@ -47,7 +49,10 @@ function extractTweetId(url: string): string | null {
 /**
  * Best-effort fetch of tweet image without auth (syndication/oEmbed)
  */
-async function fetchTwitterImage(url: string, tweetId?: string): Promise<string | undefined> {
+async function fetchTwitterImage(
+  url: string,
+  tweetId?: string,
+): Promise<string | undefined> {
   const id = tweetId || extractTweetId(url);
   if (!id) return undefined;
 
@@ -62,17 +67,22 @@ async function fetchTwitterImage(url: string, tweetId?: string): Promise<string 
       const res = await fetchWithTimeout(
         endpoint,
         { headers: { Accept: "application/json" } },
-        8000
+        8000,
       );
 
       if (!res.ok) {
-        console.log("Twitter syndication non-200", { endpoint, status: res.status });
+        console.log("Twitter syndication non-200", {
+          endpoint,
+          status: res.status,
+        });
         continue;
       }
 
       const json = (await res.json()) as {
         photos?: Array<{ url?: string }>;
-        mediaDetails?: { photos?: Array<{ url?: string; media_url_https?: string }> };
+        mediaDetails?: {
+          photos?: Array<{ url?: string; media_url_https?: string }>;
+        };
         mediaEntities?: Array<{ media_url_https?: string; url?: string }>;
       };
 
@@ -101,7 +111,7 @@ async function fetchTwitterImage(url: string, tweetId?: string): Promise<string 
     const oembedRes = await fetchWithTimeout(
       `https://publish.twitter.com/oembed?url=${encodeURIComponent(canonical)}&omit_script=true`,
       { headers: { Accept: "application/json" } },
-      6000
+      6000,
     );
 
     if (oembedRes.ok) {
@@ -142,7 +152,7 @@ async function extractTwitterContent(url: string): Promise<ExtractedContent> {
     const response = await fetchWithTimeout(
       oembedUrl,
       { headers: { Accept: "application/json" } },
-      6000
+      6000,
     );
 
     if (response.ok) {
@@ -174,7 +184,10 @@ async function extractTwitterContent(url: string): Promise<ExtractedContent> {
 
   // Fallback: public syndication endpoints for images
   if (!imageUrl) {
-    console.log("[extractTwitterContent] no image from oEmbed, trying syndication", { tweetId });
+    console.log(
+      "[extractTwitterContent] no image from oEmbed, trying syndication",
+      { tweetId },
+    );
     imageUrl = await fetchTwitterImage(url, tweetId || undefined);
     console.log("[extractTwitterContent] syndication result", { imageUrl });
   }
@@ -256,11 +269,12 @@ async function extractInstagramContent(url: string): Promise<ExtractedContent> {
         embedUrl,
         {
           headers: {
-            "User-Agent": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
-            "Accept": "text/html,application/xhtml+xml",
+            "User-Agent":
+              "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
+            Accept: "text/html,application/xhtml+xml",
           },
         },
-        5000
+        5000,
       );
 
       if (response.ok) {
@@ -279,16 +293,20 @@ async function extractInstagramContent(url: string): Promise<ExtractedContent> {
         }
 
         // Try to find image URL in the HTML (Instagram embed contains CDN URLs)
-        const imgMatch = html.match(/src="(https:\/\/[^"]*cdninstagram\.com[^"]*\.(?:jpg|jpeg|png|webp)[^"]*)"/i);
+        const imgMatch = html.match(
+          /src="(https:\/\/[^"]*cdninstagram\.com[^"]*\.(?:jpg|jpeg|png|webp)[^"]*)"/i,
+        );
         if (imgMatch) {
-          imageUrl = imgMatch[1].replace(/&amp;/g, '&');
+          imageUrl = imgMatch[1].replace(/&amp;/g, "&");
         }
 
         // Try to extract from background-image style
         if (!imageUrl) {
-          const bgMatch = html.match(/background-image:\s*url\(['"]?(https:\/\/[^'")\s]+cdninstagram\.com[^'")\s]+)['"]?\)/i);
+          const bgMatch = html.match(
+            /background-image:\s*url\(['"]?(https:\/\/[^'")\s]+cdninstagram\.com[^'")\s]+)['"]?\)/i,
+          );
           if (bgMatch) {
-            imageUrl = bgMatch[1].replace(/&amp;/g, '&');
+            imageUrl = bgMatch[1].replace(/&amp;/g, "&");
           }
         }
 
@@ -299,7 +317,9 @@ async function extractInstagramContent(url: string): Promise<ExtractedContent> {
         }
 
         // Extract caption
-        const captionMatch = html.match(/<div[^>]*class="[^"]*Caption[^"]*"[^>]*>([^<]+)</i);
+        const captionMatch = html.match(
+          /<div[^>]*class="[^"]*Caption[^"]*"[^>]*>([^<]+)</i,
+        );
         if (captionMatch) {
           caption = captionMatch[1].trim();
         }
@@ -307,7 +327,9 @@ async function extractInstagramContent(url: string): Promise<ExtractedContent> {
         author = author || urlAuthor;
 
         if (imageUrl || videoUrl) {
-          console.log(`Instagram embed success: author=${author}, has image=${!!imageUrl}, has video=${!!videoUrl}`);
+          console.log(
+            `Instagram embed success: author=${author}, has image=${!!imageUrl}, has video=${!!videoUrl}`,
+          );
           return {
             title: author ? `Instagram post by @${author}` : "Instagram Post",
             content: caption || "Instagram post content.",
@@ -333,13 +355,13 @@ async function extractInstagramContent(url: string): Promise<ExtractedContent> {
     const response = await fetchWithTimeout(
       noembedUrl,
       {
-        headers: { "Accept": "application/json" },
+        headers: { Accept: "application/json" },
       },
-      5000
+      5000,
     );
 
     if (response.ok) {
-      const data = await response.json() as {
+      const data = (await response.json()) as {
         author_name?: string;
         title?: string;
         thumbnail_url?: string;
@@ -348,7 +370,9 @@ async function extractInstagramContent(url: string): Promise<ExtractedContent> {
 
       if (data.thumbnail_url) {
         const author = data.author_name || urlAuthor;
-        console.log(`Instagram noembed success: author=${author}, has thumbnail=true`);
+        console.log(
+          `Instagram noembed success: author=${author}, has thumbnail=true`,
+        );
         return {
           title: author ? `Instagram post by @${author}` : "Instagram Post",
           content: data.title || "Instagram post content.",
@@ -369,8 +393,9 @@ async function extractInstagramContent(url: string): Promise<ExtractedContent> {
 
     const response = await fetch(url, {
       headers: {
-        "User-Agent": "facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)",
-        "Accept": "text/html",
+        "User-Agent":
+          "facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)",
+        Accept: "text/html",
       },
     });
 
@@ -379,12 +404,22 @@ async function extractInstagramContent(url: string): Promise<ExtractedContent> {
       const dom = new JSDOM(html, { url });
       const document = dom.window.document;
 
-      const ogImage = document.querySelector('meta[property="og:image"]')?.getAttribute("content");
+      const ogImage = document
+        .querySelector('meta[property="og:image"]')
+        ?.getAttribute("content");
       const ogVideo =
-        document.querySelector('meta[property="og:video"]')?.getAttribute("content") ||
-        document.querySelector('meta[property="og:video:secure_url"]')?.getAttribute("content");
-      const ogTitle = document.querySelector('meta[property="og:title"]')?.getAttribute("content");
-      const ogDesc = document.querySelector('meta[property="og:description"]')?.getAttribute("content");
+        document
+          .querySelector('meta[property="og:video"]')
+          ?.getAttribute("content") ||
+        document
+          .querySelector('meta[property="og:video:secure_url"]')
+          ?.getAttribute("content");
+      const ogTitle = document
+        .querySelector('meta[property="og:title"]')
+        ?.getAttribute("content");
+      const ogDesc = document
+        .querySelector('meta[property="og:description"]')
+        ?.getAttribute("content");
 
       let author = urlAuthor;
       if (ogTitle) {
@@ -395,13 +430,15 @@ async function extractInstagramContent(url: string): Promise<ExtractedContent> {
       }
 
       if (ogImage || ogVideo) {
-        console.log(`Instagram scrape success: author=${author}, has image=${!!ogImage}, has video=${!!ogVideo}`);
+        console.log(
+          `Instagram scrape success: author=${author}, has image=${!!ogImage}, has video=${!!ogVideo}`,
+        );
         return {
           title: author ? `Instagram post by @${author}` : "Instagram Post",
           content: ogDesc || "Instagram post content.",
           source,
           author,
-          imageUrl: ogImage,
+          imageUrl: ogImage || undefined,
           videoUrl: ogVideo || undefined,
           imageSource: "scrape",
         };
@@ -420,22 +457,27 @@ async function extractInstagramContent(url: string): Promise<ExtractedContent> {
     const response = await fetchWithTimeout(
       microlinkUrl,
       {
-        headers: { "Accept": "application/json" },
+        headers: { Accept: "application/json" },
       },
-      8000
+      8000,
     );
 
     if (!response.ok) {
       throw new Error(`Microlink API failed: ${response.status}`);
     }
 
-    const data = await response.json() as MicrolinkResponse;
+    const data = (await response.json()) as MicrolinkResponse;
 
     if (data.status !== "success" || !data.data) {
       throw new Error("Microlink returned no data");
     }
 
-    const { title: rawTitle, description, author: rawAuthor, image } = data.data;
+    const {
+      title: rawTitle,
+      description,
+      author: rawAuthor,
+      image,
+    } = data.data;
     const video = (data.data as any).video;
 
     let author = rawAuthor?.replace(/^@/, "") || urlAuthor || undefined;
@@ -450,7 +492,9 @@ async function extractInstagramContent(url: string): Promise<ExtractedContent> {
     const imageUrl = image?.url;
     const videoUrl: string | undefined = video?.url || undefined;
 
-    console.log(`Instagram Microlink success: author=${author}, has image=${!!imageUrl}, has video=${!!videoUrl}`);
+    console.log(
+      `Instagram Microlink success: author=${author}, has image=${!!imageUrl}, has video=${!!videoUrl}`,
+    );
 
     return {
       title: author ? `Instagram post by @${author}` : "Instagram Post",
@@ -466,7 +510,8 @@ async function extractInstagramContent(url: string): Promise<ExtractedContent> {
 
     return {
       title: urlAuthor ? `Instagram post by @${urlAuthor}` : "Instagram Post",
-      content: "Instagram content could not be extracted. Please view the original post.",
+      content:
+        "Instagram content could not be extracted. Please view the original post.",
       source,
       author: urlAuthor,
     };
@@ -552,9 +597,10 @@ function isLinkedInLoginWall(title?: string, description?: string): boolean {
   }
 
   // Check for login wall indicators
-  return loginWallIndicators.some(indicator =>
-    titleLower.includes(indicator.toLowerCase()) ||
-    descLower.includes(indicator.toLowerCase())
+  return loginWallIndicators.some(
+    (indicator) =>
+      titleLower.includes(indicator.toLowerCase()) ||
+      descLower.includes(indicator.toLowerCase()),
   );
 }
 
@@ -582,23 +628,29 @@ async function extractLinkedInContent(url: string): Promise<ExtractedContent> {
       microlinkUrl,
       {
         headers: {
-          "Accept": "application/json",
+          Accept: "application/json",
         },
       },
-      8000
+      8000,
     );
 
     if (!response.ok) {
       throw new Error(`Microlink API failed: ${response.status}`);
     }
 
-    const data = await response.json() as MicrolinkResponse;
+    const data = (await response.json()) as MicrolinkResponse;
 
     if (data.status !== "success" || !data.data) {
       throw new Error("Microlink returned no data");
     }
 
-    const { title: rawTitle, description, author: rawAuthor, publisher, image } = data.data;
+    const {
+      title: rawTitle,
+      description,
+      author: rawAuthor,
+      publisher,
+      image,
+    } = data.data;
 
     // Check if LinkedIn returned a login wall instead of post content
     if (isLinkedInLoginWall(rawTitle, description)) {
@@ -630,13 +682,16 @@ async function extractLinkedInContent(url: string): Promise<ExtractedContent> {
     // LinkedIn descriptions often have "... See more" - we keep it as-is
     // The full content will be in the description when available
     if (!content || content.length < 20) {
-      content = "LinkedIn post content. View the original post for full details.";
+      content =
+        "LinkedIn post content. View the original post for full details.";
     }
 
     // Get image URL (LinkedIn og:images are usually good quality)
     const imageUrl = image?.url;
 
-    console.log(`LinkedIn Microlink success: author=${author}, content length=${content.length}, has image=${!!imageUrl}, has URN=${!!urn}`);
+    console.log(
+      `LinkedIn Microlink success: author=${author}, content length=${content.length}, has image=${!!imageUrl}, has URN=${!!urn}`,
+    );
 
     return {
       title,
@@ -646,15 +701,20 @@ async function extractLinkedInContent(url: string): Promise<ExtractedContent> {
       imageUrl,
     };
   } catch (microlinkError) {
-    console.log("LinkedIn Microlink failed, trying direct fetch:", microlinkError);
+    console.log(
+      "LinkedIn Microlink failed, trying direct fetch:",
+      microlinkError,
+    );
   }
 
   // Fallback: Try direct fetch with meta tags
   try {
     const response = await fetch(url, {
       headers: {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "User-Agent":
+          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        Accept:
+          "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
       },
     });
 
@@ -667,10 +727,18 @@ async function extractLinkedInContent(url: string): Promise<ExtractedContent> {
     const document = dom.window.document;
 
     // Extract from meta tags
-    const ogTitle = document.querySelector('meta[property="og:title"]')?.getAttribute("content");
-    const ogDesc = document.querySelector('meta[property="og:description"]')?.getAttribute("content");
-    const ogImage = document.querySelector('meta[property="og:image"]')?.getAttribute("content");
-    const metaAuthor = document.querySelector('meta[name="author"]')?.getAttribute("content");
+    const ogTitle = document
+      .querySelector('meta[property="og:title"]')
+      ?.getAttribute("content");
+    const ogDesc = document
+      .querySelector('meta[property="og:description"]')
+      ?.getAttribute("content");
+    const ogImage = document
+      .querySelector('meta[property="og:image"]')
+      ?.getAttribute("content");
+    const metaAuthor = document
+      .querySelector('meta[name="author"]')
+      ?.getAttribute("content");
 
     // Check for login wall
     if (isLinkedInLoginWall(ogTitle || undefined, ogDesc || undefined)) {
@@ -687,7 +755,9 @@ async function extractLinkedInContent(url: string): Promise<ExtractedContent> {
       title = `LinkedIn post by ${author}`;
     }
 
-    console.log(`LinkedIn direct fetch success: author=${author}, has description=${!!ogDesc}`);
+    console.log(
+      `LinkedIn direct fetch success: author=${author}, has description=${!!ogDesc}`,
+    );
 
     return {
       title,
@@ -723,15 +793,19 @@ async function extractGenericContent(url: string): Promise<ExtractedContent> {
       url,
       {
         headers: {
-          "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          "User-Agent":
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          Accept:
+            "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
         },
       },
-      10000
+      10000,
     );
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch: ${response.status} ${response.statusText}`);
+      throw new Error(
+        `Failed to fetch: ${response.status} ${response.statusText}`,
+      );
     }
 
     const html = await response.text();
@@ -767,16 +841,24 @@ async function extractGenericContent(url: string): Promise<ExtractedContent> {
 }
 
 function extractFallbackTitle(document: Document, url: string): string {
-  const ogTitle = document.querySelector('meta[property="og:title"]')?.getAttribute("content");
-  const twitterTitle = document.querySelector('meta[name="twitter:title"]')?.getAttribute("content");
+  const ogTitle = document
+    .querySelector('meta[property="og:title"]')
+    ?.getAttribute("content");
+  const twitterTitle = document
+    .querySelector('meta[name="twitter:title"]')
+    ?.getAttribute("content");
   const titleTag = document.querySelector("title")?.textContent;
 
   return ogTitle || twitterTitle || titleTag || url;
 }
 
 function extractFallbackContent(document: Document): string {
-  const ogDesc = document.querySelector('meta[property="og:description"]')?.getAttribute("content");
-  const metaDesc = document.querySelector('meta[name="description"]')?.getAttribute("content");
+  const ogDesc = document
+    .querySelector('meta[property="og:description"]')
+    ?.getAttribute("content");
+  const metaDesc = document
+    .querySelector('meta[name="description"]')
+    ?.getAttribute("content");
 
   if (ogDesc || metaDesc) {
     return ogDesc || metaDesc || "";
@@ -784,7 +866,9 @@ function extractFallbackContent(document: Document): string {
 
   const body = document.querySelector("body");
   if (body) {
-    body.querySelectorAll("script, style, nav, footer, header").forEach((el) => el.remove());
+    body
+      .querySelectorAll("script, style, nav, footer, header")
+      .forEach((el) => el.remove());
     return body.textContent?.slice(0, 5000) || "";
   }
 
@@ -802,7 +886,12 @@ export async function extractContent(url: string): Promise<ExtractedContent> {
 
     // Email items use the sender domain as URL, but content is already in Item.rawContent
     // The pipeline will use rawContent for AI summarization, so we return minimal data here
-    if (hostname === "email" || hostname.includes("resend") || hostname.includes("sendgrid") || hostname.includes("mailgun")) {
+    if (
+      hostname === "email" ||
+      hostname.includes("resend") ||
+      hostname.includes("sendgrid") ||
+      hostname.includes("mailgun")
+    ) {
       console.log(`Email-sourced item detected: ${url}, skipping URL fetch`);
       return {
         title: "Email Newsletter",

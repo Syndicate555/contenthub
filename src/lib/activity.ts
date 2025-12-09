@@ -9,14 +9,15 @@ import { updateStreak, type UpdateStreakResult } from "@/lib/streak";
  * Any of these activities performed in a day will maintain the user's streak
  */
 export const STREAK_ACTIVITIES = {
-  SAVE_ITEM: "save_item",           // User saves a new item
-  PROCESS_ITEM: "process_item",     // User processes an item (AI enrichment)
+  SAVE_ITEM: "save_item", // User saves a new item
+  PROCESS_ITEM: "process_item", // User processes an item (AI enrichment)
   ADD_REFLECTION: "add_reflection", // User adds a note/reflection to an item
-  REVIEW_ITEM: "review_item",       // User reviews/reads an item
-  UPDATE_ITEM: "update_item",       // User updates item status or metadata
+  REVIEW_ITEM: "review_item", // User reviews/reads an item
+  UPDATE_ITEM: "update_item", // User updates item status or metadata
 } as const;
 
-export type StreakActivity = typeof STREAK_ACTIVITIES[keyof typeof STREAK_ACTIVITIES];
+export type StreakActivity =
+  (typeof STREAK_ACTIVITIES)[keyof typeof STREAK_ACTIVITIES];
 
 /**
  * Result of tracking an activity
@@ -50,7 +51,7 @@ export interface TrackActivityResult {
 export async function trackActivity(
   userId: string,
   activity: StreakActivity,
-  metadata?: Record<string, any>
+  metadata?: Record<string, any>,
 ): Promise<TrackActivityResult> {
   try {
     // Update the user's streak
@@ -69,7 +70,10 @@ export async function trackActivity(
       streakResult,
     };
   } catch (error) {
-    console.error(`Failed to track activity ${activity} for user ${userId}:`, error);
+    console.error(
+      `Failed to track activity ${activity} for user ${userId}:`,
+      error,
+    );
 
     return {
       success: false,
@@ -139,7 +143,7 @@ export async function getTodayActivityStatus(userId: string): Promise<{
  */
 export async function getActivityHistory(
   userId: string,
-  days: number = 90
+  days: number = 90,
 ): Promise<Date[]> {
   const startDate = new Date();
   startDate.setDate(startDate.getDate() - days);

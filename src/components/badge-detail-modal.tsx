@@ -1,6 +1,11 @@
 "use client";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { formatDistanceToNow } from "date-fns";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -32,7 +37,10 @@ interface BadgeDetailModalProps {
   onClose: () => void;
 }
 
-const RARITY_COLORS: Record<string, { bg: string; border: string; glow: string; text: string }> = {
+const RARITY_COLORS: Record<
+  string,
+  { bg: string; border: string; glow: string; text: string }
+> = {
   common: {
     bg: "bg-gray-50",
     border: "border-gray-300",
@@ -62,7 +70,10 @@ const RARITY_COLORS: Record<string, { bg: string; border: string; glow: string; 
 /**
  * Calculate progress toward unlocking a badge
  */
-function calculateProgress(badge: Badge, stats?: UserStats): { current: number; target: number; percentage: number } {
+function calculateProgress(
+  badge: Badge,
+  stats?: UserStats,
+): { current: number; target: number; percentage: number } {
   if (!badge.criteriaType || !badge.criteriaValue || !stats) {
     return { current: 0, target: 0, percentage: 0 };
   }
@@ -96,7 +107,8 @@ function calculateProgress(badge: Badge, stats?: UserStats): { current: number; 
  * Get a call-to-action message based on badge type
  */
 function getCallToAction(badge: Badge): string {
-  if (!badge.criteriaType) return "Complete the challenge to unlock this badge!";
+  if (!badge.criteriaType)
+    return "Complete the challenge to unlock this badge!";
 
   switch (badge.criteriaType) {
     case "item_count":
@@ -132,7 +144,12 @@ function formatCriteriaValue(badge: Badge): string {
   }
 }
 
-export function BadgeDetailModal({ badge, userStats, isOpen, onClose }: BadgeDetailModalProps) {
+export function BadgeDetailModal({
+  badge,
+  userStats,
+  isOpen,
+  onClose,
+}: BadgeDetailModalProps) {
   if (!badge) return null;
 
   const isEarned = badge.earned;
@@ -178,7 +195,9 @@ export function BadgeDetailModal({ badge, userStats, isOpen, onClose }: BadgeDet
             <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
               <p className="text-sm font-medium text-green-800">
                 Unlocked{" "}
-                {formatDistanceToNow(new Date(badge.awardedAt), { addSuffix: true })}
+                {formatDistanceToNow(new Date(badge.awardedAt), {
+                  addSuffix: true,
+                })}
               </p>
               <p className="text-xs text-green-600 mt-1">🎉 Congratulations!</p>
             </div>
@@ -189,7 +208,8 @@ export function BadgeDetailModal({ badge, userStats, isOpen, onClose }: BadgeDet
                 <div className="flex items-center justify-between text-sm mb-2">
                   <span className="font-medium text-gray-700">Progress</span>
                   <span className="text-gray-600">
-                    {progress.current.toLocaleString()} / {progress.target.toLocaleString()}
+                    {progress.current.toLocaleString()} /{" "}
+                    {progress.target.toLocaleString()}
                   </span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
@@ -206,7 +226,8 @@ export function BadgeDetailModal({ badge, userStats, isOpen, onClose }: BadgeDet
               {/* Criteria */}
               <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                 <p className="text-sm text-gray-700 text-center">
-                  <span className="font-medium">Goal:</span> {formatCriteriaValue(badge)}
+                  <span className="font-medium">Goal:</span>{" "}
+                  {formatCriteriaValue(badge)}
                 </p>
               </div>
 

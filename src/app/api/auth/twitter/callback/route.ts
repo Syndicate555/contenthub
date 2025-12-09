@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     const { userId: clerkId } = await auth();
     if (!clerkId) {
       return NextResponse.redirect(
-        new URL("/sign-in", process.env.NEXT_PUBLIC_APP_URL)
+        new URL("/sign-in", process.env.NEXT_PUBLIC_APP_URL),
       );
     }
 
@@ -37,10 +37,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(
         new URL(
           `/settings?error=twitter_auth_denied&message=${encodeURIComponent(
-            errorDescription || error
+            errorDescription || error,
           )}`,
-          process.env.NEXT_PUBLIC_APP_URL
-        )
+          process.env.NEXT_PUBLIC_APP_URL,
+        ),
       );
     }
 
@@ -48,8 +48,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(
         new URL(
           "/settings?error=missing_params",
-          process.env.NEXT_PUBLIC_APP_URL
-        )
+          process.env.NEXT_PUBLIC_APP_URL,
+        ),
       );
     }
 
@@ -63,12 +63,15 @@ export async function GET(request: NextRequest) {
     cookieStore.delete("twitter_code_verifier");
 
     if (!storedState || state !== storedState) {
-      console.error("State mismatch:", { received: state, stored: storedState });
+      console.error("State mismatch:", {
+        received: state,
+        stored: storedState,
+      });
       return NextResponse.redirect(
         new URL(
           "/settings?error=state_mismatch",
-          process.env.NEXT_PUBLIC_APP_URL
-        )
+          process.env.NEXT_PUBLIC_APP_URL,
+        ),
       );
     }
 
@@ -76,8 +79,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(
         new URL(
           "/settings?error=missing_verifier",
-          process.env.NEXT_PUBLIC_APP_URL
-        )
+          process.env.NEXT_PUBLIC_APP_URL,
+        ),
       );
     }
 
@@ -86,7 +89,7 @@ export async function GET(request: NextRequest) {
     const tokenResponse = await exchangeCodeForToken(
       code,
       codeVerifier,
-      redirectUri
+      redirectUri,
     );
 
     // Get Twitter user info
@@ -102,14 +105,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(
         new URL(
           "/settings?error=user_not_found",
-          process.env.NEXT_PUBLIC_APP_URL
-        )
+          process.env.NEXT_PUBLIC_APP_URL,
+        ),
       );
     }
 
     // Calculate token expiration time
     const tokenExpiresAt = new Date(
-      Date.now() + tokenResponse.expires_in * 1000
+      Date.now() + tokenResponse.expires_in * 1000,
     );
 
     // Encrypt tokens before storing
@@ -147,26 +150,28 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    console.log(`Twitter connected for user ${user.id}: @${twitterUser.username}`);
+    console.log(
+      `Twitter connected for user ${user.id}: @${twitterUser.username}`,
+    );
 
     // Redirect to settings with success message
     return NextResponse.redirect(
       new URL(
         `/settings?success=twitter_connected&handle=${encodeURIComponent(
-          twitterUser.username
+          twitterUser.username,
         )}`,
-        process.env.NEXT_PUBLIC_APP_URL
-      )
+        process.env.NEXT_PUBLIC_APP_URL,
+      ),
     );
   } catch (error) {
     console.error("Twitter OAuth callback error:", error);
     return NextResponse.redirect(
       new URL(
         `/settings?error=callback_failed&message=${encodeURIComponent(
-          error instanceof Error ? error.message : "Unknown error"
+          error instanceof Error ? error.message : "Unknown error",
         )}`,
-        process.env.NEXT_PUBLIC_APP_URL
-      )
+        process.env.NEXT_PUBLIC_APP_URL,
+      ),
     );
   }
 }

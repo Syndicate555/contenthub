@@ -59,7 +59,8 @@ export function DomainStats({ domains }: DomainStatsProps) {
                     {userDomain.displayName}
                   </h3>
                   <p className="text-sm text-gray-600">
-                    {userDomain.itemCount} {userDomain.itemCount === 1 ? "item" : "items"}
+                    {userDomain.itemCount}{" "}
+                    {userDomain.itemCount === 1 ? "item" : "items"}
                   </p>
                 </div>
               </div>

@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     if (!user) {
       return NextResponse.json(
         { ok: false, error: "Unauthorized" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
     if (days < 1 || days > 365) {
       return NextResponse.json(
         { ok: false, error: "Days must be between 1 and 365" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -36,8 +36,8 @@ export async function GET(request: NextRequest) {
     const activityDates = await getActivityHistory(user.id, days);
 
     // Convert dates to ISO strings for consistent JSON serialization
-    const activityDateStrings = activityDates.map((date) =>
-      date.toISOString().split("T")[0]
+    const activityDateStrings = activityDates.map(
+      (date) => date.toISOString().split("T")[0],
     );
 
     return NextResponse.json({
@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
     console.error("GET /api/streak/calendar error:", error);
     return NextResponse.json(
       { ok: false, error: "Failed to fetch calendar data" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -44,7 +44,7 @@ export function generateState(): string {
  */
 export function buildAuthorizationUrl(
   redirectUri: string,
-  state: string
+  state: string,
 ): string {
   const clientId = process.env.PINTEREST_CLIENT_ID;
 
@@ -68,7 +68,7 @@ export function buildAuthorizationUrl(
  */
 export async function exchangeCodeForToken(
   code: string,
-  redirectUri: string
+  redirectUri: string,
 ): Promise<TokenResponse> {
   const clientId = process.env.PINTEREST_CLIENT_ID;
   const clientSecret = process.env.PINTEREST_CLIENT_SECRET;
@@ -78,7 +78,7 @@ export async function exchangeCodeForToken(
   }
 
   const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString(
-    "base64"
+    "base64",
   );
 
   const response = await fetch(PINTEREST_TOKEN_URL, {
@@ -107,7 +107,7 @@ export async function exchangeCodeForToken(
  * Refresh access token using refresh token
  */
 export async function refreshAccessToken(
-  refreshToken: string
+  refreshToken: string,
 ): Promise<TokenResponse> {
   const clientId = process.env.PINTEREST_CLIENT_ID;
   const clientSecret = process.env.PINTEREST_CLIENT_SECRET;
@@ -117,7 +117,7 @@ export async function refreshAccessToken(
   }
 
   const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString(
-    "base64"
+    "base64",
   );
 
   const response = await fetch(PINTEREST_TOKEN_URL, {
@@ -153,7 +153,7 @@ export async function revokeToken(token: string): Promise<void> {
   }
 
   const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString(
-    "base64"
+    "base64",
   );
 
   await fetch(PINTEREST_REVOKE_URL, {
@@ -172,7 +172,7 @@ export async function revokeToken(token: string): Promise<void> {
  * Get authenticated user's Pinterest profile
  */
 export async function getPinterestUser(
-  accessToken: string
+  accessToken: string,
 ): Promise<PinterestUser> {
   const response = await fetch("https://api.pinterest.com/v5/user_account", {
     headers: {

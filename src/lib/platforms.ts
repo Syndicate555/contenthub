@@ -84,29 +84,37 @@ export const PLATFORM_CONFIG: PlatformConfig[] = [
   },
 ];
 
-export function normalizePlatformSlug(slug?: string | null): PlatformSlug | null {
+export function normalizePlatformSlug(
+  slug?: string | null,
+): PlatformSlug | null {
   if (!slug) return null;
   const match = PLATFORM_CONFIG.find(
-    (platform) => platform.slug === slug.toLowerCase()
+    (platform) => platform.slug === slug.toLowerCase(),
   );
   return match ? match.slug : null;
 }
 
 export function getPlatformDomains(slug: PlatformSlug): string[] {
-  return PLATFORM_CONFIG.find((platform) => platform.slug === slug)?.domains || [];
+  return (
+    PLATFORM_CONFIG.find((platform) => platform.slug === slug)?.domains || []
+  );
 }
 
 export function getPlatformLabel(slug: PlatformSlug): string {
-  return PLATFORM_CONFIG.find((platform) => platform.slug === slug)?.label || slug;
+  return (
+    PLATFORM_CONFIG.find((platform) => platform.slug === slug)?.label || slug
+  );
 }
 
-export function getPlatformSlugFromSource(source?: string | null): PlatformSlug {
+export function getPlatformSlugFromSource(
+  source?: string | null,
+): PlatformSlug {
   const normalized = source?.toLowerCase() || "";
 
   for (const platform of PLATFORM_CONFIG) {
     if (
       platform.domains.some((domain) =>
-        normalized.includes(domain.replace("www.", ""))
+        normalized.includes(domain.replace("www.", "")),
       )
     ) {
       return platform.slug;

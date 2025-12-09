@@ -18,7 +18,7 @@ export async function GET() {
     if (!clerkId) {
       return NextResponse.json(
         { ok: false, error: "Unauthorized" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -30,7 +30,7 @@ export async function GET() {
     if (!user) {
       return NextResponse.json(
         { ok: false, error: "User not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -47,7 +47,7 @@ export async function GET() {
     if (!connection) {
       return NextResponse.json(
         { ok: false, error: "Pinterest not connected" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -63,7 +63,7 @@ export async function GET() {
     console.error("Error fetching Pinterest boards:", error);
     return NextResponse.json(
       { ok: false, error: "Failed to fetch boards" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

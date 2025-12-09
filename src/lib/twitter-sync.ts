@@ -25,7 +25,7 @@ export interface SyncResult {
  */
 async function isBookmarkImported(
   userId: string,
-  externalId: string
+  externalId: string,
 ): Promise<boolean> {
   const existing = await prisma.item.findFirst({
     where: {
@@ -42,7 +42,7 @@ async function isBookmarkImported(
  */
 async function importBookmark(
   userId: string,
-  bookmark: TwitterBookmark
+  bookmark: TwitterBookmark,
 ): Promise<{ success: boolean; error?: string }> {
   try {
     // Check for duplicate
@@ -114,7 +114,7 @@ async function importBookmark(
  */
 export async function syncTwitterBookmarks(
   userId: string,
-  maxBookmarks: number = 50
+  maxBookmarks: number = 50,
 ): Promise<SyncResult> {
   const result: SyncResult = {
     success: false,
@@ -162,9 +162,7 @@ export async function syncTwitterBookmarks(
       } else {
         result.failed++;
         if (importResult.error) {
-          result.errors.push(
-            `Bookmark ${bookmark.id}: ${importResult.error}`
-          );
+          result.errors.push(`Bookmark ${bookmark.id}: ${importResult.error}`);
         }
       }
 
@@ -183,14 +181,14 @@ export async function syncTwitterBookmarks(
 
     result.success = true;
     console.log(
-      `Twitter sync complete: ${result.synced} synced, ${result.skipped} skipped, ${result.failed} failed`
+      `Twitter sync complete: ${result.synced} synced, ${result.skipped} skipped, ${result.failed} failed`,
     );
 
     return result;
   } catch (error) {
     console.error("Twitter sync failed:", error);
     result.errors.push(
-      error instanceof Error ? error.message : "Unknown error"
+      error instanceof Error ? error.message : "Unknown error",
     );
     return result;
   }

@@ -18,7 +18,7 @@ export async function GET() {
     if (!user) {
       return NextResponse.json(
         { ok: false, error: "Unauthorized" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -64,7 +64,7 @@ export async function GET() {
     console.error("GET /api/streak/status error:", error);
     return NextResponse.json(
       { ok: false, error: "Failed to fetch streak status" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

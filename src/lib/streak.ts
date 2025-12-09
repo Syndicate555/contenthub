@@ -34,7 +34,9 @@ export interface UpdateStreakResult {
  * - Resets streak if more than 1 day gap
  * - Awards XP for maintaining streak
  */
-export async function updateStreak(userId: string): Promise<UpdateStreakResult> {
+export async function updateStreak(
+  userId: string,
+): Promise<UpdateStreakResult> {
   const now = new Date();
 
   // Get user's timezone
@@ -68,7 +70,8 @@ export async function updateStreak(userId: string): Promise<UpdateStreakResult> 
 
   // Check if this is the first activity today (in user's timezone)
   const lastActivity = stats.lastActivityAt;
-  const firstActivityToday = !lastActivity || !isSameDayInTimezone(lastActivity, now, timezone);
+  const firstActivityToday =
+    !lastActivity || !isSameDayInTimezone(lastActivity, now, timezone);
 
   // If not first activity today, just update lastActivityAt and return current streak
   if (!firstActivityToday) {
@@ -188,7 +191,11 @@ export async function getUserStreak(userId: string) {
   const isToday = isSameDayInTimezone(stats.lastActivityAt, now, timezone);
   const yesterday = new Date(now);
   yesterday.setDate(yesterday.getDate() - 1);
-  const wasYesterday = isSameDayInTimezone(stats.lastActivityAt, yesterday, timezone);
+  const wasYesterday = isSameDayInTimezone(
+    stats.lastActivityAt,
+    yesterday,
+    timezone,
+  );
 
   const isActive = isToday || wasYesterday;
 
@@ -204,7 +211,7 @@ export async function getUserStreak(userId: string) {
  */
 export async function updateUserTimezone(
   userId: string,
-  timezone: string
+  timezone: string,
 ): Promise<void> {
   await db.userStats.upsert({
     where: { userId },

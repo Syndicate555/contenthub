@@ -19,7 +19,7 @@ export async function GET() {
     if (!user) {
       return NextResponse.json(
         { ok: false, error: "Unauthorized" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -56,13 +56,13 @@ export async function GET() {
         headers: {
           "Cache-Control": "private, max-age=300, stale-while-revalidate=600",
         },
-      }
+      },
     );
   } catch (error) {
     console.error("GET /api/user/focus-areas error:", error);
     return NextResponse.json(
       { ok: false, error: "Failed to fetch focus areas" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
     if (!user) {
       return NextResponse.json(
         { ok: false, error: "Unauthorized" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
           error: "Validation failed",
           details: parsed.error.flatten().fieldErrors,
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
     if (domains.length !== domainIds.length) {
       return NextResponse.json(
         { ok: false, error: "One or more invalid domain IDs" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -157,7 +157,7 @@ export async function POST(request: NextRequest) {
     console.error("POST /api/user/focus-areas error:", error);
     return NextResponse.json(
       { ok: false, error: "Failed to set focus areas" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

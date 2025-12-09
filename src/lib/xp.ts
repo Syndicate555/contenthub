@@ -358,7 +358,7 @@ export async function getRecentXPEvents(userId: string, limit: number = 20) {
  */
 export async function isInFocusArea(
   userId: string,
-  domainId: string
+  domainId: string,
 ): Promise<boolean> {
   const focusArea = await db.focusArea.findUnique({
     where: {

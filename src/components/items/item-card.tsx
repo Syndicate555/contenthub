@@ -114,11 +114,11 @@ export function ItemCard({
   const platformInfo = getPlatformInfo(item.source || "");
   const instagramEmbedUrl = useMemo(
     () => getInstagramEmbedUrl(item.url, item.source || undefined),
-    [item.url, item.source]
+    [item.url, item.source],
   );
   const instagramSizing = useMemo(
     () => getInstagramEmbedSizing(item.url),
-    [item.url]
+    [item.url],
   );
   const showInstagramEmbed = !!instagramEmbedUrl && !embedFailed;
 
@@ -140,7 +140,7 @@ export function ItemCard({
       };
 
       toast.success(
-        statusMessages[status as keyof typeof statusMessages] || "Updated"
+        statusMessages[status as keyof typeof statusMessages] || "Updated",
       );
       onStatusChange?.(item.id, status);
     } catch {
@@ -201,7 +201,7 @@ export function ItemCard({
           "overflow-hidden transition-all duration-200",
           "hover:shadow-lg hover:border-gray-300",
           "border-l-4",
-          platformInfo.borderColor
+          platformInfo.borderColor,
         )}
       >
         {/* Instagram embed for reels/posts (uses hosted source) */}

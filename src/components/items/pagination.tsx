@@ -1,6 +1,11 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -110,14 +115,15 @@ export function Pagination({
                 size="sm"
                 className={cn(
                   "h-8 w-8 p-0",
-                  currentPage === page && "bg-gray-900 text-white hover:bg-gray-800"
+                  currentPage === page &&
+                    "bg-gray-900 text-white hover:bg-gray-800",
                 )}
                 onClick={() => onPageChange(page)}
                 disabled={isLoading}
               >
                 {page}
               </Button>
-            )
+            ),
           )}
         </div>
 

@@ -9,7 +9,10 @@ export async function GET() {
     const user = await getCurrentUser();
 
     if (!user) {
-      return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { ok: false, error: "Unauthorized" },
+        { status: 401 },
+      );
     }
 
     // OPTIMIZATION: Use groupBy for counts instead of fetching all items
@@ -49,7 +52,10 @@ export async function GET() {
     });
 
     // Group items by category in memory and take first 4 per category
-    const thumbnailMap = new Map<string, { thumbnails: string[]; titles: string[] }>();
+    const thumbnailMap = new Map<
+      string,
+      { thumbnails: string[]; titles: string[] }
+    >();
 
     for (const item of allThumbnailItems) {
       const cat = item.category || "other";
@@ -72,7 +78,10 @@ export async function GET() {
     // Build response with category metadata
     const categories = ITEM_CATEGORIES.map((cat) => {
       const count = countMap.get(cat.value) || 0;
-      const thumbnailData = thumbnailMap.get(cat.value) || { thumbnails: [], titles: [] };
+      const thumbnailData = thumbnailMap.get(cat.value) || {
+        thumbnails: [],
+        titles: [],
+      };
 
       return {
         category: cat.value as ItemCategory,
@@ -120,7 +129,7 @@ export async function GET() {
     console.error("GET /api/categories error:", error);
     return NextResponse.json(
       { ok: false, error: "Failed to fetch categories" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

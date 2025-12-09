@@ -15,7 +15,10 @@ interface AddPageClientProps {
   inboundEmail: string;
 }
 
-export default function AddPageClient({ userId, inboundEmail }: AddPageClientProps) {
+export default function AddPageClient({
+  userId,
+  inboundEmail,
+}: AddPageClientProps) {
   const router = useRouter();
   const [url, setUrl] = useState("");
   const [note, setNote] = useState("");
@@ -64,7 +67,9 @@ export default function AddPageClient({ userId, inboundEmail }: AddPageClientPro
       toast.success("Item saved and processed!");
       router.push("/today");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to save item");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to save item",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -133,7 +138,8 @@ export default function AddPageClient({ userId, inboundEmail }: AddPageClientPro
 
             {isSubmitting && (
               <p className="text-xs text-center text-gray-500">
-                Fetching content and generating summary. This may take a few seconds...
+                Fetching content and generating summary. This may take a few
+                seconds...
               </p>
             )}
           </form>
@@ -150,7 +156,8 @@ export default function AddPageClient({ userId, inboundEmail }: AddPageClientPro
         </CardHeader>
         <CardContent className="space-y-3">
           <p className="text-sm text-gray-600">
-            Forward email newsletters to your personalized address to automatically save and summarize them:
+            Forward email newsletters to your personalized address to
+            automatically save and summarize them:
           </p>
           <div className="flex items-center gap-2">
             <code className="flex-1 px-3 py-2 text-sm bg-gray-100 rounded-md border border-gray-200 select-all font-mono">
@@ -170,7 +177,8 @@ export default function AddPageClient({ userId, inboundEmail }: AddPageClientPro
             </Button>
           </div>
           <p className="text-xs text-gray-500">
-            Newsletters are automatically processed with AI summaries, tags, and categorization
+            Newsletters are automatically processed with AI summaries, tags, and
+            categorization
           </p>
         </CardContent>
       </Card>

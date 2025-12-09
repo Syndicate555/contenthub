@@ -42,7 +42,7 @@ export function useTodaySidebar() {
 
   // Treat data as fresh for 30s per user to avoid refetch on rapid tab switches
   const lastResolved = userId ? sidebarFreshness.get(userId) : null;
-  const isFresh = lastResolved !== null && Date.now() - lastResolved < 30_000;
+  const isFresh = lastResolved != null && Date.now() - lastResolved < 30_000;
 
   const { data, error, isLoading, isValidating, mutate } = useSWR(
     shouldFetch ? url : null,
@@ -52,7 +52,7 @@ export function useTodaySidebar() {
       // If we already have data and it's fresh, skip revalidate on mount/stale
       revalidateOnMount: !isFresh,
       revalidateIfStale: !isFresh,
-    }
+    },
   );
 
   // Update freshness marker whenever we have data

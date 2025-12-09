@@ -80,7 +80,7 @@ export interface PinsResponse {
  * Ensure access token is valid, refresh if needed
  */
 async function ensureValidToken(
-  connection: SocialConnection
+  connection: SocialConnection,
 ): Promise<{ accessToken: string; updated: boolean }> {
   const now = new Date();
   const tokenExpiry = connection.tokenExpiresAt;
@@ -137,7 +137,7 @@ async function ensureValidToken(
  * Fetch user's boards with pagination
  */
 export async function fetchBoards(
-  connection: SocialConnection
+  connection: SocialConnection,
 ): Promise<PinterestBoard[]> {
   const { accessToken } = await ensureValidToken(connection);
 
@@ -182,7 +182,7 @@ export async function fetchBoards(
           description: board.description,
           privacy: board.privacy,
           pinCount: board.pin_count,
-        }))
+        })),
       );
     }
 
@@ -194,7 +194,9 @@ export async function fetchBoards(
     }
   } while (bookmark);
 
-  console.log(`Fetched ${allBoards.length} boards for connection ${connection.id}`);
+  console.log(
+    `Fetched ${allBoards.length} boards for connection ${connection.id}`,
+  );
 
   return allBoards;
 }
@@ -207,7 +209,7 @@ export async function fetchBoardPins(
   boardId: string,
   boardName?: string,
   bookmark?: string,
-  pageSize: number = 25
+  pageSize: number = 25,
 ): Promise<PinsResponse> {
   const { accessToken } = await ensureValidToken(connection);
 
@@ -247,7 +249,7 @@ export async function fetchBoardPins(
         `${PINTEREST_API_BASE}/boards/${boardId}`,
         {
           headers: { Authorization: `Bearer ${accessToken}` },
-        }
+        },
       );
       if (boardResponse.ok) {
         const boardData: { name: string } = await boardResponse.json();
@@ -294,7 +296,7 @@ export async function fetchBoardPins(
  * Get Pinterest connection for a user
  */
 export async function getPinterestConnection(
-  userId: string
+  userId: string,
 ): Promise<SocialConnection | null> {
   return prisma.socialConnection.findUnique({
     where: {

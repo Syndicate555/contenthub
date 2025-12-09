@@ -38,7 +38,10 @@ const iconMap: Record<string, LucideIcon> = {
   Folder,
 };
 
-const categoryColors: Record<ItemCategory, { bg: string; border: string; text: string; iconBg: string }> = {
+const categoryColors: Record<
+  ItemCategory,
+  { bg: string; border: string; text: string; iconBg: string }
+> = {
   tech: {
     bg: "bg-blue-50",
     border: "border-blue-200 hover:border-blue-300",
@@ -116,7 +119,7 @@ export function CategoryFolder({
         "hover:shadow-lg hover:-translate-y-0.5",
         colors.bg,
         colors.border,
-        isSelected && "ring-2 ring-offset-2 ring-gray-900"
+        isSelected && "ring-2 ring-offset-2 ring-gray-900",
       )}
     >
       {/* Thumbnail Preview Grid (2x2) */}
@@ -124,10 +127,7 @@ export function CategoryFolder({
         {thumbnails.length > 0 ? (
           <div className="grid grid-cols-2 gap-0.5 h-full">
             {[0, 1, 2, 3].map((idx) => (
-              <div
-                key={idx}
-                className="relative bg-gray-100 overflow-hidden"
-              >
+              <div key={idx} className="relative bg-gray-100 overflow-hidden">
                 {thumbnails[idx] ? (
                   <img
                     src={thumbnails[idx]}
@@ -162,7 +162,9 @@ export function CategoryFolder({
           <Icon className={cn("w-4 h-4", colors.text)} />
         </div>
         <div className="flex-1 text-left min-w-0">
-          <h3 className="font-semibold text-gray-900 text-sm truncate">{label}</h3>
+          <h3 className="font-semibold text-gray-900 text-sm truncate">
+            {label}
+          </h3>
           <p className="text-xs text-gray-500">
             {count} item{count !== 1 ? "s" : ""}
           </p>

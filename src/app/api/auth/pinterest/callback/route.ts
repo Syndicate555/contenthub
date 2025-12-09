@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     const { userId: clerkId } = await auth();
     if (!clerkId) {
       return NextResponse.redirect(
-        new URL("/sign-in", process.env.NEXT_PUBLIC_APP_URL)
+        new URL("/sign-in", process.env.NEXT_PUBLIC_APP_URL),
       );
     }
 
@@ -38,10 +38,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(
         new URL(
           `/settings?error=pinterest_auth_denied&message=${encodeURIComponent(
-            errorDescription || error
+            errorDescription || error,
           )}`,
-          process.env.NEXT_PUBLIC_APP_URL
-        )
+          process.env.NEXT_PUBLIC_APP_URL,
+        ),
       );
     }
 
@@ -49,8 +49,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(
         new URL(
           "/settings?error=missing_params",
-          process.env.NEXT_PUBLIC_APP_URL
-        )
+          process.env.NEXT_PUBLIC_APP_URL,
+        ),
       );
     }
 
@@ -69,8 +69,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(
         new URL(
           "/settings?error=state_mismatch",
-          process.env.NEXT_PUBLIC_APP_URL
-        )
+          process.env.NEXT_PUBLIC_APP_URL,
+        ),
       );
     }
 
@@ -90,14 +90,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(
         new URL(
           "/settings?error=user_not_found",
-          process.env.NEXT_PUBLIC_APP_URL
-        )
+          process.env.NEXT_PUBLIC_APP_URL,
+        ),
       );
     }
 
     // Calculate token expiration time
     const tokenExpiresAt = new Date(
-      Date.now() + tokenResponse.expires_in * 1000
+      Date.now() + tokenResponse.expires_in * 1000,
     );
 
     // Encrypt tokens before storing
@@ -138,27 +138,27 @@ export async function GET(request: NextRequest) {
     });
 
     console.log(
-      `Pinterest connected for user ${user.id}: @${pinterestUser.username}`
+      `Pinterest connected for user ${user.id}: @${pinterestUser.username}`,
     );
 
     // Redirect to settings with success message
     return NextResponse.redirect(
       new URL(
         `/settings?success=pinterest_connected&handle=${encodeURIComponent(
-          pinterestUser.username
+          pinterestUser.username,
         )}`,
-        process.env.NEXT_PUBLIC_APP_URL
-      )
+        process.env.NEXT_PUBLIC_APP_URL,
+      ),
     );
   } catch (error) {
     console.error("Pinterest OAuth callback error:", error);
     return NextResponse.redirect(
       new URL(
         `/settings?error=callback_failed&message=${encodeURIComponent(
-          error instanceof Error ? error.message : "Unknown error"
+          error instanceof Error ? error.message : "Unknown error",
         )}`,
-        process.env.NEXT_PUBLIC_APP_URL
-      )
+        process.env.NEXT_PUBLIC_APP_URL,
+      ),
     );
   }
 }

@@ -16,9 +16,7 @@ export function QuestsPreview() {
               <div className="text-sm font-medium text-gray-900">
                 Process 5 Items
               </div>
-              <div className="text-xs text-gray-600 mt-1">
-                0 / 5 complete
-              </div>
+              <div className="text-xs text-gray-600 mt-1">0 / 5 complete</div>
             </div>
             <div className="text-xs font-semibold text-purple-600 bg-purple-100 px-2 py-1 rounded">
               +25 XP
@@ -39,9 +37,7 @@ export function QuestsPreview() {
               <div className="text-sm font-medium text-gray-900">
                 Add a Reflection
               </div>
-              <div className="text-xs text-gray-600 mt-1">
-                0 / 1 complete
-              </div>
+              <div className="text-xs text-gray-600 mt-1">0 / 1 complete</div>
             </div>
             <div className="text-xs font-semibold text-purple-600 bg-purple-100 px-2 py-1 rounded">
               +15 XP
@@ -62,9 +58,7 @@ export function QuestsPreview() {
               <div className="text-sm font-medium text-gray-900">
                 Focus Area Item
               </div>
-              <div className="text-xs text-gray-600 mt-1">
-                0 / 1 complete
-              </div>
+              <div className="text-xs text-gray-600 mt-1">0 / 1 complete</div>
             </div>
             <div className="text-xs font-semibold text-purple-600 bg-purple-100 px-2 py-1 rounded">
               +10 XP

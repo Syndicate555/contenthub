@@ -27,13 +27,13 @@
 export async function withTimeout<T>(
   promise: Promise<T>,
   timeoutMs: number,
-  fallback?: T
+  fallback?: T,
 ): Promise<T> {
   const timeoutPromise = new Promise<never>((_, reject) =>
     setTimeout(
       () => reject(new Error(`Request timeout after ${timeoutMs}ms`)),
-      timeoutMs
-    )
+      timeoutMs,
+    ),
   );
 
   try {
@@ -66,7 +66,7 @@ export async function withTimeout<T>(
 export async function fetchWithTimeout(
   url: string,
   options: RequestInit = {},
-  timeoutMs: number = 5000
+  timeoutMs: number = 5000,
 ): Promise<Response> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
@@ -80,7 +80,7 @@ export async function fetchWithTimeout(
     return response;
   } catch (error) {
     clearTimeout(timeoutId);
-    if (error instanceof Error && error.name === 'AbortError') {
+    if (error instanceof Error && error.name === "AbortError") {
       throw new Error(`Fetch timeout after ${timeoutMs}ms`);
     }
     throw error;

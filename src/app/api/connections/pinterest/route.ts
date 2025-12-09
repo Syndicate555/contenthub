@@ -20,7 +20,7 @@ export async function POST() {
     if (!clerkId) {
       return NextResponse.json(
         { ok: false, error: "Unauthorized" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -32,7 +32,7 @@ export async function POST() {
     if (!user) {
       return NextResponse.json(
         { ok: false, error: "User not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -47,7 +47,7 @@ export async function POST() {
           error: result.errors[0],
           data: result,
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -59,7 +59,7 @@ export async function POST() {
     console.error("Error syncing Pinterest:", error);
     return NextResponse.json(
       { ok: false, error: "Failed to sync Pinterest pins" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -74,7 +74,7 @@ export async function DELETE() {
     if (!clerkId) {
       return NextResponse.json(
         { ok: false, error: "Unauthorized" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -86,7 +86,7 @@ export async function DELETE() {
     if (!user) {
       return NextResponse.json(
         { ok: false, error: "User not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -102,7 +102,7 @@ export async function DELETE() {
     console.error("Error disconnecting Pinterest:", error);
     return NextResponse.json(
       { ok: false, error: "Failed to disconnect Pinterest" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -36,7 +36,9 @@ interface ItemCardGamifiedProps {
 
 // Build an Instagram embed URL (for reels/posts) so we can play the hosted video inline
 function getInstagramEmbedUrl(url: string, source?: string) {
-  const isInstagram = source?.toLowerCase().includes("instagram") || url.toLowerCase().includes("instagram.com");
+  const isInstagram =
+    source?.toLowerCase().includes("instagram") ||
+    url.toLowerCase().includes("instagram.com");
   if (!isInstagram) return null;
 
   try {
@@ -119,7 +121,9 @@ export function ItemCardGamified({
   const [showXpBreakdown, setShowXpBreakdown] = useState(false);
   const [embedFailed, setEmbedFailed] = useState(false);
 
-  const TypeIcon = item.type ? typeIcons[item.type as keyof typeof typeIcons] : Bookmark;
+  const TypeIcon = item.type
+    ? typeIcons[item.type as keyof typeof typeIcons]
+    : Bookmark;
   const typeColor = item.type
     ? typeColors[item.type as keyof typeof typeColors]
     : "bg-gray-100 text-gray-700 border-gray-200";
@@ -127,8 +131,14 @@ export function ItemCardGamified({
   const categoryColor = item.category
     ? categoryColors[item.category] || categoryColors.other
     : categoryColors.other;
-  const instagramEmbedUrl = useMemo(() => getInstagramEmbedUrl(item.url, item.source || undefined), [item.url, item.source]);
-  const instagramSizing = useMemo(() => getInstagramEmbedSizing(item.url), [item.url]);
+  const instagramEmbedUrl = useMemo(
+    () => getInstagramEmbedUrl(item.url, item.source || undefined),
+    [item.url, item.source],
+  );
+  const instagramSizing = useMemo(
+    () => getInstagramEmbedSizing(item.url),
+    [item.url],
+  );
   const showInstagramEmbed = !!instagramEmbedUrl && !embedFailed;
 
   const handleStatusChange = async (status: string) => {
@@ -148,7 +158,9 @@ export function ItemCardGamified({
         deleted: "Deleted",
       };
 
-      toast.success(statusMessages[status as keyof typeof statusMessages] || "Updated");
+      toast.success(
+        statusMessages[status as keyof typeof statusMessages] || "Updated",
+      );
       onStatusChange?.(item.id, status);
     } catch {
       toast.error("Failed to update item");
@@ -209,7 +221,7 @@ export function ItemCardGamified({
           "border-l-4",
           item.isInFocusArea && item.domain
             ? `border-l-4 shadow-md`
-            : platformInfo.borderColor
+            : platformInfo.borderColor,
         )}
         style={
           item.isInFocusArea && item.domain
@@ -217,7 +229,6 @@ export function ItemCardGamified({
             : undefined
         }
       >
-
         {/* Instagram embed for reels/posts (uses hosted source) */}
         {showInstagramEmbed ? (
           <div className="w-full bg-black overflow-hidden relative rounded-b-none">
@@ -232,7 +243,12 @@ export function ItemCardGamified({
               />
             </div>
             <div className="absolute top-3 right-3 flex gap-2">
-              <Button size="sm" variant="secondary" className="h-8 px-3 text-xs" onClick={() => setIsEmbedModalOpen(true)}>
+              <Button
+                size="sm"
+                variant="secondary"
+                className="h-8 px-3 text-xs"
+                onClick={() => setIsEmbedModalOpen(true)}
+              >
                 View full
               </Button>
             </div>
@@ -254,7 +270,8 @@ export function ItemCardGamified({
               loading="lazy"
               quality={85}
               onError={(e) => {
-                (e.target as HTMLImageElement).parentElement!.style.display = "none";
+                (e.target as HTMLImageElement).parentElement!.style.display =
+                  "none";
               }}
             />
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors" />
@@ -269,7 +286,10 @@ export function ItemCardGamified({
                 <PlatformIcon source={item.source || ""} size="sm" />
 
                 {item.type && (
-                  <Badge variant="secondary" className={cn("text-xs border", typeColor)}>
+                  <Badge
+                    variant="secondary"
+                    className={cn("text-xs border", typeColor)}
+                  >
                     <TypeIcon className="w-3 h-3 mr-1" />
                     {item.type}
                   </Badge>
@@ -325,21 +345,34 @@ export function ItemCardGamified({
                     <Zap className="w-4 h-4 text-amber-600 fill-current flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-baseline gap-2">
-                        <span className="font-semibold text-amber-900">+{item.xpEarned} XP earned</span>
+                        <span className="font-semibold text-amber-900">
+                          +{item.xpEarned} XP earned
+                        </span>
                         {item.domain && (
                           <span className="text-xs text-gray-600">
-                            → <span className="font-medium" style={{ color: item.domain.color }}>{item.domain.displayName}</span>
+                            →{" "}
+                            <span
+                              className="font-medium"
+                              style={{ color: item.domain.color }}
+                            >
+                              {item.domain.displayName}
+                            </span>
                           </span>
                         )}
                       </div>
                       {/* XP Breakdown */}
                       {Object.keys(item.xpBreakdown).length > 0 && (
                         <div className="flex flex-wrap gap-2 mt-1 text-xs text-gray-600">
-                          {Object.entries(item.xpBreakdown).map(([action, xp]) => (
-                            <span key={action} className="bg-white/60 px-2 py-0.5 rounded">
-                              {action.replace("_", " ")}: +{xp}
-                            </span>
-                          ))}
+                          {Object.entries(item.xpBreakdown).map(
+                            ([action, xp]) => (
+                              <span
+                                key={action}
+                                className="bg-white/60 px-2 py-0.5 rounded"
+                              >
+                                {action.replace("_", " ")}: +{xp}
+                              </span>
+                            ),
+                          )}
                         </div>
                       )}
                     </div>
@@ -377,7 +410,12 @@ export function ItemCardGamified({
           {item.tags && item.tags.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mb-3">
               {item.tags.slice(0, 6).map((tag: string) => (
-                <TagBadge key={tag} tag={tag} clickable={true} onClick={() => onTagClick?.(tag)} />
+                <TagBadge
+                  key={tag}
+                  tag={tag}
+                  clickable={true}
+                  onClick={() => onTagClick?.(tag)}
+                />
               ))}
               {item.tags.length > 6 && (
                 <span className="text-xs text-gray-400 self-center">

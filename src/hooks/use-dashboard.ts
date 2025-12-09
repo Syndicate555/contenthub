@@ -22,7 +22,7 @@ export function useProfileData(fallbackData?: unknown) {
 
   // Treat data as fresh for 30s per user to avoid refetch on rapid tab switches
   const lastResolved = userId ? profileFreshness.get(userId) : null;
-  const isFresh = lastResolved !== null && Date.now() - lastResolved < 30_000;
+  const isFresh = lastResolved != null && Date.now() - lastResolved < 30_000;
 
   const { data, error, isLoading, isValidating, mutate } = useSWR(
     shouldFetch ? PROFILE_CACHE_KEY : null,
@@ -33,7 +33,7 @@ export function useProfileData(fallbackData?: unknown) {
       revalidateOnMount: !isFresh,
       revalidateIfStale: !isFresh,
       fallbackData,
-    }
+    },
   );
 
   // Update freshness marker whenever we have data
@@ -70,7 +70,7 @@ export function useSettingsData(fallbackData?: unknown) {
 
   // Treat data as fresh for 30s per user to avoid refetch on rapid tab switches
   const lastResolved = userId ? settingsFreshness.get(userId) : null;
-  const isFresh = lastResolved !== null && Date.now() - lastResolved < 30_000;
+  const isFresh = lastResolved != null && Date.now() - lastResolved < 30_000;
 
   const { data, error, isLoading, isValidating, mutate } = useSWR(
     shouldFetch ? SETTINGS_CACHE_KEY : null,
@@ -80,7 +80,7 @@ export function useSettingsData(fallbackData?: unknown) {
       revalidateOnReconnect: false,
       revalidateIfStale: !isFresh,
       fallbackData,
-    }
+    },
   );
 
   useEffect(() => {

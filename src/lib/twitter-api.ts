@@ -23,18 +23,10 @@ const TWEET_FIELDS = [
 ].join(",");
 
 // Expansions to include author info and media
-const EXPANSIONS = [
-  "author_id",
-  "attachments.media_keys",
-].join(",");
+const EXPANSIONS = ["author_id", "attachments.media_keys"].join(",");
 
 // User fields to include
-const USER_FIELDS = [
-  "id",
-  "name",
-  "username",
-  "profile_image_url",
-].join(",");
+const USER_FIELDS = ["id", "name", "username", "profile_image_url"].join(",");
 
 // Media fields to include (add alt_text/size for better coverage)
 const MEDIA_FIELDS = [
@@ -81,7 +73,7 @@ export interface BookmarksResponse {
  * Ensure the access token is valid, refresh if needed
  */
 async function ensureValidToken(
-  connection: SocialConnection
+  connection: SocialConnection,
 ): Promise<{ accessToken: string; updated: boolean }> {
   const now = new Date();
   const tokenExpiry = connection.tokenExpiresAt;
@@ -140,14 +132,14 @@ async function ensureValidToken(
 export async function fetchBookmarks(
   connection: SocialConnection,
   paginationToken?: string,
-  maxResults: number = 100
+  maxResults: number = 100,
 ): Promise<BookmarksResponse> {
   // Ensure we have a valid access token
   const { accessToken } = await ensureValidToken(connection);
 
   // Build URL with query parameters
   const url = new URL(
-    `${TWITTER_API_BASE}/users/${connection.providerUserId}/bookmarks`
+    `${TWITTER_API_BASE}/users/${connection.providerUserId}/bookmarks`,
   );
   url.searchParams.set("tweet.fields", TWEET_FIELDS);
   url.searchParams.set("expansions", EXPANSIONS);
@@ -208,10 +200,10 @@ export async function fetchBookmarks(
 
   // Create lookup maps
   const userMap = new Map<string, TwitterApiUser>(
-    users.map((u: TwitterApiUser) => [u.id, u])
+    users.map((u: TwitterApiUser) => [u.id, u]),
   );
   const mediaMap = new Map<string, TwitterApiMedia>(
-    media.map((m: TwitterApiMedia) => [m.media_key, m])
+    media.map((m: TwitterApiMedia) => [m.media_key, m]),
   );
 
   // Transform tweets to our format
@@ -272,7 +264,7 @@ export async function fetchBookmarks(
 export async function fetchAllBookmarksSince(
   connection: SocialConnection,
   sinceId?: string,
-  maxBookmarks: number = 500
+  maxBookmarks: number = 500,
 ): Promise<TwitterBookmark[]> {
   const allBookmarks: TwitterBookmark[] = [];
   let nextToken: string | undefined;
@@ -307,7 +299,7 @@ export async function fetchAllBookmarksSince(
  * Get the Twitter connection for a user
  */
 export async function getTwitterConnection(
-  userId: string
+  userId: string,
 ): Promise<SocialConnection | null> {
   return prisma.socialConnection.findUnique({
     where: {

@@ -2,6 +2,8 @@ import SettingsPageClient from "./SettingsPageClient";
 import { SWRConfig } from "swr";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { Suspense } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 async function getSettingsData() {
   try {
@@ -49,7 +51,7 @@ async function getSettingsData() {
     ]);
 
     const countMap = new Map<string, number>(
-      importCounts.map((c) => [c.importSource!, c._count])
+      importCounts.map((c) => [c.importSource!, c._count]),
     );
 
     return {
@@ -79,6 +81,18 @@ async function getSettingsData() {
   }
 }
 
+function SettingsSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="space-y-2">
+        <Skeleton className="h-8 w-32" />
+        <Skeleton className="h-4 w-64" />
+      </div>
+      <Skeleton className="h-48 w-full rounded-xl" />
+    </div>
+  );
+}
+
 export default async function SettingsPage() {
   // Fetch data on server for instant display (no loading state)
   const settingsData = await getSettingsData();
@@ -93,7 +107,9 @@ export default async function SettingsPage() {
           : {},
       }}
     >
-      <SettingsPageClient fallbackData={settingsData} />
+      <Suspense fallback={<SettingsSkeleton />}>
+        <SettingsPageClient fallbackData={settingsData} />
+      </Suspense>
     </SWRConfig>
   );
 }

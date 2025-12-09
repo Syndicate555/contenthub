@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
     if (!user) {
       return NextResponse.json(
         { ok: false, error: "Unauthorized" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     if (!Array.isArray(badgeIds) || badgeIds.length === 0) {
       return NextResponse.json(
         { ok: false, error: "badgeIds must be a non-empty array" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
     console.error("POST /api/badges/mark-seen error:", error);
     return NextResponse.json(
       { ok: false, error: "Failed to mark badges as seen" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

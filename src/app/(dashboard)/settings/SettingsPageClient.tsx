@@ -67,7 +67,9 @@ interface SettingsPageClientProps {
   fallbackData?: any;
 }
 
-export default function SettingsPageClient({ fallbackData }: SettingsPageClientProps) {
+export default function SettingsPageClient({
+  fallbackData,
+}: SettingsPageClientProps) {
   const searchParams = useSearchParams();
 
   // Use SWR hook with optional server-rendered fallback data
@@ -167,7 +169,7 @@ export default function SettingsPageClient({ fallbackData }: SettingsPageClientP
       !confirm(
         `Are you sure you want to disconnect ${
           PLATFORMS[provider as keyof typeof PLATFORMS]?.name
-        }?`
+        }?`,
       )
     ) {
       return;
@@ -265,7 +267,7 @@ export default function SettingsPageClient({ fallbackData }: SettingsPageClientP
             "flex items-center gap-2 p-4 rounded-lg",
             notification.type === "success"
               ? "bg-green-50 text-green-800"
-              : "bg-red-50 text-red-800"
+              : "bg-red-50 text-red-800",
           )}
         >
           {notification.type === "success" ? (
@@ -332,7 +334,7 @@ export default function SettingsPageClient({ fallbackData }: SettingsPageClientP
                     <div
                       className={cn(
                         "w-10 h-10 rounded-lg flex items-center justify-center text-white",
-                        platform.color
+                        platform.color,
                       )}
                     >
                       {platform.icon}
@@ -367,7 +369,7 @@ export default function SettingsPageClient({ fallbackData }: SettingsPageClientP
                           <RefreshCw
                             className={cn(
                               "w-4 h-4",
-                              isSyncing && "animate-spin"
+                              isSyncing && "animate-spin",
                             )}
                           />
                           {isSyncing ? "Syncing..." : "Sync"}
