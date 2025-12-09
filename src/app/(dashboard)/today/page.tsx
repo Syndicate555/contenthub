@@ -22,10 +22,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import {
-  useTodayItemsWithFilters,
-  updateItemStatus,
-} from "@/hooks/use-items";
+import { useTodayItemsWithFilters, updateItemStatus } from "@/hooks/use-items";
 import type { ItemStatus } from "@/types";
 import { TodaySidebar } from "@/components/today/TodaySidebar";
 import { Input } from "@/components/ui/input";
@@ -64,15 +61,19 @@ export default function TodayPage() {
 
   const platformCounts = useMemo(() => {
     const counts = new Map<string, number>();
-    sources.forEach((source) => counts.set(source.source, source.count));
+    sources.forEach((source: { source: string; count: number }) =>
+      counts.set(source.source, source.count)
+    );
     return counts;
   }, [sources]);
 
   // Total "new" items available before filtering; falls back to current items length if counts unavailable
   const totalCount =
     (sources && sources.length > 0
-      ? sources.reduce((sum, s) => sum + s.count, 0)
-      : 0) || items.length || 0;
+      ? sources.reduce((sum: any, s: { count: any }) => sum + s.count, 0)
+      : 0) ||
+    items.length ||
+    0;
 
   const hasActiveFilters = Boolean(
     (selectedPlatform && selectedPlatform !== null) ||
@@ -126,7 +127,8 @@ export default function TodayPage() {
             No results match your filters
           </h2>
           <p className="text-gray-500 mb-6 max-w-sm mx-auto">
-            Try adjusting your search or selecting a different source to see more items.
+            Try adjusting your search or selecting a different source to see
+            more items.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <button
@@ -160,7 +162,8 @@ export default function TodayPage() {
             All caught up!
           </h2>
           <p className="text-gray-500 mb-6 max-w-sm mx-auto">
-            You have no new items to review. Your inbox is empty and ready for new content.
+            You have no new items to review. Your inbox is empty and ready for
+            new content.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
@@ -194,7 +197,9 @@ export default function TodayPage() {
   // Show skeleton only if loading AND no cached data
   const showSkeleton = isLoading && items.length === 0;
 
-  const platformIconMap: Partial<Record<PlatformSlug, ComponentType<{ className?: string }>>> = {
+  const platformIconMap: Partial<
+    Record<PlatformSlug, ComponentType<{ className?: string }>>
+  > = {
     twitter: Twitter,
     linkedin: Linkedin,
     instagram: Instagram,
@@ -276,7 +281,9 @@ export default function TodayPage() {
                 <Filter className="w-4 h-4" />
                 <span>Filter by source</span>
                 {sidebarError && (
-                  <span className="text-xs text-red-500">(counts unavailable)</span>
+                  <span className="text-xs text-red-500">
+                    (counts unavailable)
+                  </span>
                 )}
               </div>
               <div className="flex flex-wrap gap-2">
@@ -306,7 +313,9 @@ export default function TodayPage() {
                   return (
                     <button
                       key={platform.slug}
-                      onClick={() => setSelectedPlatform(platform.slug as PlatformSlug)}
+                      onClick={() =>
+                        setSelectedPlatform(platform.slug as PlatformSlug)
+                      }
                       className={cn(
                         "inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm border transition-all",
                         isActive
@@ -447,8 +456,12 @@ export default function TodayPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         <button
-                          onClick={() => setPage((prev) => Math.max(1, prev - 1))}
-                          disabled={pagination.page <= 1 || isLoading || isValidating}
+                          onClick={() =>
+                            setPage((prev) => Math.max(1, prev - 1))
+                          }
+                          disabled={
+                            pagination.page <= 1 || isLoading || isValidating
+                          }
                           className={cn(
                             "px-3 py-1.5 rounded-md border text-sm transition-colors",
                             pagination.page <= 1 || isLoading || isValidating
@@ -460,7 +473,9 @@ export default function TodayPage() {
                         </button>
                         <button
                           onClick={() => setPage((prev) => prev + 1)}
-                          disabled={!pagination.hasMore || isLoading || isValidating}
+                          disabled={
+                            !pagination.hasMore || isLoading || isValidating
+                          }
                           className={cn(
                             "px-3 py-1.5 rounded-md border text-sm transition-colors",
                             !pagination.hasMore || isLoading || isValidating
