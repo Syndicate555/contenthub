@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { motion } from "framer-motion";
 import {
   Loader2,
   Link as LinkIcon,
@@ -22,12 +23,40 @@ import {
   Instagram,
   Linkedin,
   Image as ImageIcon,
+  MessageSquarePlus,
+  Send,
 } from "lucide-react";
 import { showMultipleBadgesNotification } from "@/components/badge-notification";
+
 interface AddPageClientProps {
   userId: string;
   inboundEmail: string;
 }
+
+// Framer Motion variants for animations
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: {
+    y: 0,
+    opacity: 1,
+    transition: {
+      type: "spring",
+      stiffness: 100,
+      damping: 15,
+    },
+  },
+};
+
 
 export default function AddPageClient({
   userId,
@@ -168,9 +197,14 @@ export default function AddPageClient({
 
   return (
     <div className="min-h-[80vh] bg-gradient-to-b from-slate-50 via-white to-indigo-50/60">
-      <div className="max-w-5xl mx-auto py-8 px-4 space-y-6">
+      <motion.div
+        className="max-w-5xl mx-auto py-8 px-4 space-y-6"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
         {/* Hero banner */}
-        <div className="relative overflow-hidden rounded-2xl border border-indigo-100 bg-white shadow-sm p-6">
+        <motion.div variants={itemVariants} className="relative overflow-hidden rounded-2xl border border-indigo-100 bg-white shadow-sm p-6">
           <div className="pointer-events-none absolute inset-0">
             <div className="absolute -left-10 -top-16 h-48 w-48 rounded-full bg-indigo-100 blur-3xl" />
             <div className="absolute right-0 top-0 h-36 w-36 rounded-full bg-pink-100 blur-3xl" />
@@ -196,134 +230,142 @@ export default function AddPageClient({
               </span>
             </div>
           </div>
-        </div>
+        </motion.div>
 
         <div className="grid lg:grid-cols-[1.4fr_1fr] gap-6">
           {/* Add Content form + progress */}
-          <Card className="shadow-md border-slate-100">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <LinkIcon className="w-5 h-5" />
-                Add Content
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="url">URL</Label>
-                  <Input
-                    id="url"
-                    type="url"
-                    placeholder="https://twitter.com/..."
-                    value={url}
-                    onChange={(e) => setUrl(e.target.value)}
-                    disabled={isSubmitting}
-                    autoFocus
-                  />
-                  <p className="text-xs text-gray-500">
-                    Paste a link from Twitter, Instagram, LinkedIn, or any webpage
-                  </p>
-                </div>
+          <motion.div variants={itemVariants}>
+            <Card className="shadow-md border-slate-100">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <LinkIcon className="w-5 h-5" />
+                  Add Content
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="url">URL</Label>
+                    <Input
+                      id="url"
+                      type="url"
+                      placeholder="https://twitter.com/..."
+                      value={url}
+                      onChange={(e) => setUrl(e.target.value)}
+                      disabled={isSubmitting}
+                      autoFocus
+                    />
+                    <p className="text-xs text-gray-500">
+                      Paste a link from Twitter, Instagram, LinkedIn, or any webpage
+                    </p>
+                  </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="note">Note (optional)</Label>
-                  <Textarea
-                    id="note"
-                    placeholder="Why did you save this? Any personal context..."
-                    value={note}
-                    onChange={(e) => setNote(e.target.value)}
-                    disabled={isSubmitting}
-                    rows={3}
-                  />
-                </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="note" className="flex items-center gap-2">
+                      <MessageSquarePlus className="w-4 h-4 text-slate-500" />
+                      Note (optional)
+                    </Label>
+                    <Textarea
+                      id="note"
+                      placeholder="Why did you save this? Any personal context..."
+                      value={note}
+                      onChange={(e) => setNote(e.target.value)}
+                      disabled={isSubmitting}
+                      rows={3}
+                    />
+                  </div>
 
-                <Button type="submit" className="w-full" disabled={isSubmitting}>
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Working magic...
-                    </>
-                  ) : (
-                    "Save & Process"
-                  )}
-                </Button>
+                  <Button type="submit" className="w-full flex items-center gap-2" disabled={isSubmitting}>
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Working magic...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-4 h-4" />
+                        Save & Process
+                      </>
+                    )}
+                  </Button>
 
-                {isSubmitting && (
-                  <div className="space-y-4 rounded-xl border border-slate-200 bg-gradient-to-br from-slate-50 via-white to-indigo-50 p-4 shadow-lg overflow-hidden relative">
-                    {/* Floating shapes background */}
-                    <div className="pointer-events-none absolute inset-0">
-                      <div className="absolute -left-6 -top-6 h-24 w-24 rounded-full bg-indigo-200/30 blur-2xl animate-pulse" />
-                      <div className="absolute -right-4 top-10 h-16 w-16 rounded-full bg-pink-200/40 blur-xl animate-[pulse_3s_ease-in-out_infinite]" />
-                      <div className="absolute left-1/3 bottom-0 h-12 w-12 rounded-full bg-amber-200/30 blur-lg animate-[pulse_2.6s_ease-in-out_infinite]" />
-                    </div>
+                  {isSubmitting && (
+                    <div className="space-y-4 rounded-xl border border-slate-200 bg-gradient-to-br from-slate-50 via-white to-indigo-50 p-4 shadow-lg overflow-hidden relative">
+                      {/* Floating shapes background */}
+                      <div className="pointer-events-none absolute inset-0">
+                        <div className="absolute -left-6 -top-6 h-24 w-24 rounded-full bg-indigo-200/30 blur-2xl animate-pulse" />
+                        <div className="absolute -right-4 top-10 h-16 w-16 rounded-full bg-pink-200/40 blur-xl animate-[pulse_3s_ease-in-out_infinite]" />
+                        <div className="absolute left-1/3 bottom-0 h-12 w-12 rounded-full bg-amber-200/30 blur-lg animate-[pulse_2.6s_ease-in-out_infinite]" />
+                      </div>
 
-                    <div className="flex items-center justify-between gap-2 relative">
-                      <div className="flex items-center gap-2">
-                        <Sparkles className="w-4 h-4 text-indigo-500" />
-                        <span className="text-sm font-medium text-slate-800">
-                          Processing your link
+                      <div className="flex items-center justify-between gap-2 relative">
+                        <div className="flex items-center gap-2">
+                          <Sparkles className="w-4 h-4 text-indigo-500" />
+                          <span className="text-sm font-medium text-slate-800">
+                            Processing your link
+                          </span>
+                        </div>
+                        <span className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full border ${platformHint.color}`}>
+                          {platformHint.Icon && <platformHint.Icon className="w-3.5 h-3.5" />}
+                          {platformHint.label}
                         </span>
                       </div>
-                      <span className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full border ${platformHint.color}`}>
-                        {platformHint.Icon && <platformHint.Icon className="w-3.5 h-3.5" />}
-                        {platformHint.label}
-                      </span>
-                    </div>
 
-                    <div className="relative h-2 w-full overflow-hidden rounded-full bg-slate-200 shadow-inner">
-                      <div
-                        className="absolute left-0 top-0 h-full rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 transition-all duration-700"
-                        style={{ width: `${(progressStep / (steps.length - 1)) * 100}%` }}
-                      />
-                      <div className="absolute inset-0 animate-[pulse_2s_ease-in-out_infinite] bg-white/10" />
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 relative">
-                      {steps.map((step, idx) => {
-                        const isActive = idx === progressStep;
-                        const isDone = idx < progressStep;
-                        return (
-                          <div
-                            key={step.title}
-                            className={`flex items-start gap-2 rounded-lg border p-2 text-sm transition shadow-sm ${
-                              isDone
-                                ? "border-green-200 bg-green-50 text-green-800"
-                                : isActive
-                                ? "border-indigo-200 bg-white text-indigo-900 shadow-md"
-                                : "border-slate-200 bg-white/70 text-slate-600"
-                            }`}
-                          >
-                            {isDone ? (
-                              <CheckCircle2 className="w-4 h-4 mt-0.5 text-green-500 shrink-0" />
-                            ) : isActive ? (
-                              <Loader2 className="w-4 h-4 mt-0.5 text-indigo-500 animate-spin shrink-0" />
-                            ) : (
-                              <div className="w-4 h-4 mt-0.5 rounded-full border border-slate-300 shrink-0" />
-                            )}
-                            <div>
-                              <p className="font-medium">{step.title}</p>
-                              <p className="text-xs">{step.detail}</p>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    <div className="flex items-center justify-between text-xs text-slate-500 relative">
-                      <div className="flex items-center gap-1">
-                        <Activity className="w-3.5 h-3.5 text-slate-400" />
-                        <span>{quotes[quoteIndex]}</span>
+                      <div className="relative h-2 w-full overflow-hidden rounded-full bg-slate-200 shadow-inner">
+                        <div
+                          className="absolute left-0 top-0 h-full rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 transition-all duration-700"
+                          style={{ width: `${(progressStep / (steps.length - 1)) * 100}%` }}
+                        />
+                        <div className="absolute inset-0 animate-[pulse_2s_ease-in-out_infinite] bg-white/10" />
                       </div>
-                      <span className="text-[11px] text-slate-400">AI working…</span>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 relative">
+                        {steps.map((step, idx) => {
+                          const isActive = idx === progressStep;
+                          const isDone = idx < progressStep;
+                          return (
+                            <div
+                              key={step.title}
+                              className={`flex items-start gap-2 rounded-lg border p-2 text-sm transition shadow-sm ${
+                                isDone
+                                  ? "border-green-200 bg-green-50 text-green-800"
+                                  : isActive
+                                  ? "border-indigo-200 bg-white text-indigo-900 shadow-md"
+                                  : "border-slate-200 bg-white/70 text-slate-600"
+                              }`}
+                            >
+                              {isDone ? (
+                                <CheckCircle2 className="w-4 h-4 mt-0.5 text-green-500 shrink-0" />
+                              ) : isActive ? (
+                                <Loader2 className="w-4 h-4 mt-0.5 text-indigo-500 animate-spin shrink-0" />
+                              ) : (
+                                <div className="w-4 h-4 mt-0.5 rounded-full border border-slate-300 shrink-0" />
+                              )}
+                              <div>
+                                <p className="font-medium">{step.title}</p>
+                                <p className="text-xs">{step.detail}</p>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      <div className="flex items-center justify-between text-xs text-slate-500 relative">
+                        <div className="flex items-center gap-1">
+                          <Activity className="w-3.5 h-3.5 text-slate-400" />
+                          <span>{quotes[quoteIndex]}</span>
+                        </div>
+                        <span className="text-[11px] text-slate-400">AI working…</span>
+                      </div>
                     </div>
-                  </div>
-                )}
-              </form>
-            </CardContent>
-          </Card>
+                  )}
+                </form>
+              </CardContent>
+            </Card>
+          </motion.div>
 
           {/* How it works / info */}
-          <div className="space-y-4">
+          <motion.div variants={itemVariants} className="space-y-4">
             <Card className="shadow-md border-slate-100">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -396,9 +438,9 @@ export default function AddPageClient({
                 </p>
               </CardContent>
             </Card>
-          </div>
+          </motion.div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }
