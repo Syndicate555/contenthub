@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Image from "next/image";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +32,54 @@ interface ItemCardGamifiedProps {
   showActions?: boolean;
   onStatusChange?: (id: string, status: string) => void;
   onTagClick?: (tag: string) => void;
+}
+
+// Build an Instagram embed URL (for reels/posts) so we can play the hosted video inline
+function getInstagramEmbedUrl(url: string, source?: string) {
+  const isInstagram = source?.toLowerCase().includes("instagram") || url.toLowerCase().includes("instagram.com");
+  if (!isInstagram) return null;
+
+  try {
+    const parsed = new URL(url);
+    const parts = parsed.pathname.split("/").filter(Boolean);
+    const type = parts[0];
+    const id = parts[1];
+
+    if (!id) return null;
+    if (type === "reel" || type === "p" || type === "tv") {
+      return `https://www.instagram.com/${type}/${id}/embed`;
+    }
+  } catch {
+    // ignore parse errors
+  }
+
+  return null;
+}
+
+// Heuristic sizing/cropping so square posts don't leave huge whitespace
+function getInstagramEmbedSizing(url: string) {
+  const parts = (() => {
+    try {
+      const parsed = new URL(url);
+      return parsed.pathname.split("/").filter(Boolean);
+    } catch {
+      return [];
+    }
+  })();
+  const type = parts[0];
+
+  if (type === "reel" || type === "tv") {
+    return {
+      aspectClass: "aspect-[9/16]",
+      transformClass: "scale-100",
+    };
+  }
+
+  // Default for feed posts (often square/landscape): tighter crop
+  return {
+    aspectClass: "aspect-square",
+    transformClass: "scale-110 translate-y-[-2%]",
+  };
 }
 
 const typeIcons = {
@@ -66,8 +114,10 @@ export function ItemCardGamified({
 }: ItemCardGamifiedProps) {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const [isEmbedModalOpen, setIsEmbedModalOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showXpBreakdown, setShowXpBreakdown] = useState(false);
+  const [embedFailed, setEmbedFailed] = useState(false);
 
   const TypeIcon = item.type ? typeIcons[item.type as keyof typeof typeIcons] : Bookmark;
   const typeColor = item.type
@@ -77,6 +127,9 @@ export function ItemCardGamified({
   const categoryColor = item.category
     ? categoryColors[item.category] || categoryColors.other
     : categoryColors.other;
+  const instagramEmbedUrl = useMemo(() => getInstagramEmbedUrl(item.url, item.source || undefined), [item.url, item.source]);
+  const instagramSizing = useMemo(() => getInstagramEmbedSizing(item.url), [item.url]);
+  const showInstagramEmbed = !!instagramEmbedUrl && !embedFailed;
 
   const handleStatusChange = async (status: string) => {
     setIsUpdating(true);
@@ -165,8 +218,29 @@ export function ItemCardGamified({
         }
       >
 
-        {/* Thumbnail Image */}
-        {item.imageUrl && (
+        {/* Instagram embed for reels/posts (uses hosted source) */}
+        {showInstagramEmbed ? (
+          <div className="w-full bg-black overflow-hidden relative rounded-b-none">
+            <div className={`relative w-full ${instagramSizing.aspectClass}`}>
+              <iframe
+                src={instagramEmbedUrl!}
+                className={`absolute inset-0 w-full h-full border-0 ${instagramSizing.transformClass} origin-top`}
+                allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+                allowFullScreen
+                loading="lazy"
+                onError={() => setEmbedFailed(true)}
+              />
+            </div>
+            <div className="absolute top-3 right-3 flex gap-2">
+              <Button size="sm" variant="secondary" className="h-8 px-3 text-xs" onClick={() => setIsEmbedModalOpen(true)}>
+                View full
+              </Button>
+            </div>
+          </div>
+        ) : null}
+
+        {/* Thumbnail Image (fallback) */}
+        {!showInstagramEmbed && item.imageUrl && (
           <button
             onClick={() => setIsImageModalOpen(true)}
             className="block w-full relative bg-gray-50 overflow-hidden cursor-zoom-in group min-h-[200px] max-h-80"
@@ -392,6 +466,31 @@ export function ItemCardGamified({
         alt={item.title || "Content preview"}
         sourceUrl={item.url}
       />
+      {showInstagramEmbed && isEmbedModalOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setIsEmbedModalOpen(false)}
+        >
+          <div
+            className="bg-black rounded-xl shadow-2xl w-full max-w-[520px] aspect-[9/16] relative overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <iframe
+              src={instagramEmbedUrl!}
+              className="absolute inset-0 w-full h-full border-0"
+              allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+              allowFullScreen
+              loading="lazy"
+            />
+            <button
+              className="absolute top-2 right-2 text-white/80 hover:text-white transition"
+              onClick={() => setIsEmbedModalOpen(false)}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 }

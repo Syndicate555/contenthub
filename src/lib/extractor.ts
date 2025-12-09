@@ -8,6 +8,7 @@ export interface ExtractedContent {
   source: string;
   author?: string;
   imageUrl?: string;
+  videoUrl?: string;
   imageSource?: "oembed" | "microlink" | "og" | "scrape"; // Track where the image came from
 }
 
@@ -265,11 +266,17 @@ async function extractInstagramContent(url: string): Promise<ExtractedContent> {
       if (response.ok) {
         const html = await response.text();
 
-        // Extract image URL from the embed HTML
-        // The embed page contains image URLs in various places
+        // Extract image/video URL from the embed HTML (reels often expose media here)
         let imageUrl: string | undefined;
+        let videoUrl: string | undefined;
         let author: string | undefined;
         let caption: string | undefined;
+
+        // Try to find video URL (mp4) in the embed payload
+        const videoMatch = html.match(/"video_url"\s*:\s*"([^"]+\.mp4[^"]*)"/i);
+        if (videoMatch) {
+          videoUrl = videoMatch[1].replace(/\\/g, "");
+        }
 
         // Try to find image URL in the HTML (Instagram embed contains CDN URLs)
         const imgMatch = html.match(/src="(https:\/\/[^"]*cdninstagram\.com[^"]*\.(?:jpg|jpeg|png|webp)[^"]*)"/i);
@@ -299,14 +306,15 @@ async function extractInstagramContent(url: string): Promise<ExtractedContent> {
 
         author = author || urlAuthor;
 
-        if (imageUrl) {
-          console.log(`Instagram embed success: author=${author}, has image=true`);
+        if (imageUrl || videoUrl) {
+          console.log(`Instagram embed success: author=${author}, has image=${!!imageUrl}, has video=${!!videoUrl}`);
           return {
             title: author ? `Instagram post by @${author}` : "Instagram Post",
             content: caption || "Instagram post content.",
             source,
             author,
             imageUrl,
+            videoUrl,
             imageSource: "scrape",
           };
         }
@@ -372,6 +380,9 @@ async function extractInstagramContent(url: string): Promise<ExtractedContent> {
       const document = dom.window.document;
 
       const ogImage = document.querySelector('meta[property="og:image"]')?.getAttribute("content");
+      const ogVideo =
+        document.querySelector('meta[property="og:video"]')?.getAttribute("content") ||
+        document.querySelector('meta[property="og:video:secure_url"]')?.getAttribute("content");
       const ogTitle = document.querySelector('meta[property="og:title"]')?.getAttribute("content");
       const ogDesc = document.querySelector('meta[property="og:description"]')?.getAttribute("content");
 
@@ -383,14 +394,15 @@ async function extractInstagramContent(url: string): Promise<ExtractedContent> {
         }
       }
 
-      if (ogImage) {
-        console.log(`Instagram scrape success: author=${author}, has image=true`);
+      if (ogImage || ogVideo) {
+        console.log(`Instagram scrape success: author=${author}, has image=${!!ogImage}, has video=${!!ogVideo}`);
         return {
           title: author ? `Instagram post by @${author}` : "Instagram Post",
           content: ogDesc || "Instagram post content.",
           source,
           author,
           imageUrl: ogImage,
+          videoUrl: ogVideo || undefined,
           imageSource: "scrape",
         };
       }
@@ -424,6 +436,7 @@ async function extractInstagramContent(url: string): Promise<ExtractedContent> {
     }
 
     const { title: rawTitle, description, author: rawAuthor, image } = data.data;
+    const video = (data.data as any).video;
 
     let author = rawAuthor?.replace(/^@/, "") || urlAuthor || undefined;
 
@@ -435,8 +448,9 @@ async function extractInstagramContent(url: string): Promise<ExtractedContent> {
     }
 
     const imageUrl = image?.url;
+    const videoUrl: string | undefined = video?.url || undefined;
 
-    console.log(`Instagram Microlink success: author=${author}, has image=${!!imageUrl}`);
+    console.log(`Instagram Microlink success: author=${author}, has image=${!!imageUrl}, has video=${!!videoUrl}`);
 
     return {
       title: author ? `Instagram post by @${author}` : "Instagram Post",
@@ -444,6 +458,7 @@ async function extractInstagramContent(url: string): Promise<ExtractedContent> {
       source,
       author,
       imageUrl,
+      videoUrl,
       imageSource: "microlink",
     };
   } catch (error) {
