@@ -34,6 +34,17 @@ export async function GET(request: NextRequest) {
       status: { not: "deleted" }, // Don't show deleted items by default
     };
 
+    // Helper to append AND filters while normalizing Prisma's union type (object | array)
+    const appendAndFilters = (filters: Prisma.ItemWhereInput[]) => {
+      if (filters.length === 0) return;
+      const existing = Array.isArray(where.AND)
+        ? where.AND
+        : where.AND
+        ? [where.AND]
+        : [];
+      where.AND = [...existing, ...filters];
+    };
+
     // Status filter
     if (query.status && query.status !== "all") {
       where.status = query.status;
@@ -68,15 +79,10 @@ export async function GET(request: NextRequest) {
         });
       }
 
-      if (platformFilters.length > 0) {
-        where.AND = [...(where.AND || []), ...platformFilters];
-      }
+      appendAndFilters(platformFilters);
     } else if (query.platform) {
       // Fallback: substring match if unknown slug
-      where.AND = [
-        ...(where.AND || []),
-        { source: { contains: query.platform, mode: "insensitive" } },
-      ];
+      appendAndFilters([{ source: { contains: query.platform, mode: "insensitive" } }]);
     }
 
     // Search query
