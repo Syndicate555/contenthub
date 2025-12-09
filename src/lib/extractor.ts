@@ -1,4 +1,3 @@
-import { JSDOM } from "jsdom";
 import { Readability } from "@mozilla/readability";
 import { fetchWithTimeout } from "./utils/timeout";
 
@@ -10,6 +9,14 @@ export interface ExtractedContent {
   imageUrl?: string;
   videoUrl?: string;
   imageSource?: "oembed" | "microlink" | "og" | "scrape"; // Track where the image came from
+}
+
+/**
+ * Dynamically import JSDOM to avoid ES module bundling issues in serverless environments
+ */
+async function loadJSDOM() {
+  const { JSDOM } = await import("jsdom");
+  return JSDOM;
 }
 
 /**
@@ -164,6 +171,7 @@ async function extractTwitterContent(url: string): Promise<ExtractedContent> {
 
       // Extract plain text from the HTML payload
       if (data.html) {
+        const JSDOM = await loadJSDOM();
         const dom = new JSDOM(data.html);
         const blockquote = dom.window.document.querySelector("blockquote");
         if (blockquote) {
@@ -401,6 +409,7 @@ async function extractInstagramContent(url: string): Promise<ExtractedContent> {
 
     if (response.ok) {
       const html = await response.text();
+      const JSDOM = await loadJSDOM();
       const dom = new JSDOM(html, { url });
       const document = dom.window.document;
 
@@ -723,6 +732,7 @@ async function extractLinkedInContent(url: string): Promise<ExtractedContent> {
     }
 
     const html = await response.text();
+    const JSDOM = await loadJSDOM();
     const dom = new JSDOM(html, { url });
     const document = dom.window.document;
 
@@ -809,6 +819,7 @@ async function extractGenericContent(url: string): Promise<ExtractedContent> {
     }
 
     const html = await response.text();
+    const JSDOM = await loadJSDOM();
     const dom = new JSDOM(html, { url });
     const document = dom.window.document;
 
