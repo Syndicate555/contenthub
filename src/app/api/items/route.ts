@@ -216,8 +216,17 @@ export async function GET(request: NextRequest) {
     return response;
   } catch (error) {
     console.error("GET /api/items error:", error);
+
+    // Return detailed error for debugging (TODO: remove details in production)
+    const errorMessage =
+      error instanceof Error ? error.message : "Failed to fetch items";
+
     return NextResponse.json(
-      { ok: false, error: "Failed to fetch items" },
+      {
+        ok: false,
+        error: "Failed to fetch items",
+        details: errorMessage, // Temporarily exposed for debugging
+      },
       { status: 500 },
     );
   }
@@ -260,8 +269,17 @@ export async function POST(request: NextRequest) {
     );
   } catch (error) {
     console.error("POST /api/items error:", error);
+
+    // Return detailed error for debugging (TODO: remove details in production)
+    const errorMessage =
+      error instanceof Error ? error.message : "Failed to create item";
+
     return NextResponse.json(
-      { ok: false, error: "Failed to create item" },
+      {
+        ok: false,
+        error: "Failed to create item",
+        details: errorMessage, // Temporarily exposed for debugging
+      },
       { status: 500 },
     );
   }
