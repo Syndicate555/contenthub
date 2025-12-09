@@ -24,10 +24,14 @@ async function testEmailWebhook() {
   console.log(`✅ Found test user: ${user.email} (ID: ${user.id})\n`);
 
   // Step 2: Create a fake newsletter email
+  const messageId = `<test-${Date.now()}@morningbrew.com>`;
+
   const fakeNewsletter = {
     to: `save+${user.id}@resend.dev`,
     from: "newsletter@morningbrew.com",
     subject: "Morning Brew: Your Daily Dose of Tech News",
+    message_id: messageId,
+    email_id: `email_${Date.now()}`,
     html: `
       <html>
         <body>
@@ -67,7 +71,7 @@ Google announces cloud-based quantum computing service.
 Major tech companies commit to carbon-neutral data centers by 2025.
     `,
     headers: {
-      "message-id": `<test-${Date.now()}@morningbrew.com>`,
+      "message-id": messageId,
       "from": "newsletter@morningbrew.com",
       "to": `save+${user.id}@resend.dev`,
     },
