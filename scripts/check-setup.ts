@@ -22,7 +22,7 @@ async function checkSetup() {
     console.log(`   Value: ${webhookSecret.substring(0, 15)}...`);
   } else {
     console.log("❌ RESEND_WEBHOOK_SECRET is missing!");
-    console.log("   Add to .env: RESEND_WEBHOOK_SECRET=\"whsec_...\"");
+    console.log('   Add to .env: RESEND_WEBHOOK_SECRET="whsec_..."');
   }
 
   if (domain) {
@@ -30,7 +30,7 @@ async function checkSetup() {
     console.log(`   Value: ${domain}`);
   } else {
     console.log("❌ RESEND_INBOUND_DOMAIN is missing!");
-    console.log("   Add to .env: RESEND_INBOUND_DOMAIN=\"galiltol.resend.app\"");
+    console.log('   Add to .env: RESEND_INBOUND_DOMAIN="galiltol.resend.app"');
   }
 
   // Check 2: Database connection
@@ -101,11 +101,15 @@ async function checkSetup() {
   console.log("2. Copy ngrok URL (e.g., https://abc123.ngrok-free.dev)");
   console.log("3. Update Resend webhook URL:");
   console.log("   https://resend.com/webhooks");
-  console.log("4. Set webhook URL to: https://YOUR-NGROK-URL/api/webhooks/email");
+  console.log(
+    "4. Set webhook URL to: https://YOUR-NGROK-URL/api/webhooks/email",
+  );
   console.log("5. Forward a newsletter to your email address (shown above)");
   console.log("6. Check: http://localhost:3000/today");
 
-  console.log("\n═══════════════════════════════════════════════════════════\n");
+  console.log(
+    "\n═══════════════════════════════════════════════════════════\n",
+  );
 
   await db.$disconnect();
 }

@@ -2,7 +2,7 @@
 
 import useSWR, { mutate } from "swr";
 import { useAuth } from "@clerk/nextjs";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 
 // Persist freshness across unmounts per user to avoid refetching on quick tab flips
 const profileFreshness = new Map<string, number>();
@@ -21,8 +21,10 @@ export function useProfileData(fallbackData?: unknown) {
   const shouldFetch = isLoaded && userId;
 
   // Treat data as fresh for 30s per user to avoid refetch on rapid tab switches
-  const lastResolved = userId ? profileFreshness.get(userId) : null;
-  const isFresh = lastResolved != null && Date.now() - lastResolved < 30_000;
+  const isFresh = useMemo(() => {
+    const lastResolved = userId ? profileFreshness.get(userId) : null;
+    return lastResolved != null && Date.now() - lastResolved < 30_000;
+  }, [userId]);
 
   const { data, error, isLoading, isValidating, mutate } = useSWR(
     shouldFetch ? PROFILE_CACHE_KEY : null,
@@ -69,8 +71,10 @@ export function useSettingsData(fallbackData?: unknown) {
   const shouldFetch = isLoaded && userId;
 
   // Treat data as fresh for 30s per user to avoid refetch on rapid tab switches
-  const lastResolved = userId ? settingsFreshness.get(userId) : null;
-  const isFresh = lastResolved != null && Date.now() - lastResolved < 30_000;
+  const isFresh = useMemo(() => {
+    const lastResolved = userId ? settingsFreshness.get(userId) : null;
+    return lastResolved != null && Date.now() - lastResolved < 30_000;
+  }, [userId]);
 
   const { data, error, isLoading, isValidating, mutate } = useSWR(
     shouldFetch ? SETTINGS_CACHE_KEY : null,

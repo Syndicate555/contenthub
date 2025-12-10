@@ -236,7 +236,10 @@ export default function ItemsPage() {
           <div>
             <h1 className="text-3xl font-semibold text-slate-900">Library</h1>
             <p className="text-sm text-slate-500">
-              {totalDisplay} total items{categories.length ? ` across ${categories.length} categories` : ""}
+              {totalDisplay} total items
+              {categories.length
+                ? ` across ${categories.length} categories`
+                : ""}
             </p>
           </div>
           <div className="flex items-center gap-2 bg-slate-100 rounded-lg p-1">
@@ -317,7 +320,9 @@ export default function ItemsPage() {
             <Button
               key={cat.category}
               size="sm"
-              variant={categoryFilter === cat.category ? "secondary" : "outline"}
+              variant={
+                categoryFilter === cat.category ? "secondary" : "outline"
+              }
               className={cn(
                 "rounded-full border",
                 categoryFilter === cat.category
@@ -384,7 +389,9 @@ export default function ItemsPage() {
         </div>
         <div className="flex flex-wrap gap-2">
           {tagOptions.length === 0 ? (
-            <p className="text-xs text-slate-500">Tags will appear after you add items.</p>
+            <p className="text-xs text-slate-500">
+              Tags will appear after you add items.
+            </p>
           ) : (
             tagOptions.map((t) => (
               <TagBadge
@@ -395,7 +402,10 @@ export default function ItemsPage() {
                   const tagName = t.tag;
                   setTagFilter(tagFilter === tagName ? null : tagName);
                   setCurrentPage(1);
-                  updateUrl({ tag: tagFilter === tagName ? null : tagName, page: "1" });
+                  updateUrl({
+                    tag: tagFilter === tagName ? null : tagName,
+                    page: "1",
+                  });
                 }}
               />
             ))
@@ -448,9 +458,7 @@ export default function ItemsPage() {
         ) : (
           <div className="space-y-4">
             <div className="flex items-center justify-between text-sm text-slate-500">
-              <span>
-                {pagination?.total || items.length} items
-              </span>
+              <span>{pagination?.total || items.length} items</span>
               {hasActiveFilters && (
                 <Button
                   variant="ghost"

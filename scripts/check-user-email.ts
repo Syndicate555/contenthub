@@ -27,7 +27,9 @@ async function checkUserEmail() {
     }
 
     console.log("\n📋 All ContentHub Users & Their Forwarding Emails:");
-    console.log("═══════════════════════════════════════════════════════════════\n");
+    console.log(
+      "═══════════════════════════════════════════════════════════════\n",
+    );
 
     for (const user of users) {
       const inboundEmail = getUserInboundEmail(user.id);
@@ -56,12 +58,18 @@ async function checkUserEmail() {
     });
 
     if (recentEmailItem) {
-      console.log("═══════════════════════════════════════════════════════════════");
+      console.log(
+        "═══════════════════════════════════════════════════════════════",
+      );
       console.log("📧 Most Recent Email Item Was Assigned To:");
-      console.log("═══════════════════════════════════════════════════════════════\n");
+      console.log(
+        "═══════════════════════════════════════════════════════════════\n",
+      );
       console.log(`👤 User Email: ${recentEmailItem.user.email}`);
       console.log(`   User ID: ${recentEmailItem.userId}`);
-      console.log(`   Expected Forwarding Address: ${getUserInboundEmail(recentEmailItem.userId)}`);
+      console.log(
+        `   Expected Forwarding Address: ${getUserInboundEmail(recentEmailItem.userId)}`,
+      );
       console.log(`\n📩 Email Details:`);
       console.log(`   Subject: ${recentEmailItem.title}`);
       console.log(`   Source: ${recentEmailItem.source}`);
@@ -69,16 +77,26 @@ async function checkUserEmail() {
       console.log("");
     }
 
-    console.log("═══════════════════════════════════════════════════════════════\n");
+    console.log(
+      "═══════════════════════════════════════════════════════════════\n",
+    );
     console.log("💡 Troubleshooting Tips:");
-    console.log("─────────────────────────────────────────────────────────────");
-    console.log("1. Make sure you're logged into ContentHub with the SAME email");
+    console.log(
+      "─────────────────────────────────────────────────────────────",
+    );
+    console.log(
+      "1. Make sure you're logged into ContentHub with the SAME email",
+    );
     console.log("   as the user whose forwarding address you're using");
     console.log("");
-    console.log("2. Double-check the forwarding address includes the correct user ID");
+    console.log(
+      "2. Double-check the forwarding address includes the correct user ID",
+    );
     console.log("   Format: save+{userId}@galiitol.resend.app");
     console.log("");
-    console.log("3. Each user has a unique forwarding address - using the wrong");
+    console.log(
+      "3. Each user has a unique forwarding address - using the wrong",
+    );
     console.log("   one will send the email to a different account!");
     console.log("");
   } catch (error) {

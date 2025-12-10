@@ -25,7 +25,11 @@ async function checkEmailItem() {
   console.log("═══════════════════════════════════════");
   console.log("ID:", item.id);
   console.log("Title:", item.title);
-  console.log("Status:", item.status, item.status === "new" ? "✅ CORRECT" : "❌ WRONG - should be 'new'");
+  console.log(
+    "Status:",
+    item.status,
+    item.status === "new" ? "✅ CORRECT" : "❌ WRONG - should be 'new'",
+  );
   console.log("User ID:", item.userId);
   console.log("Source:", item.source);
   console.log("Import Source:", item.importSource);

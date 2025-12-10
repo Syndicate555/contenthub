@@ -155,7 +155,7 @@ export async function awardXP(params: AwardXPParams): Promise<AwardXPResult> {
   const xpAmount = customAmount ?? XP_VALUES[action] ?? 0;
 
   // Get or create user stats
-  let userStats = await db.userStats.findUnique({
+  const userStats = await db.userStats.findUnique({
     where: { userId },
   });
 

@@ -50,18 +50,14 @@ const itemVariants = {
     y: 0,
     opacity: 1,
     transition: {
-      type: "spring",
+      type: "spring" as const,
       stiffness: 100,
       damping: 15,
     },
   },
 };
 
-
-export default function AddPageClient({
-  userId,
-  inboundEmail,
-}: AddPageClientProps) {
+export default function AddPageClient({ inboundEmail }: AddPageClientProps) {
   const router = useRouter();
   const [url, setUrl] = useState("");
   const [note, setNote] = useState("");
@@ -74,12 +70,15 @@ export default function AddPageClient({
   const steps = useMemo(
     () => [
       { title: "Validating link", detail: "Checking URL and platform." },
-      { title: "Fetching content", detail: "Pulling text, media, and metadata." },
+      {
+        title: "Fetching content",
+        detail: "Pulling text, media, and metadata.",
+      },
       { title: "AI distilling", detail: "Summarizing key takeaways." },
       { title: "Tagging & routing", detail: "Applying tags, domains, and XP." },
       { title: "Finalizing", detail: "Saving to Inbox and polishing UI." },
     ],
-    []
+    [],
   );
 
   const quotes = [
@@ -93,18 +92,38 @@ export default function AddPageClient({
   const platformHint = useMemo(() => {
     const lower = url.toLowerCase();
     if (lower.includes("twitter.com") || lower.includes("x.com")) {
-      return { label: "Twitter", color: "bg-sky-100 text-sky-800 border-sky-200", Icon: Twitter };
+      return {
+        label: "Twitter",
+        color: "bg-sky-100 text-sky-800 border-sky-200",
+        Icon: Twitter,
+      };
     }
     if (lower.includes("instagram.com")) {
-      return { label: "Instagram", color: "bg-pink-100 text-pink-800 border-pink-200", Icon: Instagram };
+      return {
+        label: "Instagram",
+        color: "bg-pink-100 text-pink-800 border-pink-200",
+        Icon: Instagram,
+      };
     }
     if (lower.includes("linkedin.com")) {
-      return { label: "LinkedIn", color: "bg-blue-100 text-blue-800 border-blue-200", Icon: Linkedin };
+      return {
+        label: "LinkedIn",
+        color: "bg-blue-100 text-blue-800 border-blue-200",
+        Icon: Linkedin,
+      };
     }
     if (lower.includes("pinterest.com")) {
-      return { label: "Pinterest", color: "bg-red-100 text-red-800 border-red-200", Icon: ImageIcon };
+      return {
+        label: "Pinterest",
+        color: "bg-red-100 text-red-800 border-red-200",
+        Icon: ImageIcon,
+      };
     }
-    return { label: "Web", color: "bg-amber-100 text-amber-800 border-amber-200", Icon: Globe2 };
+    return {
+      label: "Web",
+      color: "bg-amber-100 text-amber-800 border-amber-200",
+      Icon: Globe2,
+    };
   }, [url]);
 
   // Simulated progress timeline so users see activity while the server works
@@ -119,13 +138,13 @@ export default function AddPageClient({
     steps.forEach((_, idx) => {
       // spread progress across ~10 seconds
       timers.push(
-        setTimeout(() => setProgressStep((s) => Math.max(s, idx)), 1800 * idx)
+        setTimeout(() => setProgressStep((s) => Math.max(s, idx)), 1800 * idx),
       );
     });
 
     const quoteTimer = setInterval(
       () => setQuoteIndex((i) => (i + 1) % quotes.length),
-      2200
+      2200,
     );
 
     return () => {
@@ -204,7 +223,10 @@ export default function AddPageClient({
         animate="visible"
       >
         {/* Hero banner */}
-        <motion.div variants={itemVariants} className="relative overflow-hidden rounded-2xl border border-indigo-100 bg-white shadow-sm p-6">
+        <motion.div
+          variants={itemVariants}
+          className="relative overflow-hidden rounded-2xl border border-indigo-100 bg-white shadow-sm p-6"
+        >
           <div className="pointer-events-none absolute inset-0">
             <div className="absolute -left-10 -top-16 h-48 w-48 rounded-full bg-indigo-100 blur-3xl" />
             <div className="absolute right-0 top-0 h-36 w-36 rounded-full bg-pink-100 blur-3xl" />
@@ -212,13 +234,16 @@ export default function AddPageClient({
           </div>
           <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-2">
-              <p className="text-xs uppercase tracking-[0.2em] text-indigo-500 font-semibold">Add any link</p>
+              <p className="text-xs uppercase tracking-[0.2em] text-indigo-500 font-semibold">
+                Add any link
+              </p>
               <h1 className="text-2xl sm:text-3xl font-semibold text-slate-900">
                 Drop a link, we distill the signal.
               </h1>
               <p className="text-sm text-slate-600 max-w-2xl">
-                Automatic extraction, AI summarization, tagging, and inbox routing.
-                Watch the pipeline in action with live progress and playful cues.
+                Automatic extraction, AI summarization, tagging, and inbox
+                routing. Watch the pipeline in action with live progress and
+                playful cues.
               </p>
             </div>
             <div className="flex gap-2">
@@ -256,7 +281,8 @@ export default function AddPageClient({
                       autoFocus
                     />
                     <p className="text-xs text-gray-500">
-                      Paste a link from Twitter, Instagram, LinkedIn, or any webpage
+                      Paste a link from Twitter, Instagram, LinkedIn, or any
+                      webpage
                     </p>
                   </div>
 
@@ -275,7 +301,11 @@ export default function AddPageClient({
                     />
                   </div>
 
-                  <Button type="submit" className="w-full flex items-center gap-2" disabled={isSubmitting}>
+                  <Button
+                    type="submit"
+                    className="w-full flex items-center gap-2"
+                    disabled={isSubmitting}
+                  >
                     {isSubmitting ? (
                       <>
                         <Loader2 className="w-4 h-4 animate-spin" />
@@ -305,8 +335,12 @@ export default function AddPageClient({
                             Processing your link
                           </span>
                         </div>
-                        <span className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full border ${platformHint.color}`}>
-                          {platformHint.Icon && <platformHint.Icon className="w-3.5 h-3.5" />}
+                        <span
+                          className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full border ${platformHint.color}`}
+                        >
+                          {platformHint.Icon && (
+                            <platformHint.Icon className="w-3.5 h-3.5" />
+                          )}
                           {platformHint.label}
                         </span>
                       </div>
@@ -314,7 +348,9 @@ export default function AddPageClient({
                       <div className="relative h-2 w-full overflow-hidden rounded-full bg-slate-200 shadow-inner">
                         <div
                           className="absolute left-0 top-0 h-full rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 transition-all duration-700"
-                          style={{ width: `${(progressStep / (steps.length - 1)) * 100}%` }}
+                          style={{
+                            width: `${(progressStep / (steps.length - 1)) * 100}%`,
+                          }}
                         />
                         <div className="absolute inset-0 animate-[pulse_2s_ease-in-out_infinite] bg-white/10" />
                       </div>
@@ -330,8 +366,8 @@ export default function AddPageClient({
                                 isDone
                                   ? "border-green-200 bg-green-50 text-green-800"
                                   : isActive
-                                  ? "border-indigo-200 bg-white text-indigo-900 shadow-md"
-                                  : "border-slate-200 bg-white/70 text-slate-600"
+                                    ? "border-indigo-200 bg-white text-indigo-900 shadow-md"
+                                    : "border-slate-200 bg-white/70 text-slate-600"
                               }`}
                             >
                               {isDone ? (
@@ -355,7 +391,9 @@ export default function AddPageClient({
                           <Activity className="w-3.5 h-3.5 text-slate-400" />
                           <span>{quotes[quoteIndex]}</span>
                         </div>
-                        <span className="text-[11px] text-slate-400">AI working…</span>
+                        <span className="text-[11px] text-slate-400">
+                          AI working…
+                        </span>
                       </div>
                     </div>
                   )}
@@ -375,31 +413,56 @@ export default function AddPageClient({
               </CardHeader>
               <CardContent className="space-y-3 text-sm text-slate-700">
                 <div className="flex items-start gap-3">
-                  <div className="mt-0.5 h-8 w-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center">1</div>
+                  <div className="mt-0.5 h-8 w-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                    1
+                  </div>
                   <div>
-                    <p className="font-medium text-slate-900">Smart extraction</p>
-                    <p className="text-xs text-slate-600">We fetch text, media, and metadata from the link so you don’t have to copy-paste.</p>
+                    <p className="font-medium text-slate-900">
+                      Smart extraction
+                    </p>
+                    <p className="text-xs text-slate-600">
+                      We fetch text, media, and metadata from the link so you
+                      don’t have to copy-paste.
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="mt-0.5 h-8 w-8 rounded-full bg-pink-50 text-pink-600 flex items-center justify-center">2</div>
+                  <div className="mt-0.5 h-8 w-8 rounded-full bg-pink-50 text-pink-600 flex items-center justify-center">
+                    2
+                  </div>
                   <div>
                     <p className="font-medium text-slate-900">AI enrichment</p>
-                    <p className="text-xs text-slate-600">Summaries, tags, categories, and XP are generated to keep your inbox organized.</p>
+                    <p className="text-xs text-slate-600">
+                      Summaries, tags, categories, and XP are generated to keep
+                      your inbox organized.
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="mt-0.5 h-8 w-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">3</div>
+                  <div className="mt-0.5 h-8 w-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                    3
+                  </div>
                   <div>
                     <p className="font-medium text-slate-900">Ready to act</p>
-                    <p className="text-xs text-slate-600">Content drops into your Inbox with focus areas, badges, and actions ready to go.</p>
+                    <p className="text-xs text-slate-600">
+                      Content drops into your Inbox with focus areas, badges,
+                      and actions ready to go.
+                    </p>
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2 pt-1">
-                  <span className="px-3 py-1 text-xs rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100">Summaries</span>
-                  <span className="px-3 py-1 text-xs rounded-full bg-amber-50 text-amber-700 border border-amber-100">Tags</span>
-                  <span className="px-3 py-1 text-xs rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">Domains</span>
-                  <span className="px-3 py-1 text-xs rounded-full bg-pink-50 text-pink-700 border border-pink-100">XP</span>
+                  <span className="px-3 py-1 text-xs rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100">
+                    Summaries
+                  </span>
+                  <span className="px-3 py-1 text-xs rounded-full bg-amber-50 text-amber-700 border border-amber-100">
+                    Tags
+                  </span>
+                  <span className="px-3 py-1 text-xs rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">
+                    Domains
+                  </span>
+                  <span className="px-3 py-1 text-xs rounded-full bg-pink-50 text-pink-700 border border-pink-100">
+                    XP
+                  </span>
                 </div>
               </CardContent>
             </Card>
@@ -414,7 +477,8 @@ export default function AddPageClient({
               </CardHeader>
               <CardContent className="space-y-3">
                 <p className="text-sm text-gray-600">
-                  Forward email newsletters to your personalized address to automatically save and summarize them:
+                  Forward email newsletters to your personalized address to
+                  automatically save and summarize them:
                 </p>
                 <div className="flex items-center gap-2">
                   <code className="flex-1 px-3 py-2 text-sm bg-gray-100 rounded-md border border-gray-200 select-all font-mono">
@@ -434,7 +498,8 @@ export default function AddPageClient({
                   </Button>
                 </div>
                 <p className="text-xs text-gray-500">
-                  Newsletters are automatically processed with AI summaries, tags, and categorization
+                  Newsletters are automatically processed with AI summaries,
+                  tags, and categorization
                 </p>
               </CardContent>
             </Card>

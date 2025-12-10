@@ -17,7 +17,9 @@ async function testEmailWebhook() {
   const user = await db.user.findFirst();
 
   if (!user) {
-    console.error("❌ No users found in database. Please sign up first at http://localhost:3000");
+    console.error(
+      "❌ No users found in database. Please sign up first at http://localhost:3000",
+    );
     process.exit(1);
   }
 
@@ -72,8 +74,8 @@ Major tech companies commit to carbon-neutral data centers by 2025.
     `,
     headers: {
       "message-id": messageId,
-      "from": "newsletter@morningbrew.com",
-      "to": `save+${user.id}@resend.dev`,
+      from: "newsletter@morningbrew.com",
+      to: `save+${user.id}@resend.dev`,
     },
   };
 
@@ -90,7 +92,9 @@ Major tech companies commit to carbon-neutral data centers by 2025.
     await processEmailItem(fakeNewsletter);
     console.log("\n✅ Email processed successfully!");
     console.log("\n🎉 Check your items at: http://localhost:3000/today");
-    console.log("   The newsletter should appear with AI-generated summary, tags, and category!");
+    console.log(
+      "   The newsletter should appear with AI-generated summary, tags, and category!",
+    );
   } catch (error) {
     console.error("\n❌ Error processing email:", error);
     process.exit(1);

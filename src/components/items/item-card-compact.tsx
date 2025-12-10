@@ -37,8 +37,10 @@ export function ItemCardCompact({ item, onOpen }: ItemCardCompactProps) {
           </div>
         )}
         <div className="absolute left-2 top-2 flex items-center gap-2 rounded-full bg-white/90 px-2 py-1 text-xs font-medium text-slate-700 shadow-sm">
-          <PlatformIcon source={item.source || ""} size="xs" />
-          <span className="truncate max-w-[140px]">{cleanHostname(item.source)}</span>
+          <PlatformIcon source={item.source || ""} size="sm" />
+          <span className="truncate max-w-[140px]">
+            {cleanHostname(item.source)}
+          </span>
         </div>
       </div>
       <div className="flex flex-col gap-2 p-3">

@@ -69,11 +69,15 @@ async function testResendAPI() {
     // Test 3: Provide next steps
     console.log("\n3️⃣  Inbound Email Configuration:");
     console.log("─────────────────────────────────────────────────────────");
-    console.log("📧 Your inbound email: save+cmibd00vi000012mwuqlha0so@galiltol.resend.app");
+    console.log(
+      "📧 Your inbound email: save+cmibd00vi000012mwuqlha0so@galiltol.resend.app",
+    );
     console.log("\n⚠️  Important Notes:");
     console.log("   1. Resend's inbound email is in BETA");
     console.log("   2. You may need to request access to inbound features");
-    console.log("   3. The subdomain must be fully activated (can take 5-10 min)");
+    console.log(
+      "   3. The subdomain must be fully activated (can take 5-10 min)",
+    );
 
     console.log("\n4️⃣  Next Steps:");
     console.log("─────────────────────────────────────────────────────────");
@@ -81,9 +85,13 @@ async function testResendAPI() {
     console.log("2. ⏳ Wait 5-10 minutes for domain activation");
     console.log("3. 📧 Send test email to: test@galiltol.resend.app");
     console.log("4. 🔍 Check Resend dashboard: https://resend.com/emails");
-    console.log("5. 📝 If still not working, contact Resend support to enable inbound");
+    console.log(
+      "5. 📝 If still not working, contact Resend support to enable inbound",
+    );
 
-    console.log("\n═══════════════════════════════════════════════════════════\n");
+    console.log(
+      "\n═══════════════════════════════════════════════════════════\n",
+    );
   } catch (error) {
     console.error("❌ Error testing Resend API:", error);
   }
