@@ -58,7 +58,7 @@ export function FeatureGrid() {
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <div className="max-w-3xl space-y-3">
           <p className="text-sm font-semibold uppercase tracking-[0.14em] text-indigo-600">
-            The stack behind ContentHub
+            The stack behind Tavlo
           </p>
           <h2 className="text-3xl font-bold text-gray-900 sm:text-4xl">
             A thoughtful pipeline from capture to clarity to action.

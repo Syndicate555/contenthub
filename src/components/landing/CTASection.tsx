@@ -16,7 +16,7 @@ export function CTASection() {
                 Start your daily review in minutes.
               </h3>
               <p className="text-gray-600">
-                Sign in with Google, drop your first links, and watch ContentHub
+                Sign in with Google, drop your first links, and watch Tavlo
                 do the heavy lifting.
               </p>
               <div className="flex items-center gap-2 text-xs font-semibold text-gray-600">

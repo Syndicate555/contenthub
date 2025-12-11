@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ContentHub",
+  title: "Tavlo",
   description: "Your personal second brain for social media content",
 };
 

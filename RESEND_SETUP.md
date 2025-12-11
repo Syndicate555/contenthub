@@ -3,7 +3,7 @@
 ## Your Personalized Email Address
 **`save+cmibd00vi000012mwuqlha0so@resend.dev`**
 
-Forward any newsletter to this address and it will automatically be saved to ContentHub with AI summaries!
+Forward any newsletter to this address and it will automatically be saved to Tavlo with AI summaries!
 
 ---
 
@@ -103,7 +103,7 @@ The server needs to restart to load the new environment variables.
 
 3. **Wait 5-30 seconds**
 
-4. **Check ContentHub:**
+4. **Check Tavlo:**
    Open http://localhost:3000/today
 
 5. **You should see:**
@@ -126,10 +126,10 @@ The server needs to restart to load the new environment variables.
 - Verify webhook URL in Resend ends with `/api/webhooks/email`
 - Check Resend webhook logs: https://resend.com/webhooks → Click your webhook → "Recent Deliveries"
 
-### "Email received but not showing in ContentHub"
+### "Email received but not showing in Tavlo"
 - Check terminal logs for errors
 - Run: `npx tsx scripts/check-email-item.ts` to see if item was created
-- The email might have been categorized - check different views in ContentHub
+- The email might have been categorized - check different views in Tavlo
 
 ---
 
@@ -137,7 +137,7 @@ The server needs to restart to load the new environment variables.
 
 When you're ready to deploy:
 
-1. **Deploy ContentHub** to Vercel/Railway/Render
+1. **Deploy Tavlo** to Vercel/Railway/Render
 
 2. **Add environment variable** in production:
    ```

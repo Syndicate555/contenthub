@@ -73,10 +73,10 @@ export default function DashboardLayout({
             {/* Logo */}
             <Link href="/today" className="flex items-center gap-2">
               <div className="w-8 h-8 bg-linear-to-br from-gray-900 to-gray-700 rounded-lg flex items-center justify-center shadow-sm">
-                <span className="text-white font-bold text-sm">CH</span>
+                <span className="text-white font-bold text-sm">TV</span>
               </div>
               <span className="font-semibold text-gray-900 hidden sm:inline">
-                ContentHub
+                Tavlo
               </span>
             </Link>
 

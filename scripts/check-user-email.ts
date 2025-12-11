@@ -26,7 +26,7 @@ async function checkUserEmail() {
       return;
     }
 
-    console.log("\n📋 All ContentHub Users & Their Forwarding Emails:");
+    console.log("\n📋 All Tavlo Users & Their Forwarding Emails:");
     console.log(
       "═══════════════════════════════════════════════════════════════\n",
     );
@@ -85,7 +85,7 @@ async function checkUserEmail() {
       "─────────────────────────────────────────────────────────────",
     );
     console.log(
-      "1. Make sure you're logged into ContentHub with the SAME email",
+      "1. Make sure you're logged into Tavlo with the SAME email",
     );
     console.log("   as the user whose forwarding address you're using");
     console.log("");

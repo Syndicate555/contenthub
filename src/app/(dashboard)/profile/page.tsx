@@ -6,7 +6,7 @@ import { getUserStats, getUserDomainStats, getRecentXPEvents } from "@/lib/xp";
 import { getUserBadges, getAllBadges } from "@/lib/badges";
 
 export const metadata = {
-  title: "Profile | ContentHub",
+  title: "Profile | Tavlo",
   description: "View your learning progress and achievements",
 };
 

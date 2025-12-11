@@ -32,7 +32,7 @@ export function Hero({ displayFontClass }: HeroProps) {
               Level up every day.
             </h1>
             <p className="max-w-2xl text-lg text-gray-600">
-              ContentHub automatically distills links, tweets, reels, and
+              Tavlo automatically distills links, tweets, reels, and
               newsletters into clear takeaways—then turns your reading habit
               into XP, streaks, and badges. Focus on what matters, not on tabs.
             </p>

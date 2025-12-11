@@ -25,7 +25,7 @@ export default function SignInPage() {
           <div className="space-y-6">
             <div className="inline-flex items-center gap-2 rounded-full border border-indigo-100 bg-white/80 px-3 py-1 text-xs font-semibold text-indigo-700 shadow-sm">
               <Sparkles className="h-4 w-4" />
-              Welcome back to ContentHub
+              Welcome back to Tavlo
             </div>
             <h1
               className={`${sora.className} text-4xl leading-tight tracking-tight text-gray-900 sm:text-5xl`}

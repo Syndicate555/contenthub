@@ -7,7 +7,7 @@ import { db } from "../src/lib/db";
 import { getUserInboundEmail } from "../src/lib/email-helpers";
 
 async function checkSetup() {
-  console.log("\n🔍 ContentHub Email Newsletter Setup Check\n");
+  console.log("\n🔍 Tavlo Email Newsletter Setup Check\n");
   console.log("═══════════════════════════════════════════════════════════\n");
 
   // Check 1: Environment variables
@@ -48,7 +48,7 @@ async function checkSetup() {
       console.log(`   ${inboundEmail}`);
     } else {
       console.log("❌ No users found in database");
-      console.log("   Please sign in to ContentHub first");
+      console.log("   Please sign in to Tavlo first");
     }
   } catch (error) {
     console.log("❌ Database connection failed!");

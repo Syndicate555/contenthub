@@ -1,4 +1,4 @@
-# ContentHub
+# Tavlo
 
 Your personal "second brain" for social media content. Capture links from Twitter, Instagram, and LinkedIn, automatically distill them with AI, and review them later.
 
@@ -69,7 +69,7 @@ npm run db:push
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to start using ContentHub.
+Open [http://localhost:3000](http://localhost:3000) to start using Tavlo.
 
 ## iOS Shortcut Setup
 
