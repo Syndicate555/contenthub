@@ -17,6 +17,10 @@ import {
 import { cn } from "@/lib/utils";
 import FocusAreasSection from "./FocusAreasSection";
 import { useSettingsData } from "@/hooks/use-dashboard";
+import { useUser } from "@clerk/nextjs";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
 
 interface Connection {
   id: string;
@@ -80,6 +84,7 @@ export default function SettingsPageClient({
     error,
     mutate: mutateSettings,
   } = useSettingsData(fallbackData);
+  const { user } = useUser();
 
   const [syncingProvider, setSyncingProvider] = useState<string | null>(null);
   const [syncResult, setSyncResult] = useState<SyncResult | null>(null);
@@ -87,6 +92,17 @@ export default function SettingsPageClient({
     type: "success" | "error";
     message: string;
   } | null>(null);
+  const [feedbackTab, setFeedbackTab] = useState<"feedback" | "support">(
+    "feedback",
+  );
+  const [feedbackForm, setFeedbackForm] = useState({
+    type: "",
+    area: "",
+    severity: "",
+    body: "",
+    allowFollowUp: true,
+  });
+  const [submittingFeedback, setSubmittingFeedback] = useState(false);
 
   // Handle URL params for OAuth callbacks
   useEffect(() => {
@@ -198,6 +214,60 @@ export default function SettingsPageClient({
         type: "error",
         message: "Failed to disconnect account",
       });
+    }
+  };
+
+  const submitFeedback = async () => {
+    if (!feedbackForm.body.trim()) {
+      toast.error("Please share some details before submitting.");
+      return;
+    }
+    if (!feedbackForm.type.trim()) {
+      toast.error("Pick a type so we can triage faster.");
+      return;
+    }
+    const contactEmail = user?.primaryEmailAddress?.emailAddress || "";
+    if (!contactEmail) {
+      toast.error("Missing contact email. Please ensure you're signed in.");
+      return;
+    }
+
+    setSubmittingFeedback(true);
+    try {
+      const res = await fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          kind: feedbackTab,
+          type: feedbackForm.type,
+          area: feedbackForm.area || undefined,
+          severity: feedbackTab === "support" ? feedbackForm.severity || "minor" : undefined,
+          body: feedbackForm.body,
+          allowFollowUp: feedbackForm.allowFollowUp,
+          contactEmail,
+          route: typeof window !== "undefined" ? window.location.pathname : undefined,
+          userAgent: typeof navigator !== "undefined" ? navigator.userAgent : undefined,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || "Failed to submit");
+      }
+      toast.success("Thanks! Your submission was received.");
+      setFeedbackForm({
+        type: "",
+        area: "",
+        severity: "",
+        body: "",
+        allowFollowUp: true,
+      });
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to submit feedback",
+      );
+    } finally {
+      setSubmittingFeedback(false);
     }
   };
 
@@ -414,6 +484,183 @@ export default function SettingsPageClient({
               </div>
             );
           })}
+        </div>
+      </div>
+
+      {/* Feedback & Support */}
+      <div className="border-t border-gray-200 pt-6">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900">Feedback & Support</h3>
+            <p className="text-sm text-gray-600">
+              Tell us what to improve or report an issue. We read everything.
+            </p>
+          </div>
+          <div className="inline-flex rounded-full bg-gray-100 p-1">
+            <button
+              className={cn(
+                "px-3 py-1.5 text-sm font-medium rounded-full transition",
+                feedbackTab === "feedback"
+                  ? "bg-white shadow-sm text-gray-900"
+                  : "text-gray-500 hover:text-gray-700",
+              )}
+              onClick={() => setFeedbackTab("feedback")}
+            >
+              Feedback
+            </button>
+            <button
+              className={cn(
+                "px-3 py-1.5 text-sm font-medium rounded-full transition",
+                feedbackTab === "support"
+                  ? "bg-white shadow-sm text-gray-900"
+                  : "text-gray-500 hover:text-gray-700",
+              )}
+              onClick={() => setFeedbackTab("support")}
+            >
+              Support
+            </button>
+          </div>
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
+          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-gray-700">
+                  Type
+                </label>
+                <select
+                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                  value={feedbackForm.type}
+                  onChange={(e) =>
+                    setFeedbackForm((f) => ({ ...f, type: e.target.value }))
+                  }
+                >
+                  <option value="">Select…</option>
+                  {feedbackTab === "feedback" ? (
+                    <>
+                      <option value="feature">Feature idea</option>
+                      <option value="ux">UX / usability</option>
+                      <option value="polish">Polish / styling</option>
+                      <option value="other">Other</option>
+                    </>
+                  ) : (
+                    <>
+                      <option value="bug">Bug</option>
+                      <option value="access">Access / login</option>
+                      <option value="data">Data issue</option>
+                      <option value="performance">Performance</option>
+                      <option value="other">Other</option>
+                    </>
+                  )}
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-gray-700">
+                  Area
+                </label>
+                <select
+                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                  value={feedbackForm.area}
+                  onChange={(e) =>
+                    setFeedbackForm((f) => ({ ...f, area: e.target.value }))
+                  }
+                >
+                  <option value="">Select…</option>
+                  <option value="inbox">Inbox</option>
+                  <option value="library">Library</option>
+                  <option value="add">Add flow</option>
+                  <option value="integrations">Integrations</option>
+                  <option value="profile">Profile / settings</option>
+                  <option value="notifications">Notifications</option>
+                  <option value="mobile">Mobile</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              {feedbackTab === "support" && (
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-gray-700">
+                    Severity
+                  </label>
+                  <select
+                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                    value={feedbackForm.severity}
+                    onChange={(e) =>
+                      setFeedbackForm((f) => ({ ...f, severity: e.target.value }))
+                    }
+                  >
+                    <option value="">Select…</option>
+                    <option value="blocking">Blocking</option>
+                    <option value="major">Major</option>
+                    <option value="minor">Minor</option>
+                  </select>
+                </div>
+              )}
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-gray-700">
+                  Follow-up
+                </label>
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <input
+                    id="followup"
+                    type="checkbox"
+                    checked={feedbackForm.allowFollowUp}
+                    onChange={(e) =>
+                      setFeedbackForm((f) => ({ ...f, allowFollowUp: e.target.checked }))
+                    }
+                    className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                  />
+                  <label htmlFor="followup">I’m okay with follow-up</label>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-3 space-y-1">
+              <label className="text-xs font-semibold text-gray-700">
+                Details
+              </label>
+              <Textarea
+                rows={4}
+                placeholder={
+                  feedbackTab === "feedback"
+                    ? "Tell us the idea, why it matters, or what feels rough..."
+                    : "What happened? Expected vs. actual. Any steps to reproduce?"
+                }
+                value={feedbackForm.body}
+                onChange={(e) =>
+                  setFeedbackForm((f) => ({ ...f, body: e.target.value }))
+                }
+                className="resize-none"
+              />
+            </div>
+
+            <div className="mt-4 flex items-center gap-3">
+              <Button
+                onClick={submitFeedback}
+                disabled={submittingFeedback}
+                className="min-w-[140px]"
+              >
+                {submittingFeedback ? "Sending..." : "Submit"}
+              </Button>
+              <p className="text-xs text-gray-500">
+                We include route and device info to debug faster. No private data is sent.
+              </p>
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm space-y-3">
+            <h4 className="text-sm font-semibold text-gray-900">What helps most?</h4>
+            <ul className="text-sm text-gray-600 space-y-1.5">
+              <li>• Where were you in the app (Inbox, Library, Add)?</li>
+              <li>• What did you expect vs. what happened?</li>
+              <li>• Screenshots make bugs 10x easier.</li>
+              <li>• Severity: blocking, major, or minor?</li>
+              <li>• For ideas: the job-to-be-done or pain you’re solving.</li>
+            </ul>
+            <div className="rounded-lg bg-indigo-50 border border-indigo-100 p-3 text-xs text-indigo-800">
+              We read every submission. Early beta feedback directly shapes Tavlo.
+            </div>
+          </div>
         </div>
       </div>
 

@@ -26,6 +26,7 @@ model User {
   xpEvents          XPEvent[]
   stats             UserStats?
   userBadges        UserBadge[]
+  feedbacks         Feedback[]
 }
 
 // ============================================
@@ -93,6 +94,31 @@ model FocusArea {
   @@unique([userId, domainId]) // Can't have same domain twice
   @@unique([userId, priority]) // Each priority level is unique per user
   @@index([userId])
+}
+
+// Feedback & Support submissions
+model Feedback {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind          String // feedback | support
+  type          String // feature idea, ux, bug, access, etc.
+  area          String?
+  severity      String?
+  rating        Int?
+  title         String?
+  body          String
+  allowFollowUp Boolean  @default(false)
+  contactEmail  String
+  route         String?
+  userAgent     String?
+  status        String   @default("new")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([userId])
+  @@index([kind])
+  @@index([status])
 }
 
 // XPEvent tracks individual XP awards for audit trail and analytics
