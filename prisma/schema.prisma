@@ -273,6 +273,7 @@ model Item {
   title      String?
   summary    String? // bullet points as text
   tags       String[] // Postgres array
+  author     String? // Content creator/author name
   type       String? // "learn" | "do" | "reference"
   category   String? // "tech" | "business" | "design" | "productivity" | "learning" | "lifestyle" | "entertainment" | "news" | "other"
   rawContent String?  @db.Text // truncated extracted text

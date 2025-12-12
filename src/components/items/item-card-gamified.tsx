@@ -348,6 +348,13 @@ export function ItemCardGamified({
                 <h3 className="text-base font-semibold text-gray-900 line-clamp-2 mb-1">
                   {item.title || item.url}
                 </h3>
+
+                {/* Author subtitle */}
+                {item.author && (
+                  <p className="text-sm text-gray-500 mt-0.5">
+                    by {item.author}
+                  </p>
+                )}
               </div>
 
               {/* Date */}

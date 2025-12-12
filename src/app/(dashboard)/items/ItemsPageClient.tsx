@@ -49,6 +49,9 @@ export default function ItemsPage() {
   const [tagFilter, setTagFilter] = useState<string | null>(
     searchParams.get("tag") || null,
   );
+  const [authorFilter, setAuthorFilter] = useState<string | null>(
+    searchParams.get("author") || null,
+  );
   const [currentPage, setCurrentPage] = useState(
     parseInt(searchParams.get("page") || "1", 10),
   );
@@ -65,6 +68,7 @@ export default function ItemsPage() {
     categories,
     totalItems,
     platforms,
+    authors,
     isLoading: isCategoriesLoading,
     isValidating: isCategoriesValidating,
   } = useCategories();
@@ -82,6 +86,7 @@ export default function ItemsPage() {
     category: categoryFilter,
     platform: platformFilter,
     tag: tagFilter,
+    author: authorFilter,
     page: currentPage,
     limit: 16,
   });
@@ -92,6 +97,7 @@ export default function ItemsPage() {
     platformFilter ||
     statusFilter !== "all" ||
     tagFilter ||
+    authorFilter ||
     searchQuery;
   const isInListMode = viewMode === "list";
 
@@ -124,6 +130,8 @@ export default function ItemsPage() {
         const newPlatform =
           updates.platform !== undefined ? updates.platform : platformFilter;
         const newTag = updates.tag !== undefined ? updates.tag : tagFilter;
+        const newAuthor =
+          updates.author !== undefined ? updates.author : authorFilter;
         const newPage =
           updates.page !== undefined ? updates.page : String(currentPage);
 
@@ -132,6 +140,7 @@ export default function ItemsPage() {
         if (newCategory) params.set("category", newCategory);
         if (newPlatform) params.set("platform", newPlatform);
         if (newTag) params.set("tag", newTag);
+        if (newAuthor) params.set("author", newAuthor);
         if (newPage && parseInt(newPage) > 1) params.set("page", newPage);
 
         router.replace(`/items?${params.toString()}`, { scroll: false });
@@ -192,6 +201,7 @@ export default function ItemsPage() {
     setCategoryFilter(null);
     setPlatformFilter(null);
     setTagFilter(null);
+    setAuthorFilter(null);
     setCurrentPage(1);
     setViewMode("grid");
     router.replace("/items", { scroll: false });
@@ -365,6 +375,59 @@ export default function ItemsPage() {
               {p.platform} ({p.count})
             </Button>
           ))}
+        </div>
+      </div>
+
+      {/* Author Filter */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2 text-sm font-semibold text-slate-800">
+          <Filter className="w-4 h-4 text-slate-500" />
+          Filter by Author
+          {authorFilter && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-slate-500"
+              onClick={() => {
+                setAuthorFilter(null);
+                updateUrl({ author: null });
+              }}
+            >
+              Clear
+            </Button>
+          )}
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {(authors || []).length === 0 ? (
+            <p className="text-xs text-slate-500">No authors available yet.</p>
+          ) : (
+            (authors || []).slice(0, 10).map((a) => (
+              <Button
+                key={a.author}
+                size="sm"
+                variant={authorFilter === a.author ? "secondary" : "outline"}
+                className={cn(
+                  "rounded-full border",
+                  authorFilter === a.author
+                    ? "bg-indigo-600 text-white border-indigo-600"
+                    : "border-slate-200 text-slate-700",
+                )}
+                onClick={() => {
+                  const next = authorFilter === a.author ? null : a.author;
+                  setAuthorFilter(next);
+                  setCurrentPage(1);
+                  updateUrl({ author: next, page: "1" });
+                }}
+              >
+                {a.author} ({a.count})
+              </Button>
+            ))
+          )}
+          {(authors || []).length > 10 && (
+            <span className="text-xs text-slate-400 self-center">
+              +{(authors || []).length - 10} more
+            </span>
+          )}
         </div>
       </div>
 

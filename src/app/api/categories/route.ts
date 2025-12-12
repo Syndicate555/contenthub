@@ -110,6 +110,23 @@ export async function GET() {
       count: p._count.id,
     }));
 
+    // Get unique authors with counts
+    const authors = await db.item.groupBy({
+      by: ["author"],
+      where: {
+        userId: user.id,
+        status: { not: "deleted" },
+        author: { not: null },
+      },
+      _count: { id: true },
+      orderBy: { _count: { id: "desc" } },
+    });
+
+    const authorCounts = authors.map((a) => ({
+      author: a.author || "Unknown Author",
+      count: a._count.id,
+    }));
+
     // Create response with cache headers
     const response = NextResponse.json({
       ok: true,
@@ -117,6 +134,7 @@ export async function GET() {
         categories,
         totalItems,
         platforms: platformCounts,
+        authors: authorCounts,
       },
     });
 

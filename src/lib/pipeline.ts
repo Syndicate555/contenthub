@@ -160,6 +160,7 @@ export async function processItem(
         title: summarized.title,
         summary: summarized.summary.join("\n"),
         tags: summarized.tags,
+        author: extracted.author || null,
         type: summarized.type,
         category: summarized.category,
         rawContent: truncatedContent,

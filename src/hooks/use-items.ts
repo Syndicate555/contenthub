@@ -32,6 +32,7 @@ interface CategoriesResponse {
     categories: CategoryData[];
     totalItems: number;
     platforms: { platform: string; count: number }[];
+    authors: { author: string; count: number }[];
   };
 }
 
@@ -51,6 +52,7 @@ export interface ItemsQueryParams {
   category?: ItemCategory | null;
   platform?: string | null;
   tag?: string | null;
+  author?: string | null;
   page?: number;
   limit?: number;
 }
@@ -65,6 +67,7 @@ function buildItemsUrl(params: ItemsQueryParams): string {
   if (params.category) searchParams.set("category", params.category);
   if (params.platform) searchParams.set("platform", params.platform);
   if (params.tag) searchParams.set("tag", params.tag);
+  if (params.author) searchParams.set("author", params.author);
   searchParams.set("page", String(params.page || 1));
   searchParams.set("limit", String(params.limit || 16));
 
@@ -182,6 +185,7 @@ export function useCategories() {
     categories: data?.data?.categories || [],
     totalItems: data?.data?.totalItems || 0,
     platforms: data?.data?.platforms || [],
+    authors: data?.data?.authors || [],
     isLoading: !shouldFetch || (isLoading && !data),
     isValidating,
     error: error?.message || null,

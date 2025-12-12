@@ -241,12 +241,19 @@ export default function SettingsPageClient({
           kind: feedbackTab,
           type: feedbackForm.type,
           area: feedbackForm.area || undefined,
-          severity: feedbackTab === "support" ? feedbackForm.severity || "minor" : undefined,
+          severity:
+            feedbackTab === "support"
+              ? feedbackForm.severity || "minor"
+              : undefined,
           body: feedbackForm.body,
           allowFollowUp: feedbackForm.allowFollowUp,
           contactEmail,
-          route: typeof window !== "undefined" ? window.location.pathname : undefined,
-          userAgent: typeof navigator !== "undefined" ? navigator.userAgent : undefined,
+          route:
+            typeof window !== "undefined"
+              ? window.location.pathname
+              : undefined,
+          userAgent:
+            typeof navigator !== "undefined" ? navigator.userAgent : undefined,
         }),
       });
 
@@ -491,7 +498,9 @@ export default function SettingsPageClient({
       <div className="border-t border-gray-200 pt-6">
         <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">Feedback & Support</h3>
+            <h3 className="text-lg font-semibold text-gray-900">
+              Feedback & Support
+            </h3>
             <p className="text-sm text-gray-600">
               Tell us what to improve or report an issue. We read everything.
             </p>
@@ -586,7 +595,10 @@ export default function SettingsPageClient({
                     className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100"
                     value={feedbackForm.severity}
                     onChange={(e) =>
-                      setFeedbackForm((f) => ({ ...f, severity: e.target.value }))
+                      setFeedbackForm((f) => ({
+                        ...f,
+                        severity: e.target.value,
+                      }))
                     }
                   >
                     <option value="">Select…</option>
@@ -606,7 +618,10 @@ export default function SettingsPageClient({
                     type="checkbox"
                     checked={feedbackForm.allowFollowUp}
                     onChange={(e) =>
-                      setFeedbackForm((f) => ({ ...f, allowFollowUp: e.target.checked }))
+                      setFeedbackForm((f) => ({
+                        ...f,
+                        allowFollowUp: e.target.checked,
+                      }))
                     }
                     className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                   />
@@ -643,13 +658,16 @@ export default function SettingsPageClient({
                 {submittingFeedback ? "Sending..." : "Submit"}
               </Button>
               <p className="text-xs text-gray-500">
-                We include route and device info to debug faster. No private data is sent.
+                We include route and device info to debug faster. No private
+                data is sent.
               </p>
             </div>
           </div>
 
           <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm space-y-3">
-            <h4 className="text-sm font-semibold text-gray-900">What helps most?</h4>
+            <h4 className="text-sm font-semibold text-gray-900">
+              What helps most?
+            </h4>
             <ul className="text-sm text-gray-600 space-y-1.5">
               <li>• Where were you in the app (Inbox, Library, Add)?</li>
               <li>• What did you expect vs. what happened?</li>
@@ -658,7 +676,8 @@ export default function SettingsPageClient({
               <li>• For ideas: the job-to-be-done or pain you’re solving.</li>
             </ul>
             <div className="rounded-lg bg-indigo-50 border border-indigo-100 p-3 text-xs text-indigo-800">
-              We read every submission. Early beta feedback directly shapes Tavlo.
+              We read every submission. Early beta feedback directly shapes
+              Tavlo.
             </div>
           </div>
         </div>

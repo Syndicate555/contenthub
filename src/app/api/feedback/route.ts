@@ -21,13 +21,19 @@ export async function POST(request: Request) {
   try {
     const user = await getCurrentUser();
     if (!user) {
-      return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { ok: false, error: "Unauthorized" },
+        { status: 401 },
+      );
     }
 
     const json = await request.json();
     const parsed = feedbackSchema.safeParse(json);
     if (!parsed.success) {
-      return NextResponse.json({ ok: false, error: "Invalid payload" }, { status: 400 });
+      return NextResponse.json(
+        { ok: false, error: "Invalid payload" },
+        { status: 400 },
+      );
     }
 
     // Basic rate limit: max 5 submissions per hour per user

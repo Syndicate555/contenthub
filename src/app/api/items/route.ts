@@ -63,6 +63,11 @@ export async function GET(request: NextRequest) {
       where.category = query.category;
     }
 
+    // Author filter
+    if (query.author) {
+      where.author = query.author;
+    }
+
     // Platform filter (normalized domain-based filtering)
     const platformSlug = normalizePlatformSlug(query.platform);
     if (platformSlug) {
@@ -116,6 +121,7 @@ export async function GET(request: NextRequest) {
           url: true,
           title: true,
           summary: true,
+          author: true,
           imageUrl: true,
           category: true,
           type: true,

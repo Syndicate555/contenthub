@@ -480,16 +480,16 @@ export default function AddPageClient({ inboundEmail }: AddPageClientProps) {
                   Forward email newsletters to your personalized address to
                   automatically save and summarize them:
                 </p>
-          <div className="flex items-center gap-2 w-full">
-            <code className="flex-1 min-w-0 px-3 py-2 text-sm bg-gray-100 rounded-md border border-gray-200 select-all font-mono break-all">
-              {inboundEmail}
-            </code>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={handleCopyEmail}
-              className="shrink-0"
-            >
+                <div className="flex items-center gap-2 w-full">
+                  <code className="flex-1 min-w-0 px-3 py-2 text-sm bg-gray-100 rounded-md border border-gray-200 select-all font-mono break-all">
+                    {inboundEmail}
+                  </code>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={handleCopyEmail}
+                    className="shrink-0"
+                  >
                     {emailCopied ? (
                       <Check className="w-4 h-4 text-green-600" />
                     ) : (

@@ -43,6 +43,7 @@ export const itemsQuerySchema = z.object({
   tag: z.string().optional(),
   category: categoryEnum.optional(),
   platform: z.string().optional(),
+  author: z.string().optional(),
   page: z.coerce.number().min(1).default(1),
   limit: z.coerce.number().min(1).max(100).default(16),
 });
