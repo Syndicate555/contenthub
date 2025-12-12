@@ -7,6 +7,7 @@ export type PlatformSlug =
   | "pinterest"
   | "youtube"
   | "reddit"
+  | "tiktok"
   | "newsletter"
   | "other";
 
@@ -62,6 +63,13 @@ export const PLATFORM_CONFIG: PlatformConfig[] = [
     order: 6,
   },
   {
+    slug: "tiktok",
+    label: "TikTok",
+    icon: "🎵",
+    domains: ["tiktok.com", "vm.tiktok.com"],
+    order: 7,
+  },
+  {
     slug: "newsletter",
     label: "Newsletter",
     icon: "✉️",
@@ -73,7 +81,7 @@ export const PLATFORM_CONFIG: PlatformConfig[] = [
       "newsletter",
       "substack.com",
     ],
-    order: 7,
+    order: 8,
   },
   {
     slug: "other",

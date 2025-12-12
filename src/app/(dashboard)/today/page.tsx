@@ -2,12 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { ComponentType } from "react";
+import { motion } from "framer-motion";
 import { ItemCardGamified } from "@/components/items/item-card-gamified";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   CheckCircle2,
   Inbox,
-  Sparkles,
   ArrowRight,
   Loader2,
   Search,
@@ -29,6 +29,10 @@ import { Input } from "@/components/ui/input";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useTodaySidebar } from "@/hooks/use-today-sidebar";
 import { PLATFORM_CONFIG, PlatformSlug } from "@/lib/platforms";
+import {
+  CaughtUpIllustration,
+  NoResultsIllustration,
+} from "@/components/ui/empty-state-illustration";
 
 export default function TodayPage() {
   const [processedToday, setProcessedToday] = useState(0);
@@ -119,68 +123,92 @@ export default function TodayPage() {
 
     if (noResults) {
       return (
-        <div className="text-center py-16">
-          <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Search className="w-7 h-7 text-blue-600" />
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center py-16"
+        >
+          <div className="mb-6">
+            <NoResultsIllustration />
           </div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+          <h2 className="text-2xl font-bold text-gray-900 mb-3">
             No results match your filters
           </h2>
-          <p className="text-gray-500 mb-6 max-w-sm mx-auto">
+          <p className="text-gray-500 mb-8 max-w-md mx-auto">
             Try adjusting your search or selecting a different source to see
             more items.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <button
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               onClick={() => {
                 setSearchTerm("");
                 setSelectedPlatform(null);
               }}
-              className="inline-flex items-center px-5 py-2.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors font-medium"
+              className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-gray-900 to-gray-800 text-white rounded-lg shadow-lg hover:shadow-xl transition-all font-semibold"
             >
               Clear filters
-            </button>
-            <Link
-              href="/items"
-              className="inline-flex items-center px-5 py-2.5 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors font-medium"
-            >
-              Browse Library
-              <ArrowRight className="w-4 h-4 ml-1.5" />
+            </motion.button>
+            <Link href="/items">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="inline-flex items-center px-6 py-3 text-gray-700 bg-white border-2 border-gray-200 hover:border-gray-300 rounded-lg transition-all font-semibold"
+              >
+                Browse Library
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </motion.button>
             </Link>
           </div>
-        </div>
+        </motion.div>
       );
     }
 
     if (caughtUp) {
       return (
-        <div className="text-center py-16">
-          <div className="w-20 h-20 bg-linear-to-br from-green-100 to-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Sparkles className="w-10 h-10 text-green-600" />
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center py-16"
+        >
+          <div className="mb-6">
+            <CaughtUpIllustration />
           </div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+          <motion.h2
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className="text-2xl font-bold text-gradient-purple-pink mb-3"
+          >
             All caught up!
-          </h2>
-          <p className="text-gray-500 mb-6 max-w-sm mx-auto">
+          </motion.h2>
+          <p className="text-gray-500 mb-8 max-w-md mx-auto">
             You have no new items to review. Your inbox is empty and ready for
             new content.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <Link
-              href="/add"
-              className="inline-flex items-center px-5 py-2.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors font-medium"
-            >
-              Add Content
+            <Link href="/add">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg shadow-lg hover:shadow-xl transition-all font-semibold"
+              >
+                Add Content
+              </motion.button>
             </Link>
-            <Link
-              href="/items"
-              className="inline-flex items-center px-5 py-2.5 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors font-medium"
-            >
-              Browse Library
-              <ArrowRight className="w-4 h-4 ml-1.5" />
+            <Link href="/items">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="inline-flex items-center px-6 py-3 text-gray-700 bg-white border-2 border-gray-200 hover:border-gray-300 rounded-lg transition-all font-semibold"
+              >
+                Browse Library
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </motion.button>
             </Link>
           </div>
-        </div>
+        </motion.div>
       );
     }
 
@@ -221,7 +249,7 @@ export default function TodayPage() {
   }, [selectedPlatform, debouncedSearch]);
 
   return (
-    <div className="w-full">
+    <div className="w-full min-h-screen mesh-gradient-vibrant">
       <div className="grid gap-6 lg:gap-8 lg:grid-cols-[280px_minmax(0,1.5fr)_280px]">
         {/* Left Sidebar - User Profile & Stats */}
         <aside className="hidden lg:block w-full">
@@ -229,146 +257,229 @@ export default function TodayPage() {
         </aside>
 
         {/* Main Content - Wide Center Feed */}
-        <div className="w-full space-y-6">
-          {/* Header - Always visible immediately */}
-          <div className="space-y-1">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-bold text-gray-900">Inbox</h1>
-                {/* Background refresh indicator */}
-                {isValidating && !isLoading && (
-                  <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
-                )}
-              </div>
-              {processedToday > 0 && (
-                <div className="flex items-center gap-1.5 text-sm text-green-600 bg-green-50 px-3 py-1.5 rounded-full">
-                  <CheckCircle2 className="w-4 h-4" />
-                  <span>{processedToday} processed</span>
+        <div className="w-full space-y-4">
+          {/* Compact Header with integrated search */}
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-all"
+          >
+            <div className="flex items-center gap-4">
+              {/* Left: Title + Count */}
+              <div className="flex items-center gap-3 min-w-fit">
+                <motion.div
+                  whileHover={{ scale: 1.05, rotate: 5 }}
+                  className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-gray-900 to-gray-700 rounded-xl shadow-md"
+                >
+                  <Inbox className="w-5 h-5 text-white" />
+                </motion.div>
+                <div className="flex items-baseline gap-3">
+                  <h1 className="text-2xl font-bold text-gray-900">Inbox</h1>
+                  <div className="flex items-center gap-2">
+                    <motion.span
+                      key={items.length}
+                      initial={{ scale: 1.2, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      className="text-2xl font-black text-gray-900"
+                    >
+                      {items.length}
+                    </motion.span>
+                    <span className="text-sm text-gray-500 font-medium">
+                      items
+                    </span>
+                  </div>
                 </div>
-              )}
-            </div>
-            <p className="text-sm text-gray-500">{today}</p>
-          </div>
-
-          {/* Search + Filters */}
-          <div className="space-y-3">
-            <div className="bg-white border border-gray-200 rounded-xl px-4 py-3 shadow-sm">
-              <div className="flex items-center gap-2 text-gray-500 text-sm mb-2">
-                <Search className="w-4 h-4" />
-                <span>Search items</span>
               </div>
-              <div className="relative">
-                <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+
+              {/* Right: Search */}
+              <div className="flex-1 relative group max-w-md ml-auto">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2">
+                  <Search className="w-4 h-4 text-gray-400 group-focus-within:text-gray-600 transition-colors" />
+                </div>
                 <Input
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Search by title, tags, or content..."
-                  className="pl-9 pr-3 h-11 text-sm bg-gray-50 border-gray-200"
+                  className="pl-10 pr-16 h-10 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:border-gray-400 focus:ring-2 focus:ring-gray-100 transition-all"
                 />
                 {searchTerm && (
-                  <button
+                  <motion.button
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                     onClick={() => setSearchTerm("")}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 hover:text-gray-700"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 text-xs font-medium text-gray-600 bg-gray-200 rounded hover:bg-gray-300 hover:text-gray-700 transition-colors"
                   >
                     Clear
-                  </button>
+                  </motion.button>
+                )}
+              </div>
+
+              {/* Top-right badges */}
+              <div className="flex items-center gap-2">
+                {processedToday > 0 && (
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="flex items-center gap-1.5 text-xs text-white bg-gradient-to-r from-green-500 to-emerald-600 px-3 py-1.5 rounded-full shadow-md"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span className="font-semibold">{processedToday}</span>
+                  </motion.div>
+                )}
+                {isValidating && !isLoading && (
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{
+                      duration: 1,
+                      repeat: Infinity,
+                      ease: "linear",
+                    }}
+                  >
+                    <Loader2 className="w-4 h-4 text-gray-400" />
+                  </motion.div>
                 )}
               </div>
             </div>
 
-            <div className="bg-white border border-gray-200 rounded-xl px-4 py-3 shadow-sm">
-              <div className="flex items-center gap-2 text-gray-500 text-sm mb-3">
-                <Filter className="w-4 h-4" />
-                <span>Filter by source</span>
-                {sidebarError && (
-                  <span className="text-xs text-red-500">
-                    (counts unavailable)
-                  </span>
-                )}
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => setSelectedPlatform(null)}
-                  className={cn(
-                    "inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm border transition-all",
-                    selectedPlatform === null
-                      ? "bg-gray-900 text-white border-gray-900 shadow-sm"
-                      : "bg-white text-gray-700 border-gray-200 hover:border-gray-300",
-                  )}
+            {/* Metadata row */}
+            <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
+              <p className="text-xs text-gray-500 font-medium">
+                Your personal social media feed • {today}
+              </p>
+              {hasActiveFilters && (
+                <motion.button
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => {
+                    setSearchTerm("");
+                    setSelectedPlatform(null);
+                  }}
+                  className="text-xs font-medium text-gray-600 hover:text-gray-900 underline underline-offset-2"
                 >
-                  <span>All</span>
-                  <span
-                    className={cn(
-                      "text-xs px-2 py-0.5 rounded-full",
-                      selectedPlatform === null
-                        ? "bg-white/20 text-white"
-                        : "bg-gray-100 text-gray-600",
-                    )}
-                  >
-                    {totalCount}
-                  </span>
-                </button>
-                {platformChips.map((platform) => {
-                  const isActive = selectedPlatform === platform.slug;
-                  return (
-                    <button
-                      key={platform.slug}
-                      onClick={() =>
-                        setSelectedPlatform(platform.slug as PlatformSlug)
-                      }
-                      className={cn(
-                        "inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm border transition-all",
-                        isActive
-                          ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
-                          : "bg-white text-gray-700 border-gray-200 hover:border-gray-300",
-                      )}
-                    >
-                      <span className="flex items-center gap-1">
-                        {renderPlatformIcon(platform.slug as PlatformSlug)}
-                        <span>{platform.label}</span>
-                      </span>
-                      <span
-                        className={cn(
-                          "text-xs px-2 py-0.5 rounded-full",
-                          isActive
-                            ? "bg-white/20 text-white"
-                            : "bg-gray-100 text-gray-600",
-                        )}
-                      >
-                        {platform.count}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-              {sidebarLoading && (
-                <p className="text-xs text-gray-400 mt-2">Loading counts...</p>
-              )}
-              {(isValidating || isLoading) && (
-                <div
-                  className="flex items-center gap-2 text-xs text-gray-500 mt-3"
-                  role="status"
-                  aria-live="polite"
-                >
-                  <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
-                  <span>Updating results...</span>
-                </div>
+                  Clear all filters
+                </motion.button>
               )}
             </div>
-          </div>
+          </motion.div>
+
+          {/* Platform Filters */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-all"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2 text-gray-700 text-xs font-semibold uppercase tracking-wide">
+                <Filter className="w-4 h-4 text-gray-500" />
+                <span>Filter by source</span>
+              </div>
+              {sidebarError && (
+                <span className="text-xs text-red-500 font-medium">
+                  (counts unavailable)
+                </span>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setSelectedPlatform(null)}
+                className={cn(
+                  "inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all",
+                  selectedPlatform === null
+                    ? "bg-gray-900 text-white shadow-md"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200",
+                )}
+              >
+                <span className="font-semibold">All</span>
+                <span
+                  className={cn(
+                    "text-xs px-2 py-0.5 rounded-full font-semibold",
+                    selectedPlatform === null
+                      ? "bg-white/20 text-white"
+                      : "bg-gray-200 text-gray-600",
+                  )}
+                >
+                  {totalCount}
+                </span>
+              </motion.button>
+              {platformChips.map((platform) => {
+                const isActive = selectedPlatform === platform.slug;
+
+                // Platform gradient classes mapping
+                const platformGradients: Record<string, string> = {
+                  twitter:
+                    "from-black to-gray-800 hover:from-gray-900 hover:to-gray-700",
+                  linkedin:
+                    "from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800",
+                  instagram: "from-pink-500 via-purple-500 to-orange-500",
+                  pinterest:
+                    "from-red-600 to-red-700 hover:from-red-700 hover:to-red-800",
+                  youtube:
+                    "from-red-600 to-red-700 hover:from-red-700 hover:to-red-800",
+                  reddit:
+                    "from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700",
+                };
+
+                return (
+                  <motion.button
+                    key={platform.slug}
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() =>
+                      setSelectedPlatform(platform.slug as PlatformSlug)
+                    }
+                    className={cn(
+                      "inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all",
+                      isActive
+                        ? `bg-gradient-to-r ${platformGradients[platform.slug] || "from-indigo-600 to-purple-600"} text-white shadow-md`
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200",
+                    )}
+                  >
+                    <span className="flex items-center gap-2">
+                      {renderPlatformIcon(platform.slug as PlatformSlug)}
+                      <span>{platform.label}</span>
+                    </span>
+                    <span
+                      className={cn(
+                        "text-xs px-2 py-0.5 rounded-full font-semibold",
+                        isActive
+                          ? "bg-white/20 text-white"
+                          : "bg-gray-200 text-gray-600",
+                      )}
+                    >
+                      {platform.count}
+                    </span>
+                  </motion.button>
+                );
+              })}
+            </div>
+            {sidebarLoading && (
+              <p className="text-xs text-gray-400 mt-2">Loading counts...</p>
+            )}
+            {(isValidating || isLoading) && (
+              <div
+                className="flex items-center gap-2 text-xs text-gray-500 mt-3"
+                role="status"
+                aria-live="polite"
+              >
+                <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                <span>Updating results...</span>
+              </div>
+            )}
+          </motion.div>
 
           {/* Loading state with skeleton */}
           {showSkeleton ? (
-            <div className="space-y-6">
-              {/* Skeleton for stats banner */}
-              <Skeleton className="h-24 w-full rounded-xl" />
-              {/* Skeleton for items */}
-              <div className="space-y-4">
-                <Skeleton className="h-4 w-64" />
-                {[1, 2, 3].map((i) => (
-                  <Skeleton key={i} className="h-40 w-full rounded-xl" />
-                ))}
-              </div>
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-40 w-full rounded-xl" />
+              ))}
             </div>
           ) : error ? (
             <div className="text-center py-12">
@@ -382,34 +493,6 @@ export default function TodayPage() {
             </div>
           ) : (
             <>
-              {/* Stats Banner - Show immediately with cached data */}
-              {items.length > 0 && (
-                <div
-                  className={cn(
-                    "bg-linear-to-r from-gray-900 to-gray-800 rounded-xl p-4 text-white transition-opacity duration-200",
-                    isValidating && "opacity-90",
-                  )}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center">
-                        <Inbox className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <p className="text-sm text-white/70">Inbox items</p>
-                        <p className="text-2xl font-bold">{items.length}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm text-white/70">
-                        Take action on each item
-                      </p>
-                      <p className="text-sm">Pin, Archive, or Delete</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
               {/* Items Feed */}
               {items.length === 0 ? (
                 <EmptyState />
@@ -429,24 +512,16 @@ export default function TodayPage() {
                   </div>
 
                   {/* Item Cards - Show cached data immediately */}
-                  {items.map((item, index) => (
-                    <div
-                      key={item.id}
-                      className={cn(
-                        "transform transition-all duration-300",
-                        "animate-in fade-in slide-in-from-bottom-2",
-                      )}
-                      style={{
-                        animationDelay: `${Math.min(index * 50, 200)}ms`,
-                      }}
-                    >
+                  <div className="space-y-4">
+                    {items.map((item) => (
                       <ItemCardGamified
+                        key={item.id}
                         item={item}
                         showActions={true}
                         onStatusChange={handleStatusChange}
                       />
-                    </div>
-                  ))}
+                    ))}
+                  </div>
 
                   {/* Pagination controls */}
                   {pagination && pagination.totalPages > 1 && (

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Image from "next/image";
+import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,7 @@ import {
 import { toast } from "sonner";
 import type { EnhancedItem } from "@/hooks/use-items";
 import { cn } from "@/lib/utils";
+import { fadeInUp, hoverLift } from "@/lib/animations";
 
 interface ItemCardGamifiedProps {
   item: EnhancedItem;
@@ -214,287 +216,357 @@ export function ItemCardGamified({
 
   return (
     <>
-      <Card
-        className={cn(
-          "overflow-hidden transition-all duration-200",
-          "hover:shadow-lg hover:border-gray-300",
-          "border-l-4",
-          item.isInFocusArea && item.domain
-            ? `border-l-4 shadow-md`
-            : platformInfo.borderColor,
-        )}
-        style={
-          item.isInFocusArea && item.domain
-            ? { borderLeftColor: item.domain.color }
-            : undefined
-        }
+      <motion.div
+        variants={fadeInUp}
+        initial="initial"
+        animate="animate"
+        {...hoverLift}
       >
-        {/* Instagram embed for reels/posts (uses hosted source) */}
-        {showInstagramEmbed ? (
-          <div className="w-full bg-black overflow-hidden relative rounded-b-none">
-            <div className={`relative w-full ${instagramSizing.aspectClass}`}>
-              <iframe
-                src={instagramEmbedUrl!}
-                className={`absolute inset-0 w-full h-full border-0 ${instagramSizing.transformClass} origin-top`}
-                allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
-                allowFullScreen
+        <Card
+          className={cn(
+            "overflow-hidden transition-all duration-200",
+            "hover:shadow-2xl",
+            "border-l-8 relative",
+            item.isInFocusArea && item.domain
+              ? `shadow-lg`
+              : platformInfo.borderColor,
+          )}
+          style={
+            item.isInFocusArea && item.domain
+              ? {
+                  borderLeftColor: item.domain.color,
+                  boxShadow: `0 0 30px ${item.domain.color}40`,
+                }
+              : undefined
+          }
+        >
+          {/* Instagram embed for reels/posts (uses hosted source) */}
+          {showInstagramEmbed ? (
+            <div className="w-full bg-black overflow-hidden relative rounded-b-none">
+              <div className={`relative w-full ${instagramSizing.aspectClass}`}>
+                <iframe
+                  src={instagramEmbedUrl!}
+                  className={`absolute inset-0 w-full h-full border-0 ${instagramSizing.transformClass} origin-top`}
+                  allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+                  allowFullScreen
+                  loading="lazy"
+                  onError={() => setEmbedFailed(true)}
+                />
+              </div>
+              <div className="absolute top-3 right-3 flex gap-2">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="h-8 px-3 text-xs"
+                  onClick={() => setIsEmbedModalOpen(true)}
+                >
+                  View full
+                </Button>
+              </div>
+            </div>
+          ) : null}
+
+          {/* Thumbnail Image (fallback) */}
+          {!showInstagramEmbed && item.imageUrl && (
+            <button
+              onClick={() => setIsImageModalOpen(true)}
+              className="block w-full relative bg-gray-50 overflow-hidden cursor-zoom-in group min-h-[200px] max-h-80"
+            >
+              <Image
+                src={item.imageUrl}
+                alt={item.title || "Content preview"}
+                width={800}
+                height={600}
+                className="w-full h-auto max-h-80 object-contain group-hover:scale-[1.02] transition-transform duration-300"
                 loading="lazy"
-                onError={() => setEmbedFailed(true)}
+                quality={85}
+                onError={(e) => {
+                  (e.target as HTMLImageElement).parentElement!.style.display =
+                    "none";
+                }}
               />
-            </div>
-            <div className="absolute top-3 right-3 flex gap-2">
-              <Button
-                size="sm"
-                variant="secondary"
-                className="h-8 px-3 text-xs"
-                onClick={() => setIsEmbedModalOpen(true)}
-              >
-                View full
-              </Button>
-            </div>
-          </div>
-        ) : null}
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors" />
+            </button>
+          )}
 
-        {/* Thumbnail Image (fallback) */}
-        {!showInstagramEmbed && item.imageUrl && (
-          <button
-            onClick={() => setIsImageModalOpen(true)}
-            className="block w-full relative bg-gray-50 overflow-hidden cursor-zoom-in group min-h-[200px] max-h-80"
-          >
-            <Image
-              src={item.imageUrl}
-              alt={item.title || "Content preview"}
-              width={800}
-              height={600}
-              className="w-full h-auto max-h-80 object-contain group-hover:scale-[1.02] transition-transform duration-300"
-              loading="lazy"
-              quality={85}
-              onError={(e) => {
-                (e.target as HTMLImageElement).parentElement!.style.display =
-                  "none";
-              }}
-            />
-            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors" />
-          </button>
-        )}
+          <CardHeader className="pb-2">
+            <div className="flex items-start justify-between gap-4 mb-2">
+              <div className="flex-1 min-w-0">
+                {/* Platform Icon and Metadata */}
+                <div className="flex items-center gap-2 mb-2 flex-wrap">
+                  <PlatformIcon source={item.source || ""} size="sm" />
 
-        <CardHeader className="pb-2">
-          <div className="flex items-start justify-between gap-4 mb-2">
-            <div className="flex-1 min-w-0">
-              {/* Platform Icon and Metadata */}
-              <div className="flex items-center gap-2 mb-2 flex-wrap">
-                <PlatformIcon source={item.source || ""} size="sm" />
+                  {item.type && (
+                    <motion.div
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <Badge
+                        variant="secondary"
+                        className={cn(
+                          "text-xs border-0 shadow-md font-semibold",
+                          item.type === "learn" &&
+                            "bg-gradient-to-r from-blue-500 to-indigo-600 text-white",
+                          item.type === "do" &&
+                            "bg-gradient-to-r from-green-500 to-emerald-600 text-white",
+                          item.type === "reference" &&
+                            "bg-gradient-to-r from-purple-500 to-pink-600 text-white",
+                        )}
+                      >
+                        <TypeIcon className="w-3 h-3 mr-1" />
+                        {item.type}
+                      </Badge>
+                    </motion.div>
+                  )}
 
-                {item.type && (
-                  <Badge
-                    variant="secondary"
-                    className={cn("text-xs border", typeColor)}
-                  >
-                    <TypeIcon className="w-3 h-3 mr-1" />
-                    {item.type}
-                  </Badge>
-                )}
+                  {item.category && (
+                    <Badge
+                      variant="secondary"
+                      className={cn("text-xs border", categoryColor)}
+                    >
+                      {item.category}
+                    </Badge>
+                  )}
 
-                {item.category && (
-                  <Badge
-                    variant="secondary"
-                    className={cn("text-xs border", categoryColor)}
-                  >
-                    {item.category}
-                  </Badge>
-                )}
+                  {item.domain && (
+                    <Badge
+                      variant="secondary"
+                      className="text-xs border"
+                      style={{
+                        backgroundColor: `${item.domain.color}20`,
+                        borderColor: `${item.domain.color}40`,
+                        color: item.domain.color,
+                      }}
+                    >
+                      <span className="mr-1">{item.domain.icon}</span>
+                      {item.domain.displayName}
+                    </Badge>
+                  )}
+                </div>
 
-                {item.domain && (
-                  <Badge
-                    variant="secondary"
-                    className="text-xs border"
-                    style={{
-                      backgroundColor: `${item.domain.color}20`,
-                      borderColor: `${item.domain.color}40`,
-                      color: item.domain.color,
-                    }}
-                  >
-                    <span className="mr-1">{item.domain.icon}</span>
-                    {item.domain.displayName}
-                  </Badge>
-                )}
+                {/* Title */}
+                <h3 className="text-base font-semibold text-gray-900 line-clamp-2 mb-1">
+                  {item.title || item.url}
+                </h3>
               </div>
 
-              {/* Title */}
-              <h3 className="text-base font-semibold text-gray-900 line-clamp-2 mb-1">
-                {item.title || item.url}
-              </h3>
+              {/* Date */}
+              <span
+                className="text-xs text-gray-400 whitespace-nowrap cursor-help"
+                title={formatFullDate(item.createdAt)}
+              >
+                {formatRelativeDate(item.createdAt)}
+              </span>
             </div>
 
-            {/* Date */}
-            <span
-              className="text-xs text-gray-400 whitespace-nowrap cursor-help"
-              title={formatFullDate(item.createdAt)}
-            >
-              {formatRelativeDate(item.createdAt)}
-            </span>
-          </div>
-
-          {/* Progress Contribution Section */}
-          {(item.domain || item.xpEarned > 0 || item.isInFocusArea) && (
-            <div className="space-y-2">
-              {/* XP Earned & Domain Contribution */}
-              {item.xpEarned > 0 && (
-                <div className="flex items-center justify-between gap-3 p-2.5 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-lg">
-                  <div className="flex items-center gap-2 flex-1">
-                    <Zap className="w-4 h-4 text-amber-600 fill-current flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-baseline gap-2">
-                        <span className="font-semibold text-amber-900">
-                          +{item.xpEarned} XP earned
-                        </span>
-                        {item.domain && (
-                          <span className="text-xs text-gray-600">
-                            →{" "}
-                            <span
-                              className="font-medium"
-                              style={{ color: item.domain.color }}
-                            >
-                              {item.domain.displayName}
-                            </span>
+            {/* Progress Contribution Section */}
+            {(item.domain || item.xpEarned > 0 || item.isInFocusArea) && (
+              <div className="space-y-2">
+                {/* XP Earned & Domain Contribution */}
+                {item.xpEarned > 0 && (
+                  <motion.div
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{
+                      type: "spring",
+                      stiffness: 200,
+                      damping: 15,
+                      delay: 0.2,
+                    }}
+                    className="relative flex items-center justify-between gap-3 p-3 bg-gradient-xp rounded-lg shadow-md overflow-hidden shimmer"
+                  >
+                    <div className="flex items-center gap-2 flex-1 relative z-10">
+                      <motion.div
+                        animate={{ rotate: [0, 15, -15, 0] }}
+                        transition={{
+                          duration: 0.5,
+                          repeat: Infinity,
+                          repeatDelay: 3,
+                        }}
+                      >
+                        <Zap className="w-5 h-5 text-white fill-current flex-shrink-0 drop-shadow" />
+                      </motion.div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-baseline gap-2">
+                          <span className="font-bold text-white text-lg drop-shadow">
+                            +{item.xpEarned} XP earned
                           </span>
-                        )}
-                      </div>
-                      {/* XP Breakdown */}
-                      {Object.keys(item.xpBreakdown).length > 0 && (
-                        <div className="flex flex-wrap gap-2 mt-1 text-xs text-gray-600">
-                          {Object.entries(item.xpBreakdown).map(
-                            ([action, xp]) => (
-                              <span
-                                key={action}
-                                className="bg-white/60 px-2 py-0.5 rounded"
-                              >
-                                {action.replace("_", " ")}: +{xp}
+                          {item.domain && (
+                            <span className="text-sm text-white/90">
+                              →{" "}
+                              <span className="font-semibold">
+                                {item.domain.displayName}
                               </span>
-                            ),
+                            </span>
                           )}
                         </div>
-                      )}
+                        {/* XP Breakdown with animations */}
+                        {Object.keys(item.xpBreakdown).length > 0 && (
+                          <div className="flex flex-wrap gap-2 mt-1.5 text-xs">
+                            {Object.entries(item.xpBreakdown).map(
+                              ([action, xp], index) => (
+                                <motion.span
+                                  key={action}
+                                  initial={{ opacity: 0, x: -10 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  transition={{ delay: index * 0.1 }}
+                                  className="bg-white/80 text-amber-900 px-2 py-1 rounded-full font-medium"
+                                >
+                                  {action.replace("_", " ")}: +{xp}
+                                </motion.span>
+                              ),
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </div>
-              )}
+                  </motion.div>
+                )}
 
-              {/* Focus Area Indicator */}
-              {item.isInFocusArea && item.domain && (
-                <div className="flex items-center gap-2 px-2.5 py-2 bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg">
-                  <Sparkles className="w-4 h-4 text-purple-600 flex-shrink-0" />
-                  <span className="text-xs font-medium text-purple-900">
-                    This is in your focus area • Bonus XP applied
+                {/* Focus Area Indicator */}
+                {item.isInFocusArea && item.domain && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.3 }}
+                    className="flex items-center gap-2 px-3 py-2.5 bg-gradient-purple-pink rounded-lg shadow-md relative overflow-hidden"
+                  >
+                    <motion.div
+                      animate={{
+                        scale: [1, 1.2, 1],
+                        rotate: [0, 180, 360],
+                      }}
+                      transition={{
+                        duration: 2,
+                        repeat: Infinity,
+                        ease: "easeInOut",
+                      }}
+                    >
+                      <Sparkles className="w-5 h-5 text-white drop-shadow" />
+                    </motion.div>
+                    <span className="text-sm font-semibold text-white drop-shadow">
+                      This is in your focus area • Bonus XP applied
+                    </span>
+                    {/* Animated shine effect */}
+                    <motion.div
+                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                      animate={{ x: ["-100%", "200%"] }}
+                      transition={{
+                        duration: 2,
+                        repeat: Infinity,
+                        ease: "linear",
+                        repeatDelay: 1,
+                      }}
+                    />
+                  </motion.div>
+                )}
+              </div>
+            )}
+          </CardHeader>
+
+          <CardContent className="pt-0">
+            {/* Summary */}
+            {summaryBullets.length > 0 && (
+              <ul className="text-sm text-gray-600 space-y-1.5 mb-3">
+                {summaryBullets.slice(0, 5).map((bullet: string, i: number) => (
+                  <li key={i} className="flex items-start gap-2">
+                    <span className="text-gray-300 mt-0.5">•</span>
+                    <span className="leading-relaxed">{bullet}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {/* Tags */}
+            {item.tags && item.tags.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mb-3">
+                {item.tags.slice(0, 6).map((tag: string) => (
+                  <TagBadge
+                    key={tag}
+                    tag={tag}
+                    clickable={true}
+                    onClick={() => onTagClick?.(tag)}
+                  />
+                ))}
+                {item.tags.length > 6 && (
+                  <span className="text-xs text-gray-400 self-center">
+                    +{item.tags.length - 6} more
                   </span>
-                </div>
-              )}
-            </div>
-          )}
-        </CardHeader>
+                )}
+              </div>
+            )}
 
-        <CardContent className="pt-0">
-          {/* Summary */}
-          {summaryBullets.length > 0 && (
-            <ul className="text-sm text-gray-600 space-y-1.5 mb-3">
-              {summaryBullets.slice(0, 5).map((bullet: string, i: number) => (
-                <li key={i} className="flex items-start gap-2">
-                  <span className="text-gray-300 mt-0.5">•</span>
-                  <span className="leading-relaxed">{bullet}</span>
-                </li>
-              ))}
-            </ul>
-          )}
+            {/* Note */}
+            {item.note && (
+              <div className="flex items-start gap-2 p-2 bg-amber-50 border border-amber-100 rounded-lg mb-3">
+                <MessageSquare className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-amber-800">{item.note}</p>
+              </div>
+            )}
 
-          {/* Tags */}
-          {item.tags && item.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mb-3">
-              {item.tags.slice(0, 6).map((tag: string) => (
-                <TagBadge
-                  key={tag}
-                  tag={tag}
-                  clickable={true}
-                  onClick={() => onTagClick?.(tag)}
-                />
-              ))}
-              {item.tags.length > 6 && (
-                <span className="text-xs text-gray-400 self-center">
-                  +{item.tags.length - 6} more
-                </span>
-              )}
-            </div>
-          )}
-
-          {/* Note */}
-          {item.note && (
-            <div className="flex items-start gap-2 p-2 bg-amber-50 border border-amber-100 rounded-lg mb-3">
-              <MessageSquare className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
-              <p className="text-xs text-amber-800">{item.note}</p>
-            </div>
-          )}
-
-          {/* View Original Button */}
-          <div className="flex items-center gap-2 mb-3">
-            <a
-              href={item.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
-            >
-              <ExternalLink className="w-4 h-4" />
-              View Original
-            </a>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleCopyLink}
-              className="h-7 px-2 text-gray-500 hover:text-gray-700"
-            >
-              {copied ? (
-                <Check className="w-3.5 h-3.5 text-green-600" />
-              ) : (
-                <Copy className="w-3.5 h-3.5" />
-              )}
-            </Button>
-          </div>
-
-          {/* Actions */}
-          {showActions && (
-            <div className="flex items-center gap-1 pt-3 border-t border-gray-100">
+            {/* View Original Button */}
+            <div className="flex items-center gap-2 mb-3">
+              <a
+                href={item.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                <ExternalLink className="w-4 h-4" />
+                View Original
+              </a>
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => handleStatusChange("pinned")}
-                disabled={isUpdating}
-                className="flex-1 h-9 text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+                onClick={handleCopyLink}
+                className="h-7 px-2 text-gray-500 hover:text-gray-700"
               >
-                <Pin className="w-4 h-4 mr-1.5" />
-                Pin
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleStatusChange("reviewed")}
-                disabled={isUpdating}
-                className="flex-1 h-9 text-green-600 hover:text-green-700 hover:bg-green-50"
-              >
-                <Archive className="w-4 h-4 mr-1.5" />
-                Archive
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleStatusChange("deleted")}
-                disabled={isUpdating}
-                className="flex-1 h-9 text-red-600 hover:text-red-700 hover:bg-red-50"
-              >
-                <Trash2 className="w-4 h-4 mr-1.5" />
-                Delete
+                {copied ? (
+                  <Check className="w-3.5 h-3.5 text-green-600" />
+                ) : (
+                  <Copy className="w-3.5 h-3.5" />
+                )}
               </Button>
             </div>
-          )}
-        </CardContent>
-      </Card>
+
+            {/* Actions */}
+            {showActions && (
+              <div className="flex items-center gap-1 pt-3 border-t border-gray-100">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleStatusChange("pinned")}
+                  disabled={isUpdating}
+                  className="flex-1 h-9 text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+                >
+                  <Pin className="w-4 h-4 mr-1.5" />
+                  Pin
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleStatusChange("reviewed")}
+                  disabled={isUpdating}
+                  className="flex-1 h-9 text-green-600 hover:text-green-700 hover:bg-green-50"
+                >
+                  <Archive className="w-4 h-4 mr-1.5" />
+                  Archive
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleStatusChange("deleted")}
+                  disabled={isUpdating}
+                  className="flex-1 h-9 text-red-600 hover:text-red-700 hover:bg-red-50"
+                >
+                  <Trash2 className="w-4 h-4 mr-1.5" />
+                  Delete
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </motion.div>
 
       {/* Image Modal */}
       <ImageModal

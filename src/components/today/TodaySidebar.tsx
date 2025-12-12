@@ -11,33 +11,33 @@ import { AlertCircle } from "lucide-react";
  */
 function SidebarSkeleton() {
   return (
-    <div className="sticky top-20 space-y-4 animate-pulse">
+    <div className="sticky top-20 space-y-3 animate-pulse">
       {/* Profile Card Skeleton */}
-      <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
+      <div className="bg-white rounded-lg border border-gray-200 p-3 shadow-sm">
         <div className="flex flex-col items-center space-y-3">
           <div className="w-16 h-16 rounded-full bg-gray-200" />
-          <div className="h-4 w-24 bg-gray-200 rounded" />
-          <div className="h-3 w-16 bg-gray-200 rounded" />
+          <div className="h-3 w-20 bg-gray-200 rounded" />
+          <div className="h-3 w-14 bg-gray-200 rounded" />
           <div className="w-full h-2 bg-gray-200 rounded" />
         </div>
       </div>
 
       {/* Quick Stats Skeleton */}
-      <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
-        <div className="h-4 w-20 bg-gray-200 rounded mb-3" />
+      <div className="bg-white rounded-lg border border-gray-200 p-3 shadow-sm">
+        <div className="h-3 w-16 bg-gray-200 rounded mb-2" />
         <div className="grid grid-cols-3 gap-2">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-16 bg-gray-200 rounded-lg" />
+            <div key={i} className="h-14 bg-gray-200 rounded-lg" />
           ))}
         </div>
       </div>
 
       {/* Sources Skeleton */}
-      <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
-        <div className="h-4 w-28 bg-gray-200 rounded mb-3" />
-        <div className="space-y-2">
+      <div className="bg-white rounded-lg border border-gray-200 p-3 shadow-sm">
+        <div className="h-3 w-24 bg-gray-200 rounded mb-2" />
+        <div className="space-y-1.5">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-8 bg-gray-200 rounded" />
+            <div key={i} className="h-7 bg-gray-200 rounded" />
           ))}
         </div>
       </div>
@@ -89,9 +89,9 @@ export function TodaySidebar() {
   }
 
   return (
-    <div className="sticky top-20 space-y-4">
+    <div className="sticky top-20 space-y-3">
       {/* User Profile Card */}
-      <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm hover:shadow-md transition-shadow">
+      <div className="bg-white rounded-lg border border-gray-200 p-3 shadow-sm hover:shadow-md transition-shadow">
         <UserProfileSection
           level={stats.level}
           totalXp={stats.totalXp}
@@ -100,8 +100,8 @@ export function TodaySidebar() {
       </div>
 
       {/* Quick Stats Card */}
-      <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm hover:shadow-md transition-shadow">
-        <h3 className="text-sm font-semibold text-gray-900 mb-3">
+      <div className="bg-white rounded-lg border border-gray-200 p-3 shadow-sm hover:shadow-md transition-shadow">
+        <h3 className="text-xs font-semibold text-gray-900 mb-2">
           Quick Stats
         </h3>
         <QuickStats
@@ -112,8 +112,8 @@ export function TodaySidebar() {
       </div>
 
       {/* Content Sources Card */}
-      <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm hover:shadow-md transition-shadow">
-        <h3 className="text-sm font-semibold text-gray-900 mb-3">
+      <div className="bg-white rounded-lg border border-gray-200 p-3 shadow-sm hover:shadow-md transition-shadow">
+        <h3 className="text-xs font-semibold text-gray-900 mb-2">
           Content Sources
         </h3>
         <SourceBreakdown sources={sources} />

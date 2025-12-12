@@ -2,7 +2,7 @@
 
 import useSWR from "swr";
 import { useAuth } from "@clerk/nextjs";
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
 
 // Persist freshness across unmounts per user to avoid refetching on quick tab flips
 const sidebarFreshness = new Map<string, number>();
@@ -40,20 +40,14 @@ export function useTodaySidebar() {
   // Allow fetch only when auth is ready
   const shouldFetch = isLoaded && userId;
 
-  // Treat data as fresh for 30s per user to avoid refetch on rapid tab switches
-  const isFresh = useMemo(() => {
-    const lastResolved = userId ? sidebarFreshness.get(userId) : null;
-    return lastResolved != null && Date.now() - lastResolved < 30_000;
-  }, [userId]);
-
   const { data, error, isLoading, isValidating, mutate } = useSWR(
     shouldFetch ? url : null,
     {
       revalidateOnFocus: false,
       revalidateOnReconnect: false,
-      // If we already have data and it's fresh, skip revalidate on mount/stale
-      revalidateOnMount: !isFresh,
-      revalidateIfStale: !isFresh,
+      // Always revalidate on mount to ensure fresh data
+      revalidateOnMount: true,
+      dedupingInterval: 5000, // Prevent duplicate requests within 5 seconds
     },
   );
 
