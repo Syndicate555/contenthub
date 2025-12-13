@@ -19,6 +19,17 @@ function stripHtmlPreserveBreaks(html: string): string {
   return withBreaks.replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">");
 }
 
+// Safe, lazy loader for JSDOM that gracefully fails in environments where ESM/CJS interop is problematic
+async function loadJSDOMSafe() {
+  try {
+    const mod = await import("jsdom");
+    return mod.JSDOM;
+  } catch (err) {
+    console.error("JSDOM load failed; continuing without DOM parsing", err);
+    return null;
+  }
+}
+
 /**
  * Detects the platform from a URL
  */
@@ -311,6 +322,23 @@ async function fetchTikTokMedia(
   return { imageUrl };
 }
 
+async function resolveTikTokUrl(url: string): Promise<string> {
+  try {
+    const res = await fetchWithTimeout(
+      url,
+      {
+        redirect: "follow",
+        headers: { Accept: "text/html" },
+      },
+      5000,
+    );
+    return res.url || url;
+  } catch (err) {
+    console.log("[TikTok] Failed to resolve redirect:", err);
+    return url;
+  }
+}
+
 /**
  * Extract content from Twitter/X using oEmbed and public endpoints
  */
@@ -598,7 +626,8 @@ async function extractInstagramContent(url: string): Promise<ExtractedContent> {
 
     if (response.ok) {
       const html = await response.text();
-      const JSDOM = await loadJSDOM();
+      const JSDOM = await loadJSDOMSafe();
+      if (!JSDOM) throw new Error("DOM parser unavailable");
       const dom = new JSDOM(html, { url });
       const document = dom.window.document;
 
@@ -806,9 +835,10 @@ function isLinkedInLoginWall(title?: string, description?: string): boolean {
  * Extract content from TikTok using oEmbed and public endpoints
  */
 async function extractTikTokContent(url: string): Promise<ExtractedContent> {
-  const source = new URL(url).hostname;
-  const videoId = extractTikTokVideoId(url);
-  const urlUsername = extractTikTokUsername(url);
+  const resolvedUrl = await resolveTikTokUrl(url);
+  const source = new URL(resolvedUrl).hostname;
+  const videoId = extractTikTokVideoId(resolvedUrl);
+  const urlUsername = extractTikTokUsername(resolvedUrl);
 
   let videoCaption = "";
   let authorName: string | undefined;
@@ -817,59 +847,71 @@ async function extractTikTokContent(url: string): Promise<ExtractedContent> {
     console.log(`[TikTok] Extracting content from: ${url}`);
 
     // Step 1: Extract text and author from oEmbed
-    const oembedUrl = `https://www.tiktok.com/oembed?url=${encodeURIComponent(url)}`;
-    const response = await fetchWithTimeout(
-      oembedUrl,
-      { headers: { Accept: "application/json" } },
-      6000,
-    );
-
-    if (!response.ok) {
-      throw new Error(
-        `TikTok oEmbed API failed with status ${response.status}`,
+    // Step 1: Try oEmbed first
+    try {
+      const oembedUrl = `https://www.tiktok.com/oembed?url=${encodeURIComponent(resolvedUrl)}`;
+      const response = await fetchWithTimeout(
+        oembedUrl,
+        { headers: { Accept: "application/json" } },
+        6000,
       );
+
+      if (response.ok) {
+        const data = (await response.json()) as {
+          title?: string;
+          author_name?: string;
+          author_url?: string;
+        };
+
+        videoCaption = data.title || "";
+        authorName = data.author_name;
+
+        if (!authorName && data.author_url) {
+          const authorMatch = data.author_url.match(/\/@([^\/\?]+)/);
+          if (authorMatch) authorName = authorMatch[1];
+        }
+      } else {
+        console.log(`[TikTok] oEmbed failed with status ${response.status}`);
+      }
+    } catch (err) {
+      console.log("[TikTok] oEmbed error:", err);
     }
 
-    const data = (await response.json()) as {
-      version?: string;
-      type?: string;
-      title?: string;
-      author_name?: string;
-      author_url?: string;
-      thumbnail_url?: string;
-      html?: string;
-      provider_name?: string;
-    };
-
-    // Extract caption/title and author
-    videoCaption = data.title || "";
-    authorName = data.author_name;
-
-    // If author_name not available, try extracting from author_url
-    if (!authorName && data.author_url) {
-      const authorMatch = data.author_url.match(/\/@([^\/\?]+)/);
-      if (authorMatch) authorName = authorMatch[1];
+    // Step 2: Microlink fallback if oEmbed gave us nothing
+    if (!videoCaption || !authorName) {
+      try {
+        const microlinkUrl = `https://api.microlink.io?url=${encodeURIComponent(resolvedUrl)}`;
+        const microlinkRes = await fetchWithTimeout(
+          microlinkUrl,
+          { headers: { Accept: "application/json" } },
+          8000,
+        );
+        if (microlinkRes.ok) {
+          const data = (await microlinkRes.json()) as {
+            status?: string;
+            data?: {
+              title?: string;
+              description?: string;
+              author?: string;
+            };
+          };
+          if (data.status === "success" && data.data) {
+            videoCaption = videoCaption || data.data.title || data.data.description || "";
+            authorName = authorName || data.data.author || urlUsername;
+          }
+        }
+      } catch (err) {
+        console.log("[TikTok] Microlink fallback failed:", err);
+      }
     }
 
-    // Fallback to URL-extracted username
-    authorName = authorName || urlUsername;
+    // Fallback defaults if still missing
+    videoCaption = videoCaption || "TikTok video";
+    authorName = authorName || urlUsername || "unknown";
 
-    // Validate that we got meaningful data
-    if (!videoCaption || videoCaption.trim().length === 0) {
-      throw new Error(
-        "TikTok content extraction failed: No video caption/title found",
-      );
-    }
-
-    if (!authorName) {
-      throw new Error(
-        "TikTok content extraction failed: Unable to identify author",
-      );
-    }
-
-    // Step 2: Fetch media (thumbnail/video poster)
+    // Step 3: Fetch media (thumbnail/video poster)
     console.log(`[TikTok] Fetching media for video ${videoId}`);
-    const media = await fetchTikTokMedia(url);
+    const media = await fetchTikTokMedia(resolvedUrl);
 
     console.log(
       `[TikTok] Extraction complete: author=${authorName}, caption=${videoCaption.length} chars, image=${!!media.imageUrl}`,
@@ -1011,7 +1053,8 @@ async function extractLinkedInContent(url: string): Promise<ExtractedContent> {
     }
 
     const html = await response.text();
-    const JSDOM = await loadJSDOM();
+    const JSDOM = await loadJSDOMSafe();
+    if (!JSDOM) throw new Error("DOM parser unavailable");
     const dom = new JSDOM(html, { url });
     const document = dom.window.document;
 
@@ -1098,26 +1141,36 @@ async function extractGenericContent(url: string): Promise<ExtractedContent> {
     }
 
     const html = await response.text();
-    const JSDOM = await loadJSDOM();
-    const dom = new JSDOM(html, { url });
-    const document = dom.window.document;
+    const JSDOM = await loadJSDOMSafe();
 
-    // Try to extract with Readability
-    const reader = new Readability(document);
-    const article = reader.parse();
+    if (JSDOM) {
+      const dom = new JSDOM(html, { url });
+      const document = dom.window.document;
 
-    if (article && article.textContent && article.textContent.length > 100) {
+      // Try to extract with Readability
+      const reader = new Readability(document);
+      const article = reader.parse();
+
+      if (article && article.textContent && article.textContent.length > 100) {
+        return {
+          title: article.title || extractFallbackTitle(document, url),
+          content: article.textContent,
+          source,
+        };
+      }
+
+      // Fallback: extract from meta tags or body text
       return {
-        title: article.title || extractFallbackTitle(document, url),
-        content: article.textContent,
+        title: extractFallbackTitle(document, url),
+        content: extractFallbackContent(document),
         source,
       };
     }
 
-    // Fallback: extract from meta tags
+    // If JSDOM unavailable (Edge/ESM), fall back to stripped HTML
     return {
-      title: extractFallbackTitle(document, url),
-      content: extractFallbackContent(document),
+      title: extractFallbackTitle(null, url),
+      content: stripHtmlPreserveBreaks(html),
       source,
     };
   } catch (error) {
@@ -1130,31 +1183,31 @@ async function extractGenericContent(url: string): Promise<ExtractedContent> {
   }
 }
 
-function extractFallbackTitle(document: Document, url: string): string {
+function extractFallbackTitle(document: Document | null, url: string): string {
   const ogTitle = document
-    .querySelector('meta[property="og:title"]')
+    ?.querySelector('meta[property="og:title"]')
     ?.getAttribute("content");
   const twitterTitle = document
-    .querySelector('meta[name="twitter:title"]')
+    ?.querySelector('meta[name="twitter:title"]')
     ?.getAttribute("content");
-  const titleTag = document.querySelector("title")?.textContent;
+  const titleTag = document?.querySelector("title")?.textContent;
 
   return ogTitle || twitterTitle || titleTag || url;
 }
 
-function extractFallbackContent(document: Document): string {
+function extractFallbackContent(document: Document | null): string {
   const ogDesc = document
-    .querySelector('meta[property="og:description"]')
+    ?.querySelector('meta[property="og:description"]')
     ?.getAttribute("content");
   const metaDesc = document
-    .querySelector('meta[name="description"]')
+    ?.querySelector('meta[name="description"]')
     ?.getAttribute("content");
 
   if (ogDesc || metaDesc) {
     return ogDesc || metaDesc || "";
   }
 
-  const body = document.querySelector("body");
+  const body = document?.querySelector("body");
   if (body) {
     body
       .querySelectorAll("script, style, nav, footer, header")
