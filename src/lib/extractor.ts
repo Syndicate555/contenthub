@@ -24,7 +24,7 @@ async function loadJSDOM() {
  */
 function detectPlatform(
   url: string,
-): "twitter" | "instagram" | "linkedin" | "pinterest" | "generic" {
+): "twitter" | "instagram" | "linkedin" | "pinterest" | "tiktok" | "generic" {
   const hostname = new URL(url).hostname.toLowerCase();
 
   if (hostname.includes("twitter.com") || hostname.includes("x.com")) {
@@ -39,6 +39,9 @@ function detectPlatform(
   if (hostname.includes("pinterest.com")) {
     return "pinterest";
   }
+  if (hostname.includes("tiktok.com")) {
+    return "tiktok";
+  }
   return "generic";
 }
 
@@ -51,6 +54,30 @@ function extractTweetId(url: string): string | null {
   // https://x.com/user/status/123456789
   const match = url.match(/(?:twitter\.com|x\.com)\/[^\/]+\/status\/(\d+)/);
   return match ? match[1] : null;
+}
+
+/**
+ * Extract video ID from TikTok URL
+ * Supports: @username/video/123, vm.tiktok.com/ABC, vt.tiktok.com/XYZ
+ */
+function extractTikTokVideoId(url: string): string | undefined {
+  // Pattern 1: Standard video URL with ID
+  const standardMatch = url.match(/tiktok\.com\/@[^\/]+\/video\/(\d+)/);
+  if (standardMatch) return standardMatch[1];
+
+  // Pattern 2: Short video URL
+  const shortMatch = url.match(/v(?:m|t)\.tiktok\.com\/([A-Za-z0-9]+)/);
+  if (shortMatch) return shortMatch[1];
+
+  return undefined;
+}
+
+/**
+ * Extract username from TikTok URL
+ */
+function extractTikTokUsername(url: string): string | undefined {
+  const match = url.match(/tiktok\.com\/@([^\/]+)/);
+  return match ? match[1] : undefined;
 }
 
 /**
@@ -208,6 +235,80 @@ async function fetchTwitterMedia(
     `[Twitter] All media fetch methods failed for tweet ${id}, returning empty`,
   );
   return { imageUrl, videoUrl };
+}
+
+/**
+ * Fetch TikTok video metadata using oEmbed and Microlink APIs
+ */
+async function fetchTikTokMedia(
+  url: string,
+): Promise<{ imageUrl?: string; videoUrl?: string }> {
+  let imageUrl: string | undefined;
+
+  // Method 1: TikTok oEmbed API
+  try {
+    console.log(`[TikTok] Trying oEmbed API`);
+    const oembedUrl = `https://www.tiktok.com/oembed?url=${encodeURIComponent(url)}`;
+
+    const response = await fetchWithTimeout(
+      oembedUrl,
+      { headers: { Accept: "application/json" } },
+      6000,
+    );
+
+    if (response.ok) {
+      const data = (await response.json()) as {
+        thumbnail_url?: string;
+        thumbnail_width?: number;
+        thumbnail_height?: number;
+      };
+
+      imageUrl = data.thumbnail_url;
+
+      if (imageUrl) {
+        console.log(`[TikTok] oEmbed success: thumbnail found`);
+        return { imageUrl };
+      }
+    }
+  } catch (err) {
+    console.log("[TikTok] oEmbed failed:", err);
+  }
+
+  // Method 2: Microlink API fallback
+  try {
+    console.log(`[TikTok] Trying Microlink API`);
+    const microlinkUrl = `https://api.microlink.io?url=${encodeURIComponent(url)}`;
+
+    const response = await fetchWithTimeout(
+      microlinkUrl,
+      { headers: { Accept: "application/json" } },
+      8000,
+    );
+
+    if (response.ok) {
+      const data = (await response.json()) as {
+        status: string;
+        data?: {
+          image?: { url?: string };
+          video?: { url?: string };
+        };
+      };
+
+      if (data.status === "success" && data.data) {
+        imageUrl = imageUrl || data.data.image?.url;
+
+        if (imageUrl) {
+          console.log(`[TikTok] Microlink success: image found`);
+          return { imageUrl };
+        }
+      }
+    }
+  } catch (err) {
+    console.log("[TikTok] Microlink failed:", err);
+  }
+
+  console.log(`[TikTok] All media fetch methods failed`);
+  return { imageUrl };
 }
 
 /**
@@ -711,6 +812,96 @@ function isLinkedInLoginWall(title?: string, description?: string): boolean {
 }
 
 /**
+ * Extract content from TikTok using oEmbed and public endpoints
+ */
+async function extractTikTokContent(url: string): Promise<ExtractedContent> {
+  const source = new URL(url).hostname;
+  const videoId = extractTikTokVideoId(url);
+  const urlUsername = extractTikTokUsername(url);
+
+  let videoCaption = "";
+  let authorName: string | undefined;
+
+  try {
+    console.log(`[TikTok] Extracting content from: ${url}`);
+
+    // Step 1: Extract text and author from oEmbed
+    const oembedUrl = `https://www.tiktok.com/oembed?url=${encodeURIComponent(url)}`;
+    const response = await fetchWithTimeout(
+      oembedUrl,
+      { headers: { Accept: "application/json" } },
+      6000,
+    );
+
+    if (!response.ok) {
+      throw new Error(
+        `TikTok oEmbed API failed with status ${response.status}`,
+      );
+    }
+
+    const data = (await response.json()) as {
+      version?: string;
+      type?: string;
+      title?: string;
+      author_name?: string;
+      author_url?: string;
+      thumbnail_url?: string;
+      html?: string;
+      provider_name?: string;
+    };
+
+    // Extract caption/title and author
+    videoCaption = data.title || "";
+    authorName = data.author_name;
+
+    // If author_name not available, try extracting from author_url
+    if (!authorName && data.author_url) {
+      const authorMatch = data.author_url.match(/\/@([^\/\?]+)/);
+      if (authorMatch) authorName = authorMatch[1];
+    }
+
+    // Fallback to URL-extracted username
+    authorName = authorName || urlUsername;
+
+    // Validate that we got meaningful data
+    if (!videoCaption || videoCaption.trim().length === 0) {
+      throw new Error(
+        "TikTok content extraction failed: No video caption/title found",
+      );
+    }
+
+    if (!authorName) {
+      throw new Error(
+        "TikTok content extraction failed: Unable to identify author",
+      );
+    }
+
+    // Step 2: Fetch media (thumbnail/video poster)
+    console.log(`[TikTok] Fetching media for video ${videoId}`);
+    const media = await fetchTikTokMedia(url);
+
+    console.log(
+      `[TikTok] Extraction complete: author=${authorName}, caption=${videoCaption.length} chars, image=${!!media.imageUrl}`,
+    );
+
+    // Build response
+    return {
+      title: `TikTok video by @${authorName}`,
+      content: videoCaption,
+      source,
+      author: authorName,
+      imageUrl: media.imageUrl,
+      videoUrl: media.videoUrl,
+    };
+  } catch (error) {
+    console.error("TikTok extraction failed:", error);
+    throw new Error(
+      `Failed to extract TikTok content: ${error instanceof Error ? error.message : "Unknown error"}. The video may be private, deleted, or TikTok's API may be rate-limiting requests.`,
+    );
+  }
+}
+
+/**
  * Extract content from LinkedIn using Microlink API
  * LinkedIn doesn't have a public oEmbed API, so we use Microlink for metadata extraction
  * Note: LinkedIn heavily restricts unauthenticated access, so we extract what we can
@@ -1029,6 +1220,8 @@ export async function extractContent(url: string): Promise<ExtractedContent> {
         content: "",
         source: "pinterest.com",
       };
+    case "tiktok":
+      return extractTikTokContent(url);
     default:
       return extractGenericContent(url);
   }

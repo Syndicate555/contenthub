@@ -25,6 +25,7 @@ import {
   Image as ImageIcon,
   MessageSquarePlus,
   Send,
+  Video,
 } from "lucide-react";
 import { showMultipleBadgesNotification } from "@/components/badge-notification";
 
@@ -117,6 +118,13 @@ export default function AddPageClient({ inboundEmail }: AddPageClientProps) {
         label: "Pinterest",
         color: "bg-red-100 text-red-800 border-red-200",
         Icon: ImageIcon,
+      };
+    }
+    if (lower.includes("tiktok.com")) {
+      return {
+        label: "TikTok",
+        color: "bg-slate-100 text-slate-900 border-slate-300",
+        Icon: Video,
       };
     }
     return {
@@ -281,8 +289,8 @@ export default function AddPageClient({ inboundEmail }: AddPageClientProps) {
                       autoFocus
                     />
                     <p className="text-xs text-gray-500">
-                      Paste a link from Twitter, Instagram, LinkedIn, or any
-                      webpage
+                      Paste a link from Twitter, Instagram, LinkedIn, TikTok, or
+                      any webpage
                     </p>
                   </div>
 
