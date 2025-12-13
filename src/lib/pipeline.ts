@@ -62,14 +62,16 @@ export async function processItem(
     const hasShortContent = !truncatedContent || truncatedContent.length < 100;
     let hasImage = !!extracted.imageUrl;
 
-    // Normalize tiny Instagram thumbnails to a larger variant so Vision/OpenAI accepts them
-    if (
-      extracted.imageUrl &&
-      extracted.source &&
-      extracted.source.toLowerCase().includes("instagram") &&
-      /s150x150|profile_pic/i.test(extracted.imageUrl)
-    ) {
-      extracted.imageUrl = extracted.imageUrl.replace(/s150x150/gi, "s1080x1080");
+    // Normalize / downgrade Vision usage for Instagram profile-sized images that Vision rejects
+    if (extracted.imageUrl && extracted.source && extracted.source.toLowerCase().includes("instagram")) {
+      // Upsize tiny thumbs when possible
+      if (/s150x150/i.test(extracted.imageUrl)) {
+        extracted.imageUrl = extracted.imageUrl.replace(/s150x150/gi, "s1080x1080");
+      }
+      // If it's a profile-style asset (/t51.2885-19/ or profile_pic), skip Vision to avoid invalid_image_url
+      if (/t51\.2885-19|profile_pic/i.test(extracted.imageUrl)) {
+        hasImage = false;
+      }
     }
 
     // Validate supported image types for Vision; otherwise disable Vision
