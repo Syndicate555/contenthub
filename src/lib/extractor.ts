@@ -151,7 +151,7 @@ async function extractTwitterContent(url: string): Promise<ExtractedContent> {
 
   let imageUrl: string | undefined;
   let tweetText = "";
-  let authorName = "Unknown";
+  let authorName: string | undefined;
 
   try {
     // Primary: Twitter oEmbed for text/author and optional thumbnail
@@ -162,52 +162,72 @@ async function extractTwitterContent(url: string): Promise<ExtractedContent> {
       6000,
     );
 
-    if (response.ok) {
-      const data = (await response.json()) as {
-        author_name?: string;
-        html?: string;
-        thumbnail_url?: string;
-      };
-
-      // Extract plain text from the HTML payload
-      if (data.html) {
-        const JSDOM = await loadJSDOM();
-        const dom = new JSDOM(data.html);
-        const blockquote = dom.window.document.querySelector("blockquote");
-        if (blockquote) {
-          const paragraphs = blockquote.querySelectorAll("p");
-          tweetText = Array.from(paragraphs)
-            .map((p) => p.textContent?.trim())
-            .filter(Boolean)
-            .join("\n\n");
-        }
-      }
-
-      authorName = data.author_name || authorName;
-      imageUrl = data.thumbnail_url || imageUrl;
+    if (!response.ok) {
+      throw new Error(
+        `Twitter oEmbed API failed with status ${response.status}`,
+      );
     }
-  } catch (oembedError) {
-    console.error("Twitter oEmbed error:", oembedError);
-  }
 
-  // Fallback: public syndication endpoints for images
-  if (!imageUrl) {
-    console.log(
-      "[extractTwitterContent] no image from oEmbed, trying syndication",
-      { tweetId },
+    const data = (await response.json()) as {
+      author_name?: string;
+      html?: string;
+      thumbnail_url?: string;
+    };
+
+    // Extract plain text from the HTML payload
+    if (data.html) {
+      const JSDOM = await loadJSDOM();
+      const dom = new JSDOM(data.html);
+      const blockquote = dom.window.document.querySelector("blockquote");
+      if (blockquote) {
+        const paragraphs = blockquote.querySelectorAll("p");
+        tweetText = Array.from(paragraphs)
+          .map((p) => p.textContent?.trim())
+          .filter(Boolean)
+          .join("\n\n");
+      }
+    }
+
+    authorName = data.author_name;
+    imageUrl = data.thumbnail_url;
+
+    // Fallback: public syndication endpoints for images
+    if (!imageUrl) {
+      console.log(
+        "[extractTwitterContent] no image from oEmbed, trying syndication",
+        { tweetId },
+      );
+      imageUrl = await fetchTwitterImage(url, tweetId || undefined);
+      console.log("[extractTwitterContent] syndication result", { imageUrl });
+    }
+
+    // Validate that we got meaningful data
+    if (!tweetText || tweetText.trim().length === 0) {
+      throw new Error(
+        "Twitter content extraction failed: No text content found",
+      );
+    }
+
+    if (!authorName) {
+      throw new Error(
+        "Twitter content extraction failed: Unable to identify author",
+      );
+    }
+
+    // Build response
+    return {
+      title: `Tweet by @${authorName}`,
+      content: tweetText,
+      source,
+      author: authorName,
+      imageUrl,
+    };
+  } catch (error) {
+    console.error("Twitter extraction failed:", error);
+    throw new Error(
+      `Failed to extract Twitter content: ${error instanceof Error ? error.message : "Unknown error"}. The tweet may be private, deleted, or Twitter's API may be rate-limiting requests.`,
     );
-    imageUrl = await fetchTwitterImage(url, tweetId || undefined);
-    console.log("[extractTwitterContent] syndication result", { imageUrl });
   }
-
-  // Build response
-  return {
-    title: authorName ? `Tweet by @${authorName}` : "Twitter Post",
-    content: tweetText || "Tweet content could not be extracted.",
-    source,
-    author: authorName,
-    imageUrl,
-  };
 }
 
 /**

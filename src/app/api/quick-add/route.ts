@@ -58,9 +58,19 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("POST /api/quick-add error:", error);
+
+    // Return user-friendly error message from pipeline validation
+    const errorMessage =
+      error instanceof Error
+        ? error.message
+        : "Failed to process this URL. Please check the URL and try again.";
+
     return NextResponse.json(
-      { ok: false, error: "Failed to add item" },
-      { status: 500 },
+      {
+        ok: false,
+        error: errorMessage,
+      },
+      { status: 400 }, // Use 400 for validation errors, not 500
     );
   }
 }

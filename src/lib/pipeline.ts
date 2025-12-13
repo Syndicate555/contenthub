@@ -5,6 +5,7 @@ import { getDomainForContent } from "./domains";
 import { awardXP, XP_ACTIONS } from "./xp";
 import { trackActivity, STREAK_ACTIVITIES } from "./activity";
 import { checkAllBadges } from "./badges";
+import { validateItemData } from "./content-validator";
 import type { Item } from "@/generated/prisma";
 
 export interface ProcessItemInput {
@@ -29,10 +30,12 @@ export interface ProcessItemResult {
 
 /**
  * Full item processing pipeline:
- * 1. Create item in database with status "new"
- * 2. Fetch and extract content from URL
+ * 1. Extract content from URL
+ * 2. Validate extracted content
  * 3. Summarize with OpenAI
- * 4. Update item with processed data
+ * 4. Validate summarized content
+ * 5. Create item in database with all processed data
+ * 6. Award XP and track activity
  */
 export async function processItem(
   input: ProcessItemInput,
@@ -44,70 +47,21 @@ export async function processItem(
   try {
     source = new URL(url).hostname;
   } catch {
-    // Invalid URL, will be caught later
-  }
-
-  // Step 1: Create initial item record
-  const item = await db.item.create({
-    data: {
-      url,
-      note,
-      userId,
-      source,
-      status: "new",
-    },
-  });
-
-  // Award XP for saving the item (we don't know domain yet)
-  try {
-    await awardXP({
-      userId,
-      action: XP_ACTIONS.SAVE_ITEM,
-      itemId: item.id,
-      metadata: { url, source },
-    });
-  } catch (xpError) {
-    console.error("Failed to award save XP:", xpError);
-    // Don't fail the whole operation for XP errors
-  }
-
-  // Track SAVE_ITEM activity for streak maintenance
-  try {
-    await trackActivity(userId, STREAK_ACTIVITIES.SAVE_ITEM, {
-      itemId: item.id,
-    });
-  } catch (activityError) {
-    console.error("Failed to track save activity:", activityError);
-    // Don't fail the whole operation for activity tracking errors
+    throw new Error("Invalid URL format");
   }
 
   try {
-    // Step 2: Extract content from URL (or use existing rawContent for emails)
-    let extracted;
-    let contentToSummarize;
+    // Step 1: Extract content from URL
+    console.log(`Pipeline: Extracting content from ${url}`);
+    const extracted = await extractContent(url);
+    const contentToSummarize = extracted.content;
 
-    // Check if this is an email item with pre-extracted content
-    if (item.rawContent && item.importSource === "email") {
-      console.log("Using pre-extracted email content from rawContent");
-      extracted = {
-        title: item.title || "Email Newsletter",
-        content: item.rawContent,
-        source: item.source || "email",
-      };
-      contentToSummarize = item.rawContent;
-    } else {
-      // Normal URL extraction
-      extracted = await extractContent(url);
-      contentToSummarize = extracted.content;
-    }
-
-    // Step 3: Summarize with OpenAI
+    // Step 2: Summarize with OpenAI
     // Use Vision API if content is short but we have an image (e.g., infographics)
     const truncatedContent = truncateContent(contentToSummarize);
     const hasShortContent = !truncatedContent || truncatedContent.length < 100;
     let hasImage = !!extracted.imageUrl;
 
-    // Twitter/X: attempt to fetch via connected Twitter API if available (and not rate limited)
     // Validate supported image types for Vision; otherwise disable Vision
     const allowedExtensions = [".jpg", ".jpeg", ".png", ".webp", ".gif"];
     const isSupportedImage =
@@ -144,19 +98,34 @@ export async function processItem(
       });
     }
 
+    // Step 3: Validate the extracted and summarized content
+    console.log("Pipeline: Validating extracted content");
+    const validation = validateItemData(extracted, summarized);
+
+    if (!validation.isValid) {
+      console.error("Content validation failed:", validation.error);
+      throw new Error(
+        validation.error || "Content validation failed for unknown reason",
+      );
+    }
+
     // Step 4: Determine domain from category and tags
     const domainId = await getDomainForContent(
       summarized.category,
       summarized.tags,
     );
 
-    // Step 5: Update item with processed data including domain
+    // Step 5: Create item in database with all processed data
     console.log(
-      `Pipeline: Saving item with imageUrl=${extracted.imageUrl ? "YES: " + extracted.imageUrl.substring(0, 80) + "..." : "NO"}, domainId=${domainId || "none"}`,
+      `Pipeline: Saving item with imageUrl=${extracted.imageUrl ? "YES" : "NO"}, domainId=${domainId || "none"}`,
     );
-    const updatedItem = await db.item.update({
-      where: { id: item.id },
+    const item = await db.item.create({
       data: {
+        url,
+        note,
+        userId,
+        source: extracted.source,
+        status: "new",
         title: summarized.title,
         summary: summarized.summary.join("\n"),
         tags: summarized.tags,
@@ -164,13 +133,36 @@ export async function processItem(
         type: summarized.type,
         category: summarized.category,
         rawContent: truncatedContent,
-        source: extracted.source,
         imageUrl: extracted.imageUrl,
         domainId: domainId || undefined,
       },
     });
 
-    // Step 6: Award XP for processing the item (with domain for domain-specific leveling)
+    // Step 6: Award XP for saving the item
+    try {
+      await awardXP({
+        userId,
+        action: XP_ACTIONS.SAVE_ITEM,
+        itemId: item.id,
+        domainId: domainId || undefined,
+        metadata: { url, source: extracted.source },
+      });
+    } catch (xpError) {
+      console.error("Failed to award save XP:", xpError);
+      // Don't fail the whole operation for XP errors
+    }
+
+    // Step 7: Track SAVE_ITEM activity for streak maintenance
+    try {
+      await trackActivity(userId, STREAK_ACTIVITIES.SAVE_ITEM, {
+        itemId: item.id,
+      });
+    } catch (activityError) {
+      console.error("Failed to track save activity:", activityError);
+      // Don't fail the whole operation for activity tracking errors
+    }
+
+    // Step 8: Award XP for processing the item (with domain for domain-specific leveling)
     try {
       await awardXP({
         userId,
@@ -188,12 +180,12 @@ export async function processItem(
       // Don't fail the whole operation for XP errors
     }
 
-    // Step 7: Track activity (PROCESS_ITEM) for streak maintenance
+    // Step 9: Track activity (PROCESS_ITEM) for streak maintenance
     try {
       const activityResult = await trackActivity(
         userId,
         STREAK_ACTIVITIES.PROCESS_ITEM,
-        { itemId: updatedItem.id },
+        { itemId: item.id },
       );
 
       if (activityResult.streakResult) {
@@ -206,7 +198,7 @@ export async function processItem(
       // Don't fail the whole operation for activity tracking errors
     }
 
-    // Step 8: Check and award eligible badges
+    // Step 10: Check and award eligible badges
     let awardedBadges: Array<{
       id: string;
       key: string;
@@ -236,29 +228,19 @@ export async function processItem(
     }
 
     return {
-      item: updatedItem,
+      item,
       success: true,
       newBadges: awardedBadges.length > 0 ? awardedBadges : undefined,
     };
   } catch (error) {
     console.error("Pipeline processing failed:", error);
 
-    // Update item to indicate failure but don't delete it
-    const failedItem = await db.item.update({
-      where: { id: item.id },
-      data: {
-        title: url,
-        summary:
-          "Failed to process this URL. You can view the original content.",
-        tags: ["processing_failed"],
-      },
-    });
-
-    return {
-      item: failedItem,
-      success: false,
-      error: error instanceof Error ? error.message : "Unknown error",
-    };
+    // Return error without saving anything to database
+    throw new Error(
+      error instanceof Error
+        ? error.message
+        : "Failed to process this URL. Please try again or contact support.",
+    );
   }
 }
 
