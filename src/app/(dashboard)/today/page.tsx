@@ -83,6 +83,12 @@ export default function TodayPage() {
     (selectedPlatform && selectedPlatform !== null) ||
     (debouncedSearch && debouncedSearch.trim().length > 0),
   );
+  const headerCount =
+    (pagination?.total ?? 0) ||
+    (sources && sources.length > 0
+      ? sources.reduce((sum: any, s: { count: any }) => sum + s.count, 0)
+      : 0) ||
+    items.length;
 
   const platformChips = useMemo(
     () =>
@@ -277,12 +283,12 @@ export default function TodayPage() {
                   <h1 className="text-2xl font-bold text-gray-900">Inbox</h1>
                   <div className="flex items-center gap-2">
                     <motion.span
-                      key={items.length}
+                      key={headerCount}
                       initial={{ scale: 1.2, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
                       className="text-2xl font-black text-gray-900"
                     >
-                      {items.length}
+                      {headerCount}
                     </motion.span>
                     <span className="text-sm text-gray-500 font-medium">
                       items
