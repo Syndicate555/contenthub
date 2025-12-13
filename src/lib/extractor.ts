@@ -11,12 +11,12 @@ export interface ExtractedContent {
   imageSource?: "oembed" | "microlink" | "og" | "scrape"; // Track where the image came from
 }
 
-/**
- * Dynamically import JSDOM to avoid ES module bundling issues in serverless environments
- */
-async function loadJSDOM() {
-  const { JSDOM } = await import("jsdom");
-  return JSDOM;
+// Simple HTML stripper for small snippets (avoids jsdom on serverless)
+function stripHtmlPreserveBreaks(html: string): string {
+  const withBreaks = html
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/p>/gi, "\n");
+  return withBreaks.replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">");
 }
 
 /**
@@ -354,18 +354,9 @@ async function extractTwitterContent(url: string): Promise<ExtractedContent> {
       thumbnail_url?: string;
     };
 
-    // Extract plain text from the HTML payload
+    // Extract plain text from the HTML payload without jsdom (avoid ESM issues in serverless)
     if (data.html) {
-      const JSDOM = await loadJSDOM();
-      const dom = new JSDOM(data.html);
-      const blockquote = dom.window.document.querySelector("blockquote");
-      if (blockquote) {
-        const paragraphs = blockquote.querySelectorAll("p");
-        tweetText = Array.from(paragraphs)
-          .map((p) => p.textContent?.trim())
-          .filter(Boolean)
-          .join("\n\n");
-      }
+      tweetText = stripHtmlPreserveBreaks(data.html).trim();
     }
 
     authorName = data.author_name;
