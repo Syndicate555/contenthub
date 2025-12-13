@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+
+// Ensure Node.js runtime (jsdom/parse5 are not edge-compatible)
+export const runtime = "nodejs";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { processItem } from "@/lib/pipeline";
