@@ -68,23 +68,6 @@ export function validateExtractedContent(
 export function validateSummarizedContent(
   summarized: SummarizerOutput,
 ): ValidationResult {
-  // Check for fallback summaries
-  const fallbackPhrases = [
-    "content could not be extracted",
-    "summarization failed",
-    "summary unavailable",
-    "image could not be analyzed",
-  ];
-
-  const summaryText = summarized.summary.join(" ").toLowerCase();
-  if (fallbackPhrases.some((phrase) => summaryText.includes(phrase))) {
-    return {
-      isValid: false,
-      error: "Content processing failed",
-      reason: "Unable to generate a meaningful summary for this content",
-    };
-  }
-
   // Check for processing failure tags
   const failureTags = ["llm_failed", "processing_failed", "extraction_failed"];
   if (summarized.tags.some((tag) => failureTags.includes(tag))) {
@@ -92,15 +75,6 @@ export function validateSummarizedContent(
       isValid: false,
       error: "Content processing failed",
       reason: "The content could not be processed successfully",
-    };
-  }
-
-  // Check if summary is just a single generic bullet
-  if (summarized.summary.length === 1 && summarized.summary[0].length < 30) {
-    return {
-      isValid: false,
-      error: "Insufficient content",
-      reason: "The processed content is too minimal to be useful",
     };
   }
 
