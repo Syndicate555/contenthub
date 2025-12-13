@@ -31,9 +31,11 @@ export default function FocusAreasSection() {
     type: "success" | "error";
     message: string;
   } | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // Fetch domains and current focus areas
   const fetchData = useCallback(async () => {
+    setLoadError(null);
     try {
       const [domainsRes, focusAreasRes] = await Promise.all([
         fetch("/api/domains"),
@@ -45,6 +47,10 @@ export default function FocusAreasSection() {
 
       if (domainsData.ok) {
         setDomains(domainsData.data.domains);
+      } else {
+        setLoadError(
+          domainsData.error || "Failed to load focus area categories",
+        );
       }
 
       if (focusAreasData.ok) {
@@ -56,6 +62,7 @@ export default function FocusAreasSection() {
       }
     } catch (error) {
       console.error("Failed to fetch data:", error);
+      setLoadError("Network error: Unable to load focus area categories");
     } finally {
       setIsLoading(false);
     }
@@ -146,6 +153,30 @@ export default function FocusAreasSection() {
           {[1, 2, 3, 4].map((i) => (
             <Skeleton key={i} className="h-20 rounded-xl" />
           ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state if domains failed to load
+  if (loadError) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <Target className="w-5 h-5" />
+            Focus Areas
+          </h2>
+        </div>
+        <div className="flex items-center gap-2 p-4 rounded-lg text-sm bg-red-50 text-red-800">
+          <AlertCircle className="w-5 h-5 flex-shrink-0" />
+          <div className="flex-1">
+            <p className="font-medium">Unable to load focus areas</p>
+            <p className="text-xs mt-1">{loadError}</p>
+          </div>
+          <Button size="sm" onClick={fetchData} variant="outline">
+            Retry
+          </Button>
         </div>
       </div>
     );

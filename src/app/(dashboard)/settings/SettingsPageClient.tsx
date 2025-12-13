@@ -13,6 +13,12 @@ import {
   AlertCircle,
   Clock,
   Download,
+  Instagram,
+  Linkedin,
+  MessageCircle,
+  Youtube,
+  Mail,
+  Globe2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import FocusAreasSection from "./FocusAreasSection";
@@ -64,6 +70,35 @@ const PLATFORMS = {
     connectPath: "/api/auth/pinterest",
     description: "Import your saved pins",
   },
+  instagram: {
+    name: "Instagram",
+    icon: <Instagram className="w-5 h-5" />,
+    color: "bg-gradient-to-br from-pink-500 via-amber-400 to-purple-500",
+    connectPath: "#",
+    description: "Import your saved posts and reels",
+  },
+  linkedin: {
+    name: "LinkedIn",
+    icon: <Linkedin className="w-5 h-5" />,
+    color: "bg-blue-600",
+    connectPath: "#",
+    description: "Import your saved posts",
+  },
+  reddit: {
+    name: "Reddit",
+    icon: <MessageCircle className="w-5 h-5" />,
+    color: "bg-orange-500",
+    connectPath: "#",
+    description: "Import your saved posts",
+  },
+  youtube: {
+    name: "YouTube",
+    icon: <Youtube className="w-5 h-5" />,
+    color: "bg-red-600",
+    connectPath: "#",
+    description: "Import your saved videos",
+  },
+
   // future platforms here
 };
 
@@ -74,6 +109,8 @@ interface SettingsPageClientProps {
 export default function SettingsPageClient({
   fallbackData,
 }: SettingsPageClientProps) {
+  const connectionsDisabled = true;
+
   const searchParams = useSearchParams();
 
   // Use SWR hook with optional server-rendered fallback data
@@ -93,7 +130,7 @@ export default function SettingsPageClient({
     message: string;
   } | null>(null);
   const [feedbackTab, setFeedbackTab] = useState<"feedback" | "support">(
-    "feedback",
+    "feedback"
   );
   const [feedbackForm, setFeedbackForm] = useState({
     type: "",
@@ -145,6 +182,10 @@ export default function SettingsPageClient({
   }, [notification]);
 
   const handleConnect = (provider: string) => {
+    if (connectionsDisabled) {
+      toast.info("Platform connections are coming soon.");
+      return;
+    }
     const platform = PLATFORMS[provider as keyof typeof PLATFORMS];
     if (platform) {
       window.location.href = platform.connectPath;
@@ -152,6 +193,10 @@ export default function SettingsPageClient({
   };
 
   const handleSync = async (provider: string) => {
+    if (connectionsDisabled) {
+      toast.info("Platform connections are coming soon.");
+      return;
+    }
     setSyncingProvider(provider);
     setSyncResult(null);
 
@@ -181,11 +226,15 @@ export default function SettingsPageClient({
   };
 
   const handleDisconnect = async (provider: string) => {
+    if (connectionsDisabled) {
+      toast.info("Platform connections are coming soon.");
+      return;
+    }
     if (
       !confirm(
         `Are you sure you want to disconnect ${
           PLATFORMS[provider as keyof typeof PLATFORMS]?.name
-        }?`,
+        }?`
       )
     ) {
       return;
@@ -271,7 +320,7 @@ export default function SettingsPageClient({
       });
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to submit feedback",
+        error instanceof Error ? error.message : "Failed to submit feedback"
       );
     } finally {
       setSubmittingFeedback(false);
@@ -344,7 +393,7 @@ export default function SettingsPageClient({
             "flex items-center gap-2 p-4 rounded-lg",
             notification.type === "success"
               ? "bg-green-50 text-green-800"
-              : "bg-red-50 text-red-800",
+              : "bg-red-50 text-red-800"
           )}
         >
           {notification.type === "success" ? (
@@ -393,6 +442,9 @@ export default function SettingsPageClient({
           Connect your social media accounts to automatically import your
           bookmarks and saved posts.
         </p>
+        <div className="rounded-lg border border-amber-200 bg-amber-50 text-amber-800 px-3 py-2 text-sm">
+          Platform connections are coming soon for beta. For now, add links manually via Add.
+        </div>
 
         {/* Platform Cards */}
         <div className="space-y-3">
@@ -411,7 +463,7 @@ export default function SettingsPageClient({
                     <div
                       className={cn(
                         "w-10 h-10 rounded-lg flex items-center justify-center text-white",
-                        platform.color,
+                        platform.color
                       )}
                     >
                       {platform.icon}
@@ -439,23 +491,17 @@ export default function SettingsPageClient({
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleSync(provider)}
-                          disabled={isSyncing}
-                          className="gap-1.5"
+                          disabled
+                          className="gap-1.5 opacity-60 cursor-not-allowed"
                         >
-                          <RefreshCw
-                            className={cn(
-                              "w-4 h-4",
-                              isSyncing && "animate-spin",
-                            )}
-                          />
-                          {isSyncing ? "Syncing..." : "Sync"}
+                          <RefreshCw className="w-4 h-4" />
+                          Sync
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleDisconnect(provider)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          disabled
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50 opacity-60 cursor-not-allowed"
                         >
                           <Unlink className="w-4 h-4" />
                         </Button>
@@ -463,8 +509,8 @@ export default function SettingsPageClient({
                     ) : (
                       <Button
                         size="sm"
-                        onClick={() => handleConnect(provider)}
-                        className="gap-1.5"
+                        disabled
+                        className="gap-1.5 opacity-60 cursor-not-allowed"
                       >
                         <Link2 className="w-4 h-4" />
                         Connect
@@ -511,7 +557,7 @@ export default function SettingsPageClient({
                 "px-3 py-1.5 text-sm font-medium rounded-full transition",
                 feedbackTab === "feedback"
                   ? "bg-white shadow-sm text-gray-900"
-                  : "text-gray-500 hover:text-gray-700",
+                  : "text-gray-500 hover:text-gray-700"
               )}
               onClick={() => setFeedbackTab("feedback")}
             >
@@ -522,7 +568,7 @@ export default function SettingsPageClient({
                 "px-3 py-1.5 text-sm font-medium rounded-full transition",
                 feedbackTab === "support"
                   ? "bg-white shadow-sm text-gray-900"
-                  : "text-gray-500 hover:text-gray-700",
+                  : "text-gray-500 hover:text-gray-700"
               )}
               onClick={() => setFeedbackTab("support")}
             >
