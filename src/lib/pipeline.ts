@@ -62,6 +62,16 @@ export async function processItem(
     const hasShortContent = !truncatedContent || truncatedContent.length < 100;
     let hasImage = !!extracted.imageUrl;
 
+    // Normalize tiny Instagram thumbnails to a larger variant so Vision/OpenAI accepts them
+    if (
+      extracted.imageUrl &&
+      extracted.source &&
+      extracted.source.toLowerCase().includes("instagram") &&
+      /s150x150|profile_pic/i.test(extracted.imageUrl)
+    ) {
+      extracted.imageUrl = extracted.imageUrl.replace(/s150x150/gi, "s1080x1080");
+    }
+
     // Validate supported image types for Vision; otherwise disable Vision
     const allowedExtensions = [".jpg", ".jpeg", ".png", ".webp", ".gif"];
     const isSupportedImage =
