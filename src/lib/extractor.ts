@@ -54,22 +54,26 @@ function extractTweetId(url: string): string | null {
 }
 
 /**
- * Best-effort fetch of tweet image without auth (syndication/oEmbed)
+ * Fetch tweet media (images/videos) using multiple fallback methods
  */
-async function fetchTwitterImage(
+async function fetchTwitterMedia(
   url: string,
   tweetId?: string,
-): Promise<string | undefined> {
+): Promise<{ imageUrl?: string; videoUrl?: string }> {
   const id = tweetId || extractTweetId(url);
-  if (!id) return undefined;
+  if (!id) return {};
 
-  // Try public syndication endpoints (no auth required)
-  const endpoints = [
-    `https://cdn.syndication.twimg.com/tweet-result?id=${id}&lang=en`,
+  let imageUrl: string | undefined;
+  let videoUrl: string | undefined;
+
+  // Method 1: Try public syndication endpoints (no auth required)
+  console.log(`[Twitter] Trying syndication API for tweet ${id}`);
+  const syndicationEndpoints = [
+    `https://cdn.syndication.twimg.com/tweet-result?id=${id}&lang=en&token=a`,
     `https://cdn.syndication.twimg.com/tweet?id=${id}&lang=en`,
   ];
 
-  for (const endpoint of endpoints) {
+  for (const endpoint of syndicationEndpoints) {
     try {
       const res = await fetchWithTimeout(
         endpoint,
@@ -78,36 +82,101 @@ async function fetchTwitterImage(
       );
 
       if (!res.ok) {
-        console.log("Twitter syndication non-200", {
-          endpoint,
-          status: res.status,
-        });
+        console.log(`[Twitter] Syndication ${res.status}:`, endpoint);
         continue;
       }
 
       const json = (await res.json()) as {
-        photos?: Array<{ url?: string }>;
-        mediaDetails?: {
-          photos?: Array<{ url?: string; media_url_https?: string }>;
-        };
-        mediaEntities?: Array<{ media_url_https?: string; url?: string }>;
+        photos?: Array<{ url?: string; expandedUrl?: string }>;
+        video?: { poster?: string; variants?: Array<{ src?: string }> };
+        mediaDetails?: Array<{
+          media_url_https?: string;
+          type?: string;
+          video_info?: {
+            variants?: Array<{ url?: string; content_type?: string }>;
+          };
+        }>;
       };
 
-      const found =
-        json.photos?.[0]?.url ||
-        json.mediaDetails?.photos?.[0]?.url ||
-        json.mediaDetails?.photos?.[0]?.media_url_https ||
-        json.mediaEntities?.[0]?.media_url_https ||
-        json.mediaEntities?.[0]?.url;
+      // Extract image
+      if (!imageUrl) {
+        imageUrl =
+          json.photos?.[0]?.url ||
+          json.photos?.[0]?.expandedUrl ||
+          json.video?.poster ||
+          json.mediaDetails?.[0]?.media_url_https;
+      }
 
-      if (found) return found;
+      // Extract video
+      if (!videoUrl && json.video?.variants) {
+        // Find MP4 variant with highest bitrate
+        const mp4Variant = json.video.variants.find((v) => v.src);
+        videoUrl = mp4Variant?.src;
+      }
+
+      if (!videoUrl && json.mediaDetails) {
+        const videoMedia = json.mediaDetails.find(
+          (m) => m.type === "video" || m.video_info,
+        );
+        if (videoMedia?.video_info?.variants) {
+          // Find MP4 variant
+          const mp4 = videoMedia.video_info.variants.find(
+            (v) => v.content_type === "video/mp4" && v.url,
+          );
+          videoUrl = mp4?.url;
+        }
+      }
+
+      if (imageUrl || videoUrl) {
+        console.log(
+          `[Twitter] Syndication success: image=${!!imageUrl}, video=${!!videoUrl}`,
+        );
+        return { imageUrl, videoUrl };
+      }
     } catch (err) {
-      console.log("Twitter syndication fetch failed", { endpoint, error: err });
+      console.log("[Twitter] Syndication failed:", endpoint, err);
     }
   }
 
-  // Fallback: oEmbed thumbnail
+  // Method 2: Try Microlink API (reliable for metadata)
   try {
+    console.log(`[Twitter] Trying Microlink API for tweet ${id}`);
+    const microlinkUrl = `https://api.microlink.io?url=${encodeURIComponent(url)}`;
+
+    const response = await fetchWithTimeout(
+      microlinkUrl,
+      { headers: { Accept: "application/json" } },
+      8000,
+    );
+
+    if (response.ok) {
+      const data = (await response.json()) as {
+        status: string;
+        data?: {
+          image?: { url?: string };
+          video?: { url?: string };
+        };
+      };
+
+      if (data.status === "success" && data.data) {
+        imageUrl = imageUrl || data.data.image?.url;
+        videoUrl = videoUrl || data.data.video?.url;
+
+        if (imageUrl || videoUrl) {
+          console.log(
+            `[Twitter] Microlink success: image=${!!imageUrl}, video=${!!videoUrl}`,
+          );
+          return { imageUrl, videoUrl };
+        }
+      }
+    }
+  } catch (err) {
+    console.log("[Twitter] Microlink failed:", err);
+  }
+
+  // Method 3: Try oEmbed thumbnail as last resort
+  try {
+    console.log(`[Twitter] Trying oEmbed thumbnail for tweet ${id}`);
     const canonical = (() => {
       const u = new URL(url);
       u.search = "";
@@ -122,14 +191,23 @@ async function fetchTwitterImage(
     );
 
     if (oembedRes.ok) {
-      const oembedJson = (await oembedRes.json()) as { thumbnail_url?: string };
-      if (oembedJson.thumbnail_url) return oembedJson.thumbnail_url;
+      const oembedJson = (await oembedRes.json()) as {
+        thumbnail_url?: string;
+      };
+      if (oembedJson.thumbnail_url) {
+        imageUrl = imageUrl || oembedJson.thumbnail_url;
+        console.log("[Twitter] oEmbed thumbnail found");
+        return { imageUrl };
+      }
     }
   } catch (err) {
-    console.log("Twitter oEmbed thumbnail fetch failed", err);
+    console.log("[Twitter] oEmbed thumbnail failed:", err);
   }
 
-  return undefined;
+  console.log(
+    `[Twitter] All media fetch methods failed for tweet ${id}, returning empty`,
+  );
+  return { imageUrl, videoUrl };
 }
 
 /**
@@ -149,12 +227,13 @@ async function extractTwitterContent(url: string): Promise<ExtractedContent> {
     return safe.toString();
   })();
 
-  let imageUrl: string | undefined;
   let tweetText = "";
   let authorName: string | undefined;
 
   try {
-    // Primary: Twitter oEmbed for text/author and optional thumbnail
+    console.log(`[Twitter] Extracting content from: ${url}`);
+
+    // Step 1: Extract text and author from oEmbed
     const oembedUrl = `https://publish.twitter.com/oembed?url=${encodeURIComponent(canonicalTweetUrl)}&omit_script=true`;
     const response = await fetchWithTimeout(
       oembedUrl,
@@ -189,17 +268,6 @@ async function extractTwitterContent(url: string): Promise<ExtractedContent> {
     }
 
     authorName = data.author_name;
-    imageUrl = data.thumbnail_url;
-
-    // Fallback: public syndication endpoints for images
-    if (!imageUrl) {
-      console.log(
-        "[extractTwitterContent] no image from oEmbed, trying syndication",
-        { tweetId },
-      );
-      imageUrl = await fetchTwitterImage(url, tweetId || undefined);
-      console.log("[extractTwitterContent] syndication result", { imageUrl });
-    }
 
     // Validate that we got meaningful data
     if (!tweetText || tweetText.trim().length === 0) {
@@ -214,13 +282,22 @@ async function extractTwitterContent(url: string): Promise<ExtractedContent> {
       );
     }
 
+    // Step 2: Fetch media (images/videos) using multiple fallback methods
+    console.log(`[Twitter] Fetching media for tweet ${tweetId}`);
+    const media = await fetchTwitterMedia(url, tweetId || undefined);
+
+    console.log(
+      `[Twitter] Extraction complete: author=${authorName}, content=${tweetText.length} chars, image=${!!media.imageUrl}, video=${!!media.videoUrl}`,
+    );
+
     // Build response
     return {
       title: `Tweet by @${authorName}`,
       content: tweetText,
       source,
       author: authorName,
-      imageUrl,
+      imageUrl: media.imageUrl,
+      videoUrl: media.videoUrl,
     };
   } catch (error) {
     console.error("Twitter extraction failed:", error);
