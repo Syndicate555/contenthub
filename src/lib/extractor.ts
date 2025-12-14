@@ -1,5 +1,6 @@
 import { Readability } from "@mozilla/readability";
 import { fetchWithTimeout } from "./utils/timeout";
+import { YoutubeTranscript } from "youtube-transcript";
 
 export interface ExtractedContent {
   title: string;
@@ -40,7 +41,7 @@ async function loadJSDOMSafe() {
  */
 function detectPlatform(
   url: string,
-): "twitter" | "instagram" | "linkedin" | "pinterest" | "tiktok" | "generic" {
+): "twitter" | "instagram" | "linkedin" | "pinterest" | "tiktok" | "youtube" | "generic" {
   const hostname = new URL(url).hostname.toLowerCase();
 
   if (hostname.includes("twitter.com") || hostname.includes("x.com")) {
@@ -58,6 +59,9 @@ function detectPlatform(
   if (hostname.includes("tiktok.com")) {
     return "tiktok";
   }
+  if (hostname.includes("youtube.com") || hostname.includes("youtu.be")) {
+    return "youtube";
+  }
   return "generic";
 }
 
@@ -70,6 +74,68 @@ function extractTweetId(url: string): string | null {
   // https://x.com/user/status/123456789
   const match = url.match(/(?:twitter\.com|x\.com)\/[^\/]+\/status\/(\d+)/);
   return match ? match[1] : null;
+}
+
+/**
+ * Extract YouTube Video ID from URL
+ */
+function extractYoutubeVideoId(url: string): string | null {
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+  const match = url.match(regExp);
+  return (match && match[2].length === 11) ? match[2] : null;
+}
+
+/**
+ * Extract content from YouTube video
+ * Fetches transcript for AI summary and metadata via oEmbed
+ */
+async function extractYoutubeContent(url: string): Promise<ExtractedContent> {
+  const videoId = extractYoutubeVideoId(url);
+  if (!videoId) throw new Error("Invalid YouTube URL");
+
+  const source = "youtube.com";
+  let title = "YouTube Video";
+  let author = "Unknown Channel";
+  let transcriptText = "";
+
+  // Step A: Fetch Metadata via Noembed (No API Key needed)
+  try {
+    const oembedUrl = `https://noembed.com/embed?url=https://www.youtube.com/watch?v=${videoId}`;
+    const res = await fetch(oembedUrl);
+    const data = await res.json();
+    
+    title = data.title || title;
+    author = data.author_name || author;
+  } catch (e) {
+    console.error("YouTube oEmbed failed", e);
+  }
+
+  // Step B: Fetch Transcript
+  try {
+    console.log(`[YouTube] Fetching transcript for ${videoId}`);
+    const transcriptItems = await YoutubeTranscript.fetchTranscript(videoId);
+    // Join text and remove excessive whitespace
+    transcriptText = transcriptItems.map(t => t.text).join(' ');
+  } catch (e) {
+    console.log("Could not fetch transcript (might be disabled):", e);
+    // Fallback: We'll rely on title/author/description if we can get it
+  }
+
+  // Step C: Construct Content for AI
+  // If we have a transcript, that is the content. If not, we use the title/author.
+  const content = transcriptText.length > 50 
+    ? transcriptText 
+    : `Video Title: ${title}. Author: ${author}. (Transcript unavailable)`;
+
+  return {
+    title,
+    content, // This will be truncated by pipeline before being sent to AI
+    source,
+    author,
+    imageUrl: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
+    videoUrl: `https://www.youtube.com/watch?v=${videoId}`,
+    embedHtml: `<iframe width="560" height="315" src="https://www.youtube.com/embed/${videoId}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`
+  };
 }
 
 /**
@@ -132,7 +198,7 @@ async function fetchTwitterMedia(
       const json = (await res.json()) as {
         photos?: Array<{ url?: string; expandedUrl?: string }>;
         video?: { poster?: string; variants?: Array<{ src?: string }> };
-        mediaDetails?: Array<{
+        mediaDetails?: Array<{ 
           media_url_https?: string;
           type?: string;
           video_info?: {
@@ -427,7 +493,7 @@ async function extractTwitterContent(url: string): Promise<ExtractedContent> {
   } catch (error) {
     console.error("Twitter extraction failed:", error);
     throw new Error(
-      `Failed to extract Twitter content: ${error instanceof Error ? error.message : "Unknown error"}. The tweet may be private, deleted, or Twitter's API may be rate-limiting requests.`,
+      `Failed to extract Twitter content: ${error instanceof Error ? error.message : "Unknown error"}. The tweet may be private, deleted, or Twitter's API may be rate-limiting requests.`, 
     );
   }
 }
@@ -524,7 +590,7 @@ async function extractInstagramContent(url: string): Promise<ExtractedContent> {
 
         // Try to find image URL in the HTML (Instagram embed contains CDN URLs)
         const imgMatch = html.match(
-          /src="(https:\/\/[^"]*cdninstagram\.com[^"]*\.(?:jpg|jpeg|png|webp)[^"]*)"/i,
+          /src="(https:\/\/[^\"]*cdninstagram\.com[^\"]*\.(?:jpg|jpeg|png|webp)[^\"]*)"/i,
         );
         if (imgMatch) {
           imageUrl = imgMatch[1].replace(/&amp;/g, "&");
@@ -533,7 +599,7 @@ async function extractInstagramContent(url: string): Promise<ExtractedContent> {
         // Try to extract from background-image style
         if (!imageUrl) {
           const bgMatch = html.match(
-            /background-image:\s*url\(['"]?(https:\/\/[^'")\s]+cdninstagram\.com[^'")\s]+)['"]?\)/i,
+            /background-image:\s*url\(['"]?(https:\/\/[^')\s]+cdninstagram\.com[^')\s]+)['"]?\)/i,
           );
           if (bgMatch) {
             imageUrl = bgMatch[1].replace(/&amp;/g, "&");
@@ -765,7 +831,7 @@ function extractLinkedInUrn(url: string): string | null {
   }
 
   // Pattern 2: Activity ID in posts URL (linkedin.com/posts/username_activity-ID-hash)
-  const postsMatch = url.match(/linkedin\.com\/posts\/[^\/]+_activity-(\d+)/i);
+  const postsMatch = url.match(/linkedin\.com\/posts\/[^\/_]+_activity-(\d+)/i);
   if (postsMatch) {
     return `urn:li:activity:${postsMatch[1]}`;
   }
@@ -939,7 +1005,7 @@ async function extractTikTokContent(url: string): Promise<ExtractedContent> {
   } catch (error) {
     console.error("TikTok extraction failed:", error);
     throw new Error(
-      `Failed to extract TikTok content: ${error instanceof Error ? error.message : "Unknown error"}. The video may be private, deleted, or TikTok's API may be rate-limiting requests.`,
+      `Failed to extract TikTok content: ${error instanceof Error ? error.message : "Unknown error"}. The video may be private, deleted, or TikTok's API may be rate-limiting requests.`, 
     );
   }
 }
@@ -1117,7 +1183,7 @@ async function extractLinkedInContent(url: string): Promise<ExtractedContent> {
 
     return {
       title: author ? `LinkedIn post by ${author}` : "LinkedIn Post",
-      content: `This is a LinkedIn post${author ? ` by ${author}` : ""}. LinkedIn restricts access to post content without authentication. Click the link to view the original post.`,
+      content: `This is a LinkedIn post${author ? ` by ${author}` : ""}. LinkedIn restricts access to post content without authentication. Click the link to view the original post.`, 
       source,
       author,
     };
@@ -1276,6 +1342,8 @@ export async function extractContent(url: string): Promise<ExtractedContent> {
       };
     case "tiktok":
       return extractTikTokContent(url);
+    case "youtube":
+      return extractYoutubeContent(url);
     default:
       return extractGenericContent(url);
   }

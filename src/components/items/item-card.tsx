@@ -19,6 +19,7 @@ import {
   MessageSquare,
   Copy,
   Check,
+  Play,
 } from "lucide-react";
 import { toast } from "sonner";
 import type { Item } from "@/generated/prisma";
@@ -69,7 +70,7 @@ function getInstagramEmbedSizing(url: string) {
 
   if (type === "reel" || type === "tv") {
     return {
-      aspectClass: "aspect-[9/16]",
+      aspectClass: "aspect-[9/16",
       transformClass: "scale-100",
     };
   }
@@ -105,6 +106,28 @@ function getTikTokEmbedUrl(
   return `https://www.tiktok.com/embed/v2/${videoId}`;
 }
 
+function getYoutubeVideoId(url: string): string | null {
+  try {
+    const urlObj = new URL(url);
+    const hostname = urlObj.hostname.toLowerCase();
+
+    if (hostname.includes("youtube.com")) {
+      return urlObj.searchParams.get("v");
+    } else if (hostname.includes("youtu.be")) {
+      return urlObj.pathname.slice(1);
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+// Get YouTube Embed URL
+function getYoutubeEmbedUrl(url: string): string | null {
+  const videoId = getYoutubeVideoId(url);
+  return videoId ? `https://www.youtube.com/embed/${videoId}?autoplay=1` : null;
+}
+
 const typeIcons = {
   learn: BookOpen,
   do: Wrench,
@@ -131,6 +154,7 @@ export function ItemCard({
       item.source?.toLowerCase().includes("tiktok") ||
       item.url.toLowerCase().includes("tiktok"),
     hasEmbedHtml: !!item.embedHtml,
+    source: item.source,
   });
 
   const [isUpdating, setIsUpdating] = useState(false);
@@ -138,6 +162,7 @@ export function ItemCard({
   const [isEmbedModalOpen, setIsEmbedModalOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [embedFailed, setEmbedFailed] = useState(false);
+  const [playYoutube, setPlayYoutube] = useState(false);
 
   const TypeIcon = item.type
     ? typeIcons[item.type as keyof typeof typeIcons]
@@ -146,6 +171,7 @@ export function ItemCard({
     ? typeColors[item.type as keyof typeof typeColors]
     : "bg-gray-100 text-gray-700 border-gray-200";
   const platformInfo = getPlatformInfo(item.source || "");
+  
   const instagramEmbedUrl = useMemo(
     () => getInstagramEmbedUrl(item.url, item.source || undefined),
     [item.url, item.source],
@@ -155,6 +181,7 @@ export function ItemCard({
     [item.url],
   );
   const showInstagramEmbed = !!instagramEmbedUrl && !embedFailed;
+  
   const tiktokEmbedUrl = useMemo(() => {
     const url = getTikTokEmbedUrl(
       item.url,
@@ -176,6 +203,10 @@ export function ItemCard({
     return url;
   }, [item.url, item.source, item.embedHtml, item.id, item.title]);
   const showTikTokEmbed = !!tiktokEmbedUrl && !embedFailed;
+
+  const isYoutube = item.source?.includes("youtube") || item.url.includes("youtu");
+  const youtubeVideoId = useMemo(() => isYoutube ? getYoutubeVideoId(item.url) : null, [isYoutube, item.url]);
+  const youtubeEmbedUrl = useMemo(() => isYoutube ? getYoutubeEmbedUrl(item.url) : null, [isYoutube, item.url]);
 
   const handleStatusChange = async (status: string) => {
     setIsUpdating(true);
@@ -299,8 +330,53 @@ export function ItemCard({
           </div>
         ) : null}
 
+        {/* YouTube Embed / Facade */}
+        {isYoutube && youtubeVideoId && !embedFailed && (
+          <div className="w-full aspect-video bg-black relative group">
+            {playYoutube ? (
+              <div className="absolute inset-0 w-full h-full">
+                <iframe
+                  className="w-full h-full"
+                  src={youtubeEmbedUrl!}
+                  title={item.title || "YouTube video"}
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                  onError={() => setEmbedFailed(true)}
+                ></iframe>
+              </div>
+            ) : (
+              <button
+                onClick={() => setPlayYoutube(true)}
+                className="w-full h-full relative block cursor-pointer group"
+              >
+                <Image
+                  src={`https://img.youtube.com/vi/${youtubeVideoId}/maxresdefault.jpg`}
+                  alt="Video thumbnail"
+                  fill
+                  className="object-cover"
+                  onError={(e) => {
+                    // Fallback to hqdefault if maxres doesn't exist
+                    const img = e.target as HTMLImageElement;
+                    if (img.src.includes("maxresdefault")) {
+                      img.src = img.src.replace("maxresdefault", "hqdefault");
+                    } else {
+                      setEmbedFailed(true);
+                    }
+                  }}
+                />
+                <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                  <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                    <Play className="w-8 h-8 text-white fill-white ml-1" />
+                  </div>
+                </div>
+              </button>
+            )}
+          </div>
+        )}
+
         {/* Thumbnail Image - Click to open modal (fallback) */}
-        {!showInstagramEmbed && !showTikTokEmbed && item.imageUrl && (
+        {!showInstagramEmbed && !showTikTokEmbed && !isYoutube && item.imageUrl && (
           <button
             onClick={() => setIsImageModalOpen(true)}
             className="block w-full relative bg-gray-50 overflow-hidden cursor-zoom-in group min-h-[200px] max-h-80"

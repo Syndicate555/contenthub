@@ -26,6 +26,7 @@ import {
   MessageSquarePlus,
   Send,
   Video,
+  Youtube,
 } from "lucide-react";
 import { showMultipleBadgesNotification } from "@/components/badge-notification";
 
@@ -125,6 +126,13 @@ export default function AddPageClient({ inboundEmail }: AddPageClientProps) {
         label: "TikTok",
         color: "bg-slate-100 text-slate-900 border-slate-300",
         Icon: Video,
+      };
+    }
+    if (lower.includes("youtube.com") || lower.includes("youtu.be")) {
+      return {
+        label: "Youtube",
+        color: "bg-red-100 text-red-800 border-red-200",
+        Icon: Youtube,
       };
     }
     return {
