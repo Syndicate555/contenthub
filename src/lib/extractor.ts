@@ -830,8 +830,9 @@ function extractLinkedInUrn(url: string): string | null {
     return `urn:li:activity:${urnMatch[1]}`;
   }
 
-  // Pattern 2: Activity ID in posts URL (linkedin.com/posts/username_activity-ID-hash)
-  const postsMatch = url.match(/linkedin\.com\/posts\/[^\/_]+_activity-(\d+)/i);
+  // Pattern 2: Activity ID in posts URL - Look for "activity-" followed by digits
+  // Works for: linkedin.com/posts/username_slug-activity-1234567890-hash
+  const postsMatch = url.match(/activity-(\d+)/i);
   if (postsMatch) {
     return `urn:li:activity:${postsMatch[1]}`;
   }

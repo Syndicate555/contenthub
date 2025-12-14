@@ -389,6 +389,10 @@ export function ItemCard({
               className="w-full h-auto max-h-80 object-contain group-hover:scale-[1.02] transition-transform duration-300"
               loading="lazy"
               quality={85}
+              unoptimized={
+                item.imageUrl?.toLowerCase().endsWith(".gif") ||
+                item.source?.includes("linkedin")
+              }
               onError={(e) => {
                 (e.target as HTMLImageElement).parentElement!.style.display =
                   "none";

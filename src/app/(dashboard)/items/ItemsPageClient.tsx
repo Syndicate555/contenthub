@@ -579,10 +579,16 @@ export default function ItemsPage() {
 
       {/* Detail modal */}
       {selectedItem && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-start justify-center p-4 overflow-auto">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full mt-10 relative">
+        <div
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start justify-center p-4 overflow-y-auto"
+          onClick={() => setSelectedItem(null)}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full mt-10 relative"
+            onClick={(e) => e.stopPropagation()}
+          >
             <button
-              className="absolute right-3 top-3 text-slate-400 hover:text-slate-600"
+              className="absolute right-4 top-4 p-2 bg-white/90 hover:bg-white rounded-full text-slate-500 hover:text-slate-800 transition-all z-10 shadow-sm border border-slate-100"
               onClick={() => setSelectedItem(null)}
               aria-label="Close"
             >
