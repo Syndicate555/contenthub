@@ -86,6 +86,30 @@ function getInstagramEmbedSizing(url: string) {
   };
 }
 
+// Extract TikTok video ID from embedHtml
+function extractTikTokVideoId(embedHtml: string): string | null {
+  const videoIdMatch = embedHtml.match(/data-video-id="(\d+)"/);
+  return videoIdMatch ? videoIdMatch[1] : null;
+}
+
+// Check if item is a TikTok video and return iframe URL
+function getTikTokEmbedUrl(
+  url: string,
+  source?: string,
+  embedHtml?: string | null,
+): string | null {
+  const isTikTok =
+    source?.toLowerCase().includes("tiktok") ||
+    url.toLowerCase().includes("tiktok.com");
+  if (!isTikTok || !embedHtml) return null;
+
+  const videoId = extractTikTokVideoId(embedHtml);
+  if (!videoId) return null;
+
+  // Use TikTok's iframe embed URL directly
+  return `https://www.tiktok.com/embed/v2/${videoId}`;
+}
+
 const typeIcons = {
   learn: BookOpen,
   do: Wrench,
@@ -142,6 +166,30 @@ export function ItemCardGamified({
     [item.url],
   );
   const showInstagramEmbed = !!instagramEmbedUrl && !embedFailed;
+  const tiktokEmbedUrl = useMemo(() => {
+    const isTikTok =
+      item.source?.toLowerCase().includes("tiktok") ||
+      item.url.toLowerCase().includes("tiktok");
+    const url = getTikTokEmbedUrl(
+      item.url,
+      item.source || undefined,
+      item.embedHtml,
+    );
+
+    if (isTikTok) {
+      console.log("[TikTok ItemCardGamified]", {
+        itemId: item.id,
+        title: item.title?.substring(0, 50),
+        hasEmbedHtml: !!item.embedHtml,
+        embedHtmlLength: item.embedHtml?.length,
+        generatedUrl: url,
+        willShow: !!url && !embedFailed,
+      });
+    }
+
+    return url;
+  }, [item.url, item.source, item.embedHtml, item.id, item.title, embedFailed]);
+  const showTikTokEmbed = !!tiktokEmbedUrl && !embedFailed;
 
   const handleStatusChange = async (status: string) => {
     setIsUpdating(true);
@@ -266,8 +314,22 @@ export function ItemCardGamified({
             </div>
           ) : null}
 
+          {/* TikTok embed for videos (uses iframe) */}
+          {showTikTokEmbed ? (
+            <div className="w-full flex justify-center bg-gray-50 py-4">
+              <iframe
+                src={tiktokEmbedUrl}
+                className="w-full max-w-[325px] h-[730px] border-0"
+                allowFullScreen
+                scrolling="no"
+                allow="encrypted-media;"
+                onError={() => setEmbedFailed(true)}
+              />
+            </div>
+          ) : null}
+
           {/* Thumbnail Image (fallback) */}
-          {!showInstagramEmbed && item.imageUrl && (
+          {!showInstagramEmbed && !showTikTokEmbed && item.imageUrl && (
             <button
               onClick={() => setIsImageModalOpen(true)}
               className="block w-full relative bg-gray-50 overflow-hidden cursor-zoom-in group min-h-[200px] max-h-80"

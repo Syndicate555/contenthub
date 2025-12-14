@@ -8,6 +8,7 @@ export interface ExtractedContent {
   author?: string;
   imageUrl?: string;
   videoUrl?: string;
+  embedHtml?: string; // Embed HTML for video platforms (TikTok, etc.)
   imageSource?: "oembed" | "microlink" | "og" | "scrape"; // Track where the image came from
 }
 
@@ -16,7 +17,11 @@ function stripHtmlPreserveBreaks(html: string): string {
   const withBreaks = html
     .replace(/<br\s*\/?>/gi, "\n")
     .replace(/<\/p>/gi, "\n");
-  return withBreaks.replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">");
+  return withBreaks
+    .replace(/<[^>]+>/g, "")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">");
 }
 
 // Safe, lazy loader for JSDOM that gracefully fails in environments where ESM/CJS interop is problematic
@@ -842,6 +847,7 @@ async function extractTikTokContent(url: string): Promise<ExtractedContent> {
 
   let videoCaption = "";
   let authorName: string | undefined;
+  let embedHtml: string | undefined;
 
   try {
     console.log(`[TikTok] Extracting content from: ${url}`);
@@ -861,10 +867,12 @@ async function extractTikTokContent(url: string): Promise<ExtractedContent> {
           title?: string;
           author_name?: string;
           author_url?: string;
+          html?: string;
         };
 
         videoCaption = data.title || "";
         authorName = data.author_name;
+        embedHtml = data.html; // Capture embed HTML for video playback
 
         if (!authorName && data.author_url) {
           const authorMatch = data.author_url.match(/\/@([^\/\?]+)/);
@@ -896,7 +904,8 @@ async function extractTikTokContent(url: string): Promise<ExtractedContent> {
             };
           };
           if (data.status === "success" && data.data) {
-            videoCaption = videoCaption || data.data.title || data.data.description || "";
+            videoCaption =
+              videoCaption || data.data.title || data.data.description || "";
             authorName = authorName || data.data.author || urlUsername;
           }
         }
@@ -925,6 +934,7 @@ async function extractTikTokContent(url: string): Promise<ExtractedContent> {
       author: authorName,
       imageUrl: media.imageUrl,
       videoUrl: media.videoUrl,
+      embedHtml,
     };
   } catch (error) {
     console.error("TikTok extraction failed:", error);

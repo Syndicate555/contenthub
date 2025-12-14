@@ -126,6 +126,7 @@ export async function GET(request: NextRequest) {
           summary: true,
           author: true,
           imageUrl: true,
+          embedHtml: true,
           category: true,
           type: true,
           tags: true,

@@ -63,10 +63,17 @@ export async function processItem(
     let hasImage = !!extracted.imageUrl;
 
     // Normalize / downgrade Vision usage for Instagram profile-sized images that Vision rejects
-    if (extracted.imageUrl && extracted.source && extracted.source.toLowerCase().includes("instagram")) {
+    if (
+      extracted.imageUrl &&
+      extracted.source &&
+      extracted.source.toLowerCase().includes("instagram")
+    ) {
       // Upsize tiny thumbs when possible
       if (/s150x150/i.test(extracted.imageUrl)) {
-        extracted.imageUrl = extracted.imageUrl.replace(/s150x150/gi, "s1080x1080");
+        extracted.imageUrl = extracted.imageUrl.replace(
+          /s150x150/gi,
+          "s1080x1080",
+        );
       }
       // If it's a profile-style asset (/t51.2885-19/ or profile_pic), skip Vision to avoid invalid_image_url
       if (/t51\.2885-19|profile_pic/i.test(extracted.imageUrl)) {
@@ -146,6 +153,7 @@ export async function processItem(
         category: summarized.category,
         rawContent: truncatedContent,
         imageUrl: extracted.imageUrl,
+        embedHtml: extracted.embedHtml,
         domainId: domainId || undefined,
       },
     });

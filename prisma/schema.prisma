@@ -278,6 +278,7 @@ model Item {
   category   String? // "tech" | "business" | "design" | "productivity" | "learning" | "lifestyle" | "entertainment" | "news" | "other"
   rawContent String?  @db.Text // truncated extracted text
   imageUrl   String? // thumbnail/preview image URL
+  embedHtml  String?  @db.Text // embed HTML for video platforms (TikTok, etc.)
 
   // Domain classification (for gamification)
   domainId String?

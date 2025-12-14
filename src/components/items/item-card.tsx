@@ -81,6 +81,30 @@ function getInstagramEmbedSizing(url: string) {
   };
 }
 
+// Extract TikTok video ID from embedHtml
+function extractTikTokVideoId(embedHtml: string): string | null {
+  const videoIdMatch = embedHtml.match(/data-video-id="(\d+)"/);
+  return videoIdMatch ? videoIdMatch[1] : null;
+}
+
+// Check if item is a TikTok video and return iframe URL
+function getTikTokEmbedUrl(
+  url: string,
+  source?: string,
+  embedHtml?: string | null,
+): string | null {
+  const isTikTok =
+    source?.toLowerCase().includes("tiktok") ||
+    url.toLowerCase().includes("tiktok.com");
+  if (!isTikTok || !embedHtml) return null;
+
+  const videoId = extractTikTokVideoId(embedHtml);
+  if (!videoId) return null;
+
+  // Use TikTok's iframe embed URL directly
+  return `https://www.tiktok.com/embed/v2/${videoId}`;
+}
+
 const typeIcons = {
   learn: BookOpen,
   do: Wrench,
@@ -99,6 +123,16 @@ export function ItemCard({
   onStatusChange,
   onTagClick,
 }: ItemCardProps) {
+  // DEBUG: Log every item render
+  console.log("[ItemCard] Rendering:", {
+    id: item.id,
+    title: item.title?.substring(0, 50),
+    isTikTok:
+      item.source?.toLowerCase().includes("tiktok") ||
+      item.url.toLowerCase().includes("tiktok"),
+    hasEmbedHtml: !!item.embedHtml,
+  });
+
   const [isUpdating, setIsUpdating] = useState(false);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [isEmbedModalOpen, setIsEmbedModalOpen] = useState(false);
@@ -121,6 +155,27 @@ export function ItemCard({
     [item.url],
   );
   const showInstagramEmbed = !!instagramEmbedUrl && !embedFailed;
+  const tiktokEmbedUrl = useMemo(() => {
+    const url = getTikTokEmbedUrl(
+      item.url,
+      item.source || undefined,
+      item.embedHtml,
+    );
+    if (
+      item.source?.toLowerCase().includes("tiktok") ||
+      item.url.toLowerCase().includes("tiktok")
+    ) {
+      console.log("[TikTok Debug]", {
+        itemId: item.id,
+        title: item.title,
+        hasEmbedHtml: !!item.embedHtml,
+        embedHtmlLength: item.embedHtml?.length,
+        generatedUrl: url,
+      });
+    }
+    return url;
+  }, [item.url, item.source, item.embedHtml, item.id, item.title]);
+  const showTikTokEmbed = !!tiktokEmbedUrl && !embedFailed;
 
   const handleStatusChange = async (status: string) => {
     setIsUpdating(true);
@@ -230,8 +285,22 @@ export function ItemCard({
           </div>
         ) : null}
 
+        {/* TikTok embed for videos (uses iframe) */}
+        {showTikTokEmbed ? (
+          <div className="w-full flex justify-center bg-gray-50 py-4">
+            <iframe
+              src={tiktokEmbedUrl}
+              className="w-full max-w-[325px] h-[730px] border-0"
+              allowFullScreen
+              scrolling="no"
+              allow="encrypted-media;"
+              onError={() => setEmbedFailed(true)}
+            />
+          </div>
+        ) : null}
+
         {/* Thumbnail Image - Click to open modal (fallback) */}
-        {!showInstagramEmbed && item.imageUrl && (
+        {!showInstagramEmbed && !showTikTokEmbed && item.imageUrl && (
           <button
             onClick={() => setIsImageModalOpen(true)}
             className="block w-full relative bg-gray-50 overflow-hidden cursor-zoom-in group min-h-[200px] max-h-80"
