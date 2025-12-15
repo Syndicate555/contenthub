@@ -1,5 +1,9 @@
 import { db } from "./db";
-import { extractContent, truncateContent } from "./extractor";
+import {
+  extractContent,
+  truncateContent,
+  type ExtractedContent,
+} from "./extractor";
 import { summarizeContent, summarizeWithVision } from "./openai";
 import { getDomainForContent } from "./domains";
 import { awardXP, XP_ACTIONS } from "./xp";
@@ -12,6 +16,7 @@ export interface ProcessItemInput {
   url: string;
   note?: string;
   userId: string;
+  preExtractedData?: ExtractedContent;
 }
 
 export interface ProcessItemResult {
@@ -53,7 +58,7 @@ export async function processItem(
   try {
     // Step 1: Extract content from URL
     console.log(`Pipeline: Extracting content from ${url}`);
-    const extracted = await extractContent(url);
+    const extracted = input.preExtractedData || (await extractContent(url));
     const contentToSummarize = extracted.content;
 
     // Step 2: Summarize with OpenAI
@@ -126,6 +131,11 @@ export async function processItem(
       throw new Error(
         validation.error || "Content validation failed for unknown reason",
       );
+    }
+
+    // Preserve original Reddit title
+    if (extracted.source.toLowerCase().includes("reddit")) {
+      summarized.title = extracted.title;
     }
 
     // Step 4: Determine domain from category and tags

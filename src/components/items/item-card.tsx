@@ -390,8 +390,9 @@ export function ItemCard({
               loading="lazy"
               quality={85}
               unoptimized={
-                item.imageUrl?.toLowerCase().endsWith(".gif") ||
-                item.source?.includes("linkedin")
+                (item.imageUrl || "").toLowerCase().endsWith(".gif") ||
+                item.source?.includes("linkedin") ||
+                item.source?.includes("reddit")
               }
               onError={(e) => {
                 (e.target as HTMLImageElement).parentElement!.style.display =

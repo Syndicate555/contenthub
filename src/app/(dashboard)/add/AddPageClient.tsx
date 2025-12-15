@@ -27,6 +27,7 @@ import {
   Send,
   Video,
   Youtube,
+  MessageSquare,
 } from "lucide-react";
 import { showMultipleBadgesNotification } from "@/components/badge-notification";
 
@@ -133,6 +134,13 @@ export default function AddPageClient({ inboundEmail }: AddPageClientProps) {
         label: "Youtube",
         color: "bg-red-100 text-red-800 border-red-200",
         Icon: Youtube,
+      };
+    }
+    if (lower.includes("reddit.com") || lower.includes("redd.it")) {
+      return {
+        label: "Reddit",
+        color: "bg-orange-100 text-orange-800 border-orange-200",
+        Icon: MessageSquare,
       };
     }
     return {

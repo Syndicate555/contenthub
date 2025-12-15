@@ -271,6 +271,7 @@ export async function POST(request: NextRequest) {
       url: parsed.data.url,
       note: parsed.data.note,
       userId: user.id,
+      preExtractedData: body.preExtractedData,
     });
 
     return NextResponse.json(
