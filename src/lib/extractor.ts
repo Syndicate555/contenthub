@@ -158,6 +158,35 @@ async function extractYoutubeContent(url: string): Promise<ExtractedContent> {
 async function extractRedditContent(url: string): Promise<ExtractedContent> {
   const source = "reddit.com";
 
+  // Handle Reddit short links (share URLs)
+  if (url.includes("/s/")) {
+    try {
+      const resolveRes = await fetchWithTimeout(
+        url,
+        {
+          method: "GET",
+          redirect: "follow",
+          headers: {
+            "User-Agent":
+              "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+          },
+        },
+        5000,
+      );
+      if (resolveRes.url && !resolveRes.url.includes("/s/")) {
+        console.log(
+          `[Reddit] Resolved short link: ${url} -> ${resolveRes.url}`,
+        );
+        url = resolveRes.url;
+      }
+    } catch (e) {
+      console.warn(
+        "[Reddit] Failed to resolve short link, proceeding with original:",
+        e,
+      );
+    }
+  }
+
   // Clean URL to ensure we can append .json correctly
   let cleanUrl = url.split("?")[0].replace(/\/+$/, "");
 

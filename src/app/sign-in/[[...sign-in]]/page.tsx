@@ -114,10 +114,10 @@ export default function SignInPage() {
                     socialButtonsBlockButtonIcon: "text-gray-900",
                     formButtonPrimary:
                       "bg-gradient-to-r from-indigo-600 to-blue-600 text-white hover:shadow-lg hover:shadow-indigo-200",
-                    footer: "hidden",
-                    footerAction: "hidden",
-                    footerActionText: "hidden",
-                    footerActionLink: "hidden",
+                    footer: "!hidden",
+                    footerAction: "!hidden",
+                    footerActionText: "!hidden",
+                    footerActionLink: "!hidden",
                     identityPreviewEditButton: "hidden",
                   },
                 }}

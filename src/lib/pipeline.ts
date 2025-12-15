@@ -92,7 +92,10 @@ export async function processItem(
       extracted.imageUrl &&
       allowedExtensions.some((ext) =>
         extracted.imageUrl!.toLowerCase().includes(ext),
-      );
+      ) &&
+      // Block Instagram/Facebook CDNs as they block OpenAI scanners (Error 400)
+      !extracted.imageUrl?.includes("cdninstagram.com") &&
+      !extracted.imageUrl?.includes("fbcdn.net");
 
     if (!isSupportedImage) {
       // Keep the image for display purposes but avoid sending unsupported types to Vision
@@ -103,14 +106,29 @@ export async function processItem(
     if (hasShortContent && hasImage) {
       // Use Vision API to analyze the image
       console.log("Using Vision API for image analysis");
-      summarized = await summarizeWithVision({
-        title: extracted.title,
-        imageUrl: extracted.imageUrl!,
-        url,
-        source: extracted.source,
-        userNote: note,
-        textContent: truncatedContent,
-      });
+      try {
+        summarized = await summarizeWithVision({
+          title: extracted.title,
+          imageUrl: extracted.imageUrl!,
+          url,
+          source: extracted.source,
+          userNote: note,
+          textContent: truncatedContent,
+        });
+      } catch (visionError) {
+        console.warn(
+          "Vision summarization failed, falling back to text summary:",
+          visionError,
+        );
+        // Fallback to text-only summarization
+        summarized = await summarizeContent({
+          title: extracted.title,
+          content: truncatedContent,
+          url,
+          source: extracted.source,
+          userNote: note,
+        });
+      }
     } else {
       // Use text-only summarization
       summarized = await summarizeContent({
