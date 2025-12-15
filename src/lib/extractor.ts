@@ -40,16 +40,8 @@ async function loadJSDOMSafe() {
  * Detects the platform from a URL
  */
 function detectPlatform(
-  url: string
-):
-  | "twitter"
-  | "instagram"
-  | "linkedin"
-  | "pinterest"
-  | "tiktok"
-  | "youtube"
-  | "generic"
-  | "reddit" {
+  url: string,
+): "twitter" | "instagram" | "linkedin" | "pinterest" | "tiktok" | "youtube" | "reddit" | "generic" {
   const hostname = new URL(url).hostname.toLowerCase();
 
   if (hostname.includes("twitter.com") || hostname.includes("x.com")) {
@@ -80,9 +72,6 @@ function detectPlatform(
  * Extract tweet ID from Twitter/X URL
  */
 function extractTweetId(url: string): string | null {
-  // Patterns:
-  // https://twitter.com/user/status/123456789
-  // https://x.com/user/status/123456789
   const match = url.match(/(?:twitter\.com|x\.com)\/[^\/]+\/status\/(\d+)/);
   return match ? match[1] : null;
 }
@@ -91,15 +80,13 @@ function extractTweetId(url: string): string | null {
  * Extract YouTube Video ID from URL
  */
 function extractYoutubeVideoId(url: string): string | null {
-  const regExp =
-    /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*$/;
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*$/;
   const match = url.match(regExp);
-  return match && match[2].length === 11 ? match[2] : null;
+  return (match && match[2].length === 11) ? match[2] : null;
 }
 
 /**
  * Extract content from YouTube video
- * Fetches transcript for AI summary and metadata via oEmbed
  */
 async function extractYoutubeContent(url: string): Promise<ExtractedContent> {
   const videoId = extractYoutubeVideoId(url);
@@ -110,44 +97,37 @@ async function extractYoutubeContent(url: string): Promise<ExtractedContent> {
   let author = "Unknown Channel";
   let transcriptText = "";
 
-  // Step A: Fetch Metadata via Noembed (No API Key needed)
   try {
     const oembedUrl = `https://noembed.com/embed?url=https://www.youtube.com/watch?v=${videoId}`;
     const res = await fetch(oembedUrl);
     const data = await res.json();
-
+    
     title = data.title || title;
     author = data.author_name || author;
   } catch (e) {
     console.error("YouTube oEmbed failed", e);
   }
 
-  // Step B: Fetch Transcript
   try {
     console.log(`[YouTube] Fetching transcript for ${videoId}`);
     const transcriptItems = await YoutubeTranscript.fetchTranscript(videoId);
-    // Join text and remove excessive whitespace
-    transcriptText = transcriptItems.map((t) => t.text).join(" ");
+    transcriptText = transcriptItems.map(t => t.text).join(' ');
   } catch (e) {
     console.log("Could not fetch transcript (might be disabled):", e);
-    // Fallback: We'll rely on title/author/description if we can get it
   }
 
-  // Step C: Construct Content for AI
-  // If we have a transcript, that is the content. If not, we use the title/author.
-  const content =
-    transcriptText.length > 50
-      ? transcriptText
-      : `Video Title: ${title}. Author: ${author}. (Transcript unavailable)`;
+  const content = transcriptText.length > 50 
+    ? transcriptText 
+    : `Video Title: ${title}. Author: ${author}. (Transcript unavailable)`;
 
   return {
     title,
-    content, // This will be truncated by pipeline before being sent to AI
+    content,
     source,
     author,
     imageUrl: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
     videoUrl: `https://www.youtube.com/watch?v=${videoId}`,
-    embedHtml: `<iframe width="560" height="315" src="https://www.youtube.com/embed/${videoId}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`,
+    embedHtml: `<iframe width="560" height="315" src="https://www.youtube.com/embed/${videoId}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`
   };
 }
 
@@ -158,50 +138,18 @@ async function extractYoutubeContent(url: string): Promise<ExtractedContent> {
 async function extractRedditContent(url: string): Promise<ExtractedContent> {
   const source = "reddit.com";
 
-  // Handle Reddit short links (share URLs)
-  if (url.includes("/s/")) {
-    try {
-      const resolveRes = await fetchWithTimeout(
-        url,
-        {
-          method: "GET",
-          redirect: "follow",
-          headers: {
-            "User-Agent":
-              "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-          },
-        },
-        5000,
-      );
-      if (resolveRes.url && !resolveRes.url.includes("/s/")) {
-        console.log(
-          `[Reddit] Resolved short link: ${url} -> ${resolveRes.url}`,
-        );
-        url = resolveRes.url;
-      }
-    } catch (e) {
-      console.warn(
-        "[Reddit] Failed to resolve short link, proceeding with original:",
-        e,
-      );
-    }
-  }
-
   // Clean URL to ensure we can append .json correctly
-  let cleanUrl = url.split("?")[0].replace(/\/+$/, "");
-
-  // Ensure we are using www.reddit.com for the primary attempt
-  cleanUrl = cleanUrl.replace(/old\.reddit\.com/, "www.reddit.com");
+  const urlBase = url.split("?")[0];
+  const urlNoSlash = urlBase.replace(new RegExp("/+"), "");
+  const cleanUrl = urlNoSlash.replace("old.reddit.com", "www.reddit.com");
 
   const jsonUrl = `${cleanUrl}.json`;
 
-  // Common User-Agent that mimics a real browser
   const BROWSER_UA =
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36";
 
-  // Helper to process the JSON response (shared between primary and fallback)
   const processJson = (data: any) => {
-    // Redlib sometimes wraps the response differently, but usually it matches Reddit
+    // Redlib/Reddit response normalization
     const listing = Array.isArray(data) ? data[0] : data;
 
     if (!listing?.data?.children?.[0]?.data) {
@@ -210,7 +158,6 @@ async function extractRedditContent(url: string): Promise<ExtractedContent> {
 
     let post = listing.data.children[0].data;
 
-    // Handle crossposts
     if (post.crosspost_parent_list && post.crosspost_parent_list.length > 0) {
       post = post.crosspost_parent_list[0];
     }
@@ -223,7 +170,6 @@ async function extractRedditContent(url: string): Promise<ExtractedContent> {
 
     let imageUrl: string | undefined;
 
-    // Image extraction logic
     if (post.url_overridden_by_dest) {
       if (
         /\.(jpg|jpeg|png|webp|gif)(\?.*)?$/i.test(post.url_overridden_by_dest)
@@ -255,7 +201,6 @@ async function extractRedditContent(url: string): Promise<ExtractedContent> {
       imageUrl = post.thumbnail;
     }
 
-    // Fallback to post.url
     if (
       !imageUrl &&
       post.url &&
@@ -276,52 +221,57 @@ async function extractRedditContent(url: string): Promise<ExtractedContent> {
   try {
     console.log(`[Reddit] Fetching metadata from ${jsonUrl}`);
 
-    // Try primary JSON fetch
-    const response = await fetchWithTimeout(
+    // 1. Try Primary JSON (www.reddit.com)
+    let response = await fetchWithTimeout(
       jsonUrl,
-      {
-        headers: { "User-Agent": BROWSER_UA },
-      },
+      { headers: { "User-Agent": BROWSER_UA } },
       5000,
     );
 
     if (response.ok) {
-      const data = await response.json();
-      return processJson(data);
+      return processJson(await response.json());
     }
 
+    // 2. Try Secondary JSON (old.reddit.com)
     console.warn(
-      `[Reddit] Primary fetch failed: ${response.status}. Trying Proxy fallback (r.nf).`,
+      `[Reddit] Primary fetch failed: ${response.status}. Trying old.reddit fallback.`,
+    );
+    const oldJsonUrl = jsonUrl.replace("www.reddit.com", "old.reddit.com");
+    response = await fetchWithTimeout(
+      oldJsonUrl,
+      { headers: { "User-Agent": BROWSER_UA } },
+      5000,
     );
 
-    // Fallback 1: Try Redlib Proxy (r.nf)
-    // This uses a public instance to bypass Reddit's direct IP blocking
+    if (response.ok) {
+      return processJson(await response.json());
+    }
+
+    // 3. Try Proxy JSON (r.nf)
+    console.warn(`[Reddit] Old.reddit fetch failed. Trying r.nf proxy.`);
     const proxyJsonUrl = jsonUrl.replace("www.reddit.com", "r.nf");
-    const fallbackResponse = await fetchWithTimeout(
+    response = await fetchWithTimeout(
       proxyJsonUrl,
       { headers: { "User-Agent": BROWSER_UA } },
       8000,
     );
 
-    if (fallbackResponse.ok) {
-      const data = await fallbackResponse.json();
-      return processJson(data);
+    if (response.ok) {
+      return processJson(await response.json());
     }
 
     throw new Error(`All Reddit API attempts failed`);
   } catch (error) {
     console.error("Reddit API extraction failed:", error);
 
-    // Fallback 2: HTML Scraping via Proxy (r.nf) - much lighter than Reddit
+    // Fallback: HTML Scraping via old.reddit.com (Best for scraping)
     try {
-      const proxyHtmlUrl = cleanUrl.replace("www.reddit.com", "r.nf");
-      console.log(`[Reddit] Falling back to HTML scraping for ${proxyHtmlUrl}`);
+      const oldHtmlUrl = cleanUrl.replace("www.reddit.com", "old.reddit.com");
+      console.log(`[Reddit] Falling back to HTML scraping for ${oldHtmlUrl}`);
 
       const htmlResponse = await fetchWithTimeout(
-        proxyHtmlUrl,
-        {
-          headers: { "User-Agent": BROWSER_UA },
-        },
+        oldHtmlUrl,
+        { headers: { "User-Agent": BROWSER_UA } },
         8000,
       );
 
@@ -330,42 +280,55 @@ async function extractRedditContent(url: string): Promise<ExtractedContent> {
         const JSDOM = await loadJSDOMSafe();
 
         if (JSDOM) {
-          // VirtualConsole to suppress CSS errors
           const virtualConsole = new (JSDOM as any).VirtualConsole();
-          virtualConsole.on("error", () => {}); // No-op
+          virtualConsole.on("error", () => {});
 
           const dom = new JSDOM(html, {
-            url: proxyHtmlUrl,
+            url: oldHtmlUrl,
             virtualConsole,
             runScripts: undefined,
             resources: undefined,
           });
           const doc = dom.window.document;
 
-          // Redlib uses standard meta tags
           const title =
+            doc.querySelector("a.title")?.textContent ||
             doc
               .querySelector('meta[property="og:title"]')
               ?.getAttribute("content") ||
-            doc.querySelector("title")?.textContent ||
             "Reddit Post";
 
-          const image = doc
+          let image = doc
             .querySelector('meta[property="og:image"]')
             ?.getAttribute("content");
+
+          if (!image) {
+            const linkRow = doc.querySelector(".thing");
+            if (linkRow) {
+              const dataUrl = linkRow.getAttribute("data-url");
+              if (
+                dataUrl &&
+                /\.(jpg|jpeg|png|webp|gif)(\?.*)?$/i.test(dataUrl)
+              ) {
+                image = dataUrl;
+              }
+            }
+          }
+
           const description = doc
             .querySelector('meta[property="og:description"]')
             ?.getAttribute("content");
-
-          // Extract author from title or meta if possible, or fallback
-          const author = "Reddit User"; // Redlib metadata is sometimes sparse on author
+          const author = 
+            doc.querySelector("p.tagline .author")?.textContent ||
+            "Reddit User";
+          const subreddit = 
+            doc.querySelector(".redditname a")?.textContent || "r/reddit";
 
           if (
             title &&
-            title !== "Reddit Post" &&
             title !== "Reddit - Dive into anything" &&
-            !title.includes("Log in") &&
-            !title.includes("Login")
+            !title.includes("Login") &&
+            !title.includes("Log in")
           ) {
             console.log(`[Reddit] HTML Fallback success: ${title}`);
             return {
@@ -373,7 +336,7 @@ async function extractRedditContent(url: string): Promise<ExtractedContent> {
               content: description || title,
               source,
               imageUrl: image || undefined,
-              author,
+              author: `${author} in ${subreddit}`,
             };
           }
         }
@@ -394,11 +357,11 @@ async function extractRedditContent(url: string): Promise<ExtractedContent> {
  */
 function extractTikTokVideoId(url: string): string | undefined {
   // Pattern 1: Standard video URL with ID
-  const standardMatch = url.match(/tiktok\.com\/@[^\/]+\/video\/(\d+)/);
+  const standardMatch = url.match(/tiktok.com\/@[^\/]+\/video\/(\d+)/);
   if (standardMatch) return standardMatch[1];
 
   // Pattern 2: Short video URL
-  const shortMatch = url.match(/v(?:m|t)\.tiktok\.com\/([A-Za-z0-9]+)/);
+  const shortMatch = url.match(/v(?:m|t)\.tiktok.com\/([A-Za-z0-9]+)/);
   if (shortMatch) return shortMatch[1];
 
   return undefined;
@@ -408,7 +371,7 @@ function extractTikTokVideoId(url: string): string | undefined {
  * Extract username from TikTok URL
  */
 function extractTikTokUsername(url: string): string | undefined {
-  const match = url.match(/tiktok\.com\/@([^\/]+)/);
+  const match = url.match(/tiktok.com\/@([^\/]+)/);
   return match ? match[1] : undefined;
 }
 
@@ -417,7 +380,7 @@ function extractTikTokUsername(url: string): string | undefined {
  */
 async function fetchTwitterMedia(
   url: string,
-  tweetId?: string
+  tweetId?: string,
 ): Promise<{ imageUrl?: string; videoUrl?: string }> {
   const id = tweetId || extractTweetId(url);
   if (!id) return {};
@@ -437,7 +400,7 @@ async function fetchTwitterMedia(
       const res = await fetchWithTimeout(
         endpoint,
         { headers: { Accept: "application/json" } },
-        8000
+        8000,
       );
 
       if (!res.ok) {
@@ -448,7 +411,7 @@ async function fetchTwitterMedia(
       const json = (await res.json()) as {
         photos?: Array<{ url?: string; expandedUrl?: string }>;
         video?: { poster?: string; variants?: Array<{ src?: string }> };
-        mediaDetails?: Array<{
+        mediaDetails?: Array<{ 
           media_url_https?: string;
           type?: string;
           video_info?: {
@@ -475,12 +438,12 @@ async function fetchTwitterMedia(
 
       if (!videoUrl && json.mediaDetails) {
         const videoMedia = json.mediaDetails.find(
-          (m) => m.type === "video" || m.video_info
+          (m) => m.type === "video" || m.video_info,
         );
         if (videoMedia?.video_info?.variants) {
           // Find MP4 variant
           const mp4 = videoMedia.video_info.variants.find(
-            (v) => v.content_type === "video/mp4" && v.url
+            (v) => v.content_type === "video/mp4" && v.url,
           );
           videoUrl = mp4?.url;
         }
@@ -488,7 +451,7 @@ async function fetchTwitterMedia(
 
       if (imageUrl || videoUrl) {
         console.log(
-          `[Twitter] Syndication success: image=${!!imageUrl}, video=${!!videoUrl}`
+          `[Twitter] Syndication success: image=${!!imageUrl}, video=${!!videoUrl}`,
         );
         return { imageUrl, videoUrl };
       }
@@ -500,14 +463,12 @@ async function fetchTwitterMedia(
   // Method 2: Try Microlink API (reliable for metadata)
   try {
     console.log(`[Twitter] Trying Microlink API for tweet ${id}`);
-    const microlinkUrl = `https://api.microlink.io?url=${encodeURIComponent(
-      url
-    )}`;
+    const microlinkUrl = `https://api.microlink.io?url=${encodeURIComponent(url)}`;
 
     const response = await fetchWithTimeout(
       microlinkUrl,
       { headers: { Accept: "application/json" } },
-      8000
+      8000,
     );
 
     if (response.ok) {
@@ -525,7 +486,7 @@ async function fetchTwitterMedia(
 
         if (imageUrl || videoUrl) {
           console.log(
-            `[Twitter] Microlink success: image=${!!imageUrl}, video=${!!videoUrl}`
+            `[Twitter] Microlink success: image=${!!imageUrl}, video=${!!videoUrl}`,
           );
           return { imageUrl, videoUrl };
         }
@@ -546,11 +507,9 @@ async function fetchTwitterMedia(
     })();
 
     const oembedRes = await fetchWithTimeout(
-      `https://publish.twitter.com/oembed?url=${encodeURIComponent(
-        canonical
-      )}&omit_script=true`,
+      `https://publish.twitter.com/oembed?url=${encodeURIComponent(canonical)}&omit_script=true`,
       { headers: { Accept: "application/json" } },
-      6000
+      6000,
     );
 
     if (oembedRes.ok) {
@@ -568,7 +527,7 @@ async function fetchTwitterMedia(
   }
 
   console.log(
-    `[Twitter] All media fetch methods failed for tweet ${id}, returning empty`
+    `[Twitter] All media fetch methods failed for tweet ${id}, returning empty`,
   );
   return { imageUrl, videoUrl };
 }
@@ -577,21 +536,19 @@ async function fetchTwitterMedia(
  * Fetch TikTok video metadata using oEmbed and Microlink APIs
  */
 async function fetchTikTokMedia(
-  url: string
+  url: string,
 ): Promise<{ imageUrl?: string; videoUrl?: string }> {
   let imageUrl: string | undefined;
 
   // Method 1: TikTok oEmbed API
   try {
     console.log(`[TikTok] Trying oEmbed API`);
-    const oembedUrl = `https://www.tiktok.com/oembed?url=${encodeURIComponent(
-      url
-    )}`;
+    const oembedUrl = `https://www.tiktok.com/oembed?url=${encodeURIComponent(url)}`;
 
     const response = await fetchWithTimeout(
       oembedUrl,
       { headers: { Accept: "application/json" } },
-      6000
+      6000,
     );
 
     if (response.ok) {
@@ -615,14 +572,12 @@ async function fetchTikTokMedia(
   // Method 2: Microlink API fallback
   try {
     console.log(`[TikTok] Trying Microlink API`);
-    const microlinkUrl = `https://api.microlink.io?url=${encodeURIComponent(
-      url
-    )}`;
+    const microlinkUrl = `https://api.microlink.io?url=${encodeURIComponent(url)}`;
 
     const response = await fetchWithTimeout(
       microlinkUrl,
       { headers: { Accept: "application/json" } },
-      8000
+      8000,
     );
 
     if (response.ok) {
@@ -659,7 +614,7 @@ async function resolveTikTokUrl(url: string): Promise<string> {
         redirect: "follow",
         headers: { Accept: "text/html" },
       },
-      5000
+      5000,
     );
     return res.url || url;
   } catch (err) {
@@ -692,18 +647,16 @@ async function extractTwitterContent(url: string): Promise<ExtractedContent> {
     console.log(`[Twitter] Extracting content from: ${url}`);
 
     // Step 1: Extract text and author from oEmbed
-    const oembedUrl = `https://publish.twitter.com/oembed?url=${encodeURIComponent(
-      canonicalTweetUrl
-    )}&omit_script=true`;
+    const oembedUrl = `https://publish.twitter.com/oembed?url=${encodeURIComponent(canonicalTweetUrl)}&omit_script=true`;
     const response = await fetchWithTimeout(
       oembedUrl,
       { headers: { Accept: "application/json" } },
-      6000
+      6000,
     );
 
     if (!response.ok) {
       throw new Error(
-        `Twitter oEmbed API failed with status ${response.status}`
+        `Twitter oEmbed API failed with status ${response.status}`,
       );
     }
 
@@ -723,13 +676,13 @@ async function extractTwitterContent(url: string): Promise<ExtractedContent> {
     // Validate that we got meaningful data
     if (!tweetText || tweetText.trim().length === 0) {
       throw new Error(
-        "Twitter content extraction failed: No text content found"
+        "Twitter content extraction failed: No text content found",
       );
     }
 
     if (!authorName) {
       throw new Error(
-        "Twitter content extraction failed: Unable to identify author"
+        "Twitter content extraction failed: Unable to identify author",
       );
     }
 
@@ -738,9 +691,7 @@ async function extractTwitterContent(url: string): Promise<ExtractedContent> {
     const media = await fetchTwitterMedia(url, tweetId || undefined);
 
     console.log(
-      `[Twitter] Extraction complete: author=${authorName}, content=${
-        tweetText.length
-      } chars, image=${!!media.imageUrl}, video=${!!media.videoUrl}`
+      `[Twitter] Extraction complete: author=${authorName}, content=${tweetText.length} chars, image=${!!media.imageUrl}, video=${!!media.videoUrl}`,
     );
 
     // Build response
@@ -755,9 +706,7 @@ async function extractTwitterContent(url: string): Promise<ExtractedContent> {
   } catch (error) {
     console.error("Twitter extraction failed:", error);
     throw new Error(
-      `Failed to extract Twitter content: ${
-        error instanceof Error ? error.message : "Unknown error"
-      }. The tweet may be private, deleted, or Twitter's API may be rate-limiting requests.`
+      `Failed to extract Twitter content: ${error instanceof Error ? error.message : "Unknown error"}. The tweet may be private, deleted, or Twitter's API may be rate-limiting requests.`,
     );
   }
 }
@@ -807,12 +756,12 @@ async function extractInstagramContent(url: string): Promise<ExtractedContent> {
   let urlAuthor: string | undefined;
   let postId: string | undefined;
 
-  const postMatch = url.match(/instagram\.com\/(?:p|reel)\/([^\/\?]+)/i);
+  const postMatch = url.match(/instagram.com\/(?:p|reel)\/([^\/\?]+)/i);
   if (postMatch) {
     postId = postMatch[1];
   }
 
-  const profileMatch = url.match(/instagram\.com\/([^\/]+)\/(?:p|reel)\//i);
+  const profileMatch = url.match(/instagram.com\/([^\/]+)\/(?:p|reel)\//i);
   if (profileMatch && profileMatch[1] !== "p" && profileMatch[1] !== "reel") {
     urlAuthor = profileMatch[1];
   }
@@ -834,7 +783,7 @@ async function extractInstagramContent(url: string): Promise<ExtractedContent> {
             Accept: "text/html,application/xhtml+xml",
           },
         },
-        5000
+        5000,
       );
 
       if (response.ok) {
@@ -854,7 +803,7 @@ async function extractInstagramContent(url: string): Promise<ExtractedContent> {
 
         // Try to find image URL in the HTML (Instagram embed contains CDN URLs)
         const imgMatch = html.match(
-          /src="(https:\/\/[^\"]*cdninstagram\.com[^\"]*\.(?:jpg|jpeg|png|webp)[^\"]*)"/i
+          /src="(https:\/\/[^\"]*cdninstagram\.com[^\"]*\.(?:jpg|jpeg|png|webp)[^\"]*)"/i,
         );
         if (imgMatch) {
           imageUrl = imgMatch[1].replace(/&amp;/g, "&");
@@ -863,7 +812,7 @@ async function extractInstagramContent(url: string): Promise<ExtractedContent> {
         // Try to extract from background-image style
         if (!imageUrl) {
           const bgMatch = html.match(
-            /background-image:\s*url\(['"]?(https:\/\/[^')\s]+cdninstagram\.com[^')\s]+)['"]?\)/i
+            /background-image:\s*url\(['"]?(https:\/\/[^')\s]+cdninstagram\.com[^')\s]+)['"]?\)/i,
           );
           if (bgMatch) {
             imageUrl = bgMatch[1].replace(/&amp;/g, "&");
@@ -878,7 +827,7 @@ async function extractInstagramContent(url: string): Promise<ExtractedContent> {
 
         // Extract caption
         const captionMatch = html.match(
-          /<div[^>]*class="[^"]*Caption[^"]*"[^>]*>([^<]+)</i
+          /<div[^>]*class="[^ vital]*Caption[^ vital]*"[^>]*>([^<]+)</i,
         );
         if (captionMatch) {
           caption = captionMatch[1].trim();
@@ -888,7 +837,7 @@ async function extractInstagramContent(url: string): Promise<ExtractedContent> {
 
         if (imageUrl || videoUrl) {
           console.log(
-            `Instagram embed success: author=${author}, has image=${!!imageUrl}, has video=${!!videoUrl}`
+            `Instagram embed success: author=${author}, has image=${!!imageUrl}, has video=${!!videoUrl}`,
           );
           return {
             title: author ? `Instagram post by @${author}` : "Instagram Post",
@@ -910,16 +859,14 @@ async function extractInstagramContent(url: string): Promise<ExtractedContent> {
   try {
     console.log("Instagram extraction - trying noembed.com");
 
-    const noembedUrl = `https://noembed.com/embed?url=${encodeURIComponent(
-      url
-    )}`;
+    const noembedUrl = `https://noembed.com/embed?url=${encodeURIComponent(url)}`;
 
     const response = await fetchWithTimeout(
       noembedUrl,
       {
         headers: { Accept: "application/json" },
       },
-      5000
+      5000,
     );
 
     if (response.ok) {
@@ -933,7 +880,7 @@ async function extractInstagramContent(url: string): Promise<ExtractedContent> {
       if (data.thumbnail_url) {
         const author = data.author_name || urlAuthor;
         console.log(
-          `Instagram noembed success: author=${author}, has thumbnail=true`
+          `Instagram noembed success: author=${author}, has thumbnail=true`,
         );
         return {
           title: author ? `Instagram post by @${author}` : "Instagram Post",
@@ -995,7 +942,7 @@ async function extractInstagramContent(url: string): Promise<ExtractedContent> {
 
       if (ogImage || ogVideo) {
         console.log(
-          `Instagram scrape success: author=${author}, has image=${!!ogImage}, has video=${!!ogVideo}`
+          `Instagram scrape success: author=${author}, has image=${!!ogImage}, has video=${!!ogVideo}`,
         );
         return {
           title: author ? `Instagram post by @${author}` : "Instagram Post",
@@ -1016,16 +963,14 @@ async function extractInstagramContent(url: string): Promise<ExtractedContent> {
   try {
     console.log("Instagram extraction - falling back to Microlink API");
 
-    const microlinkUrl = `https://api.microlink.io?url=${encodeURIComponent(
-      url
-    )}`;
+    const microlinkUrl = `https://api.microlink.io?url=${encodeURIComponent(url)}`;
 
     const response = await fetchWithTimeout(
       microlinkUrl,
       {
         headers: { Accept: "application/json" },
       },
-      8000
+      8000,
     );
 
     if (response.ok) {
@@ -1059,7 +1004,7 @@ async function extractInstagramContent(url: string): Promise<ExtractedContent> {
     const videoUrl: string | undefined = video?.url || undefined;
 
     console.log(
-      `Instagram Microlink success: author=${author}, has image=${!!imageUrl}, has video=${!!videoUrl}`
+      `Instagram Microlink success: author=${author}, has image=${!!imageUrl}, has video=${!!videoUrl}`,
     );
 
     return {
@@ -1167,7 +1112,7 @@ function isLinkedInLoginWall(title?: string, description?: string): boolean {
   return loginWallIndicators.some(
     (indicator) =>
       titleLower.includes(indicator.toLowerCase()) ||
-      descLower.includes(indicator.toLowerCase())
+      descLower.includes(indicator.toLowerCase()),
   );
 }
 
@@ -1190,13 +1135,11 @@ async function extractTikTokContent(url: string): Promise<ExtractedContent> {
     // Step 1: Extract text and author from oEmbed
     // Step 1: Try oEmbed first
     try {
-      const oembedUrl = `https://www.tiktok.com/oembed?url=${encodeURIComponent(
-        resolvedUrl
-      )}`;
+      const oembedUrl = `https://www.tiktok.com/oembed?url=${encodeURIComponent(resolvedUrl)}`;
       const response = await fetchWithTimeout(
         oembedUrl,
         { headers: { Accept: "application/json" } },
-        6000
+        6000,
       );
 
       if (response.ok) {
@@ -1212,7 +1155,7 @@ async function extractTikTokContent(url: string): Promise<ExtractedContent> {
         embedHtml = data.html; // Capture embed HTML for video playback
 
         if (!authorName && data.author_url) {
-          const authorMatch = data.author_url.match(/\/@([^\/\?]+)/);
+          const authorMatch = data.author_url.match(new RegExp("/@([^/\\?]+)"));
           if (authorMatch) authorName = authorMatch[1];
         }
       } else {
@@ -1225,13 +1168,11 @@ async function extractTikTokContent(url: string): Promise<ExtractedContent> {
     // Step 2: Microlink fallback if oEmbed gave us nothing
     if (!videoCaption || !authorName) {
       try {
-        const microlinkUrl = `https://api.microlink.io?url=${encodeURIComponent(
-          resolvedUrl
-        )}`;
+        const microlinkUrl = `https://api.microlink.io?url=${encodeURIComponent(resolvedUrl)}`;
         const microlinkRes = await fetchWithTimeout(
           microlinkUrl,
           { headers: { Accept: "application/json" } },
-          8000
+          8000,
         );
         if (microlinkRes.ok) {
           const data = (await microlinkRes.json()) as {
@@ -1262,9 +1203,7 @@ async function extractTikTokContent(url: string): Promise<ExtractedContent> {
     const media = await fetchTikTokMedia(resolvedUrl);
 
     console.log(
-      `[TikTok] Extraction complete: author=${authorName}, caption=${
-        videoCaption.length
-      } chars, image=${!!media.imageUrl}`
+      `[TikTok] Extraction complete: author=${authorName}, caption=${videoCaption.length} chars, image=${!!media.imageUrl}`,
     );
 
     // Build response
@@ -1280,9 +1219,7 @@ async function extractTikTokContent(url: string): Promise<ExtractedContent> {
   } catch (error) {
     console.error("TikTok extraction failed:", error);
     throw new Error(
-      `Failed to extract TikTok content: ${
-        error instanceof Error ? error.message : "Unknown error"
-      }. The video may be private, deleted, or TikTok's API may be rate-limiting requests.`
+      `Failed to extract TikTok content: ${error instanceof Error ? error.message : "Unknown error"}. The video may be private, deleted, or TikTok's API may be rate-limiting requests.`,
     );
   }
 }
@@ -1303,9 +1240,7 @@ async function extractLinkedInContent(url: string): Promise<ExtractedContent> {
 
   // Try Microlink API first (most reliable for LinkedIn)
   try {
-    const microlinkUrl = `https://api.microlink.io?url=${encodeURIComponent(
-      url
-    )}`;
+    const microlinkUrl = `https://api.microlink.io?url=${encodeURIComponent(url)}`;
 
     console.log("LinkedIn extraction - using Microlink API");
 
@@ -1316,7 +1251,7 @@ async function extractLinkedInContent(url: string): Promise<ExtractedContent> {
           Accept: "application/json",
         },
       },
-      8000
+      8000,
     );
 
     if (!response.ok) {
@@ -1375,9 +1310,7 @@ async function extractLinkedInContent(url: string): Promise<ExtractedContent> {
     const imageUrl = image?.url;
 
     console.log(
-      `LinkedIn Microlink success: author=${author}, content length=${
-        content.length
-      }, has image=${!!imageUrl}, has URN=${!!urn}`
+      `LinkedIn Microlink success: author=${author}, content length=${content.length}, has image=${!!imageUrl}, has URN=${!!urn}`,
     );
 
     return {
@@ -1390,7 +1323,7 @@ async function extractLinkedInContent(url: string): Promise<ExtractedContent> {
   } catch (microlinkError) {
     console.log(
       "LinkedIn Microlink failed, trying direct fetch:",
-      microlinkError
+      microlinkError,
     );
   }
 
@@ -1445,7 +1378,7 @@ async function extractLinkedInContent(url: string): Promise<ExtractedContent> {
     }
 
     console.log(
-      `LinkedIn direct fetch success: author=${author}, has description=${!!ogDesc}`
+      `LinkedIn direct fetch success: author=${author}, has description=${!!ogDesc}`,
     );
 
     return {
@@ -1464,9 +1397,7 @@ async function extractLinkedInContent(url: string): Promise<ExtractedContent> {
 
     return {
       title: author ? `LinkedIn post by ${author}` : "LinkedIn Post",
-      content: `This is a LinkedIn post${
-        author ? ` by ${author}` : ""
-      }. LinkedIn restricts access to post content without authentication. Click the link to view the original post.`,
+      content: `This is a LinkedIn post${author ? ` by ${author}` : ""}. LinkedIn restricts access to post content without authentication. Click the link to view the original post.`,
       source,
       author,
     };
@@ -1490,12 +1421,12 @@ async function extractGenericContent(url: string): Promise<ExtractedContent> {
             "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
         },
       },
-      10000
+      10000,
     );
 
     if (!response.ok) {
       throw new Error(
-        `Failed to fetch: ${response.status} ${response.statusText}`
+        `Failed to fetch: ${response.status} ${response.statusText}`,
       );
     }
 
