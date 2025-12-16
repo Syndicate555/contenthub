@@ -172,48 +172,31 @@ export default function TodayPage() {
 
     if (caughtUp) {
       return (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center py-16"
-        >
+        <div className="text-center py-16">
           <div className="mb-6">
             <CaughtUpIllustration />
           </div>
-          <motion.h2
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            className="text-2xl font-bold text-gradient-purple-pink mb-3"
-          >
+          <h2 className="text-2xl font-bold text-gradient-purple-pink mb-3">
             All caught up!
-          </motion.h2>
+          </h2>
           <p className="text-gray-500 mb-8 max-w-md mx-auto">
             You have no new items to review. Your inbox is empty and ready for
             new content.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link href="/add">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg shadow-lg hover:shadow-xl transition-all font-semibold"
-              >
+              <button className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg shadow-lg hover:shadow-xl transition-all font-semibold">
                 Add Content
-              </motion.button>
+              </button>
             </Link>
             <Link href="/items">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="inline-flex items-center px-6 py-3 text-gray-700 bg-white border-2 border-gray-200 hover:border-gray-300 rounded-lg transition-all font-semibold"
-              >
+              <button className="inline-flex items-center px-6 py-3 text-gray-700 bg-white border-2 border-gray-200 hover:border-gray-300 rounded-lg transition-all font-semibold">
                 Browse Library
                 <ArrowRight className="w-4 h-4 ml-2" />
-              </motion.button>
+              </button>
             </Link>
           </div>
-        </motion.div>
+        </div>
       );
     }
 
