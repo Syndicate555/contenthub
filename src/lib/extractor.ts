@@ -41,7 +41,7 @@ async function loadJSDOMSafe() {
  */
 function detectPlatform(
   url: string,
-): "twitter" | "instagram" | "linkedin" | "pinterest" | "tiktok" | "youtube" | "reddit" | "generic" {
+): "twitter" | "instagram" | "linkedin" | "tiktok" | "youtube" | "reddit" | "generic" {
   const hostname = new URL(url).hostname.toLowerCase();
 
   if (hostname.includes("twitter.com") || hostname.includes("x.com")) {
@@ -52,9 +52,6 @@ function detectPlatform(
   }
   if (hostname.includes("linkedin.com")) {
     return "linkedin";
-  }
-  if (hostname.includes("pinterest.com")) {
-    return "pinterest";
   }
   if (hostname.includes("tiktok.com")) {
     return "tiktok";
@@ -1547,13 +1544,6 @@ export async function extractContent(url: string): Promise<ExtractedContent> {
       return extractInstagramContent(url);
     case "linkedin":
       return extractLinkedInContent(url);
-    case "pinterest":
-      // Pinterest content comes from API during sync - skip scraping
-      return {
-        title: "Pinterest Pin",
-        content: "",
-        source: "pinterest.com",
-      };
     case "tiktok":
       return extractTikTokContent(url);
     case "youtube":

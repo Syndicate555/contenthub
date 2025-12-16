@@ -8,7 +8,6 @@ import {
   Instagram,
   Youtube,
   MessageCircle,
-  Pin,
   Video,
 } from "lucide-react";
 
@@ -59,11 +58,6 @@ const platformConfig: Record<
     icon: Instagram,
     color: "#E4405F",
     bgColor: "bg-[#E4405F]/10",
-  },
-  pinterest: {
-    icon: Pin,
-    color: "#E60023",
-    bgColor: "bg-[#E60023]/10",
   },
   youtube: {
     icon: Youtube,

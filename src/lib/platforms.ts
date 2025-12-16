@@ -4,7 +4,6 @@ export type PlatformSlug =
   | "twitter"
   | "linkedin"
   | "instagram"
-  | "pinterest"
   | "youtube"
   | "reddit"
   | "tiktok"
@@ -40,13 +39,6 @@ export const PLATFORM_CONFIG: PlatformConfig[] = [
     icon: "📸",
     domains: ["instagram.com"],
     order: 3,
-  },
-  {
-    slug: "pinterest",
-    label: "Pinterest",
-    icon: "📌",
-    domains: ["pinterest.com"],
-    order: 4,
   },
   {
     slug: "youtube",

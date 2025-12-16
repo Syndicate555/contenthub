@@ -83,7 +83,6 @@
   --linkedin-blue: oklch(0.45 0.25 235);
   --instagram-pink: oklch(0.65 0.28 330);
   --instagram-orange: oklch(0.60 0.25 25);
-  --pinterest-red: oklch(0.55 0.25 15);
   --youtube-red: oklch(0.55 0.26 20);
   --reddit-orange: oklch(0.60 0.25 35);
 
@@ -173,10 +172,6 @@
 
   .bg-gradient-instagram {
     background: linear-gradient(135deg, var(--instagram-pink), var(--instagram-orange));
-  }
-
-  .bg-gradient-pinterest {
-    background: linear-gradient(135deg, #E60023, #C5001F);
   }
 
   .bg-gradient-youtube {

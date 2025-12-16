@@ -265,9 +265,9 @@ model Item {
   note   String? // optional user note
 
   // Import tracking (for synced bookmarks)
-  importSource   String? // "twitter" | "pinterest" | "instagram" | "linkedin" etc. (null = manually added)
+  importSource   String? // "twitter" | "instagram" | "linkedin" etc. (null = manually added)
   externalId     String? // Original post ID from the platform
-  importMetadata Json? // Provider-specific metadata (e.g., Pinterest: boardId, boardName, pinUrl, mediaUrl)
+  importMetadata Json? // Provider-specific metadata
 
   // Processed content
   title      String?

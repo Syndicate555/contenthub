@@ -18,7 +18,6 @@ import {
   Youtube,
   Mail,
   MessageCircle,
-  Pin,
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -237,7 +236,6 @@ export default function TodayPage() {
     twitter: Twitter,
     linkedin: Linkedin,
     instagram: Instagram,
-    pinterest: Pin,
     youtube: Youtube,
     newsletter: Mail,
     reddit: MessageCircle,
@@ -424,8 +422,6 @@ export default function TodayPage() {
                   linkedin:
                     "from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800",
                   instagram: "from-pink-500 via-purple-500 to-orange-500",
-                  pinterest:
-                    "from-red-600 to-red-700 hover:from-red-700 hover:to-red-800",
                   youtube:
                     "from-red-600 to-red-700 hover:from-red-700 hover:to-red-800",
                   reddit:

@@ -22,7 +22,6 @@ import {
   Twitter,
   Instagram,
   Linkedin,
-  Image as ImageIcon,
   MessageSquarePlus,
   Send,
   Video,
@@ -113,13 +112,6 @@ export default function AddPageClient({ inboundEmail }: AddPageClientProps) {
         label: "LinkedIn",
         color: "bg-blue-100 text-blue-800 border-blue-200",
         Icon: Linkedin,
-      };
-    }
-    if (lower.includes("pinterest.com")) {
-      return {
-        label: "Pinterest",
-        color: "bg-red-100 text-red-800 border-red-200",
-        Icon: ImageIcon,
       };
     }
     if (lower.includes("tiktok.com")) {
