@@ -30,6 +30,7 @@ export async function GET(request: NextRequest) {
       tag: searchParams.get("tag") || undefined,
       category: searchParams.get("category") || undefined,
       platform: searchParams.get("platform") || undefined,
+      author: searchParams.get("author") || undefined,
       page: searchParams.get("page") || undefined,
       limit: searchParams.get("limit") || undefined,
     });
