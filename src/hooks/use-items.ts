@@ -31,7 +31,12 @@ interface CategoriesResponse {
   data: {
     categories: CategoryData[];
     totalItems: number;
-    platforms: { platform: string; count: number }[];
+    platforms: {
+      platform: string;
+      displayName: string;
+      count: number;
+      variations: string[];
+    }[];
     authors: { author: string; count: number }[];
   };
 }

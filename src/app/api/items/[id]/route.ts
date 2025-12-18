@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { updateItemSchema } from "@/lib/schemas";
+import { assignTagsToItem, removeTagsFromItem } from "@/lib/tags/service";
+import { normalizeTag, isValidTag } from "@/lib/tags/normalize";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -58,23 +60,56 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       reviewedAt?: Date;
     } = {};
 
+    // Handle status changes that affect tag counts
     if (parsed.data.status !== undefined) {
-      updateData.status = parsed.data.status;
+      const oldStatus = item.status;
+      const newStatus = parsed.data.status;
+
+      updateData.status = newStatus;
+
       // Set reviewedAt when marking as reviewed or pinned
-      if (
-        parsed.data.status === "reviewed" ||
-        parsed.data.status === "pinned"
-      ) {
+      if (newStatus === "reviewed" || newStatus === "pinned") {
         updateData.reviewedAt = new Date();
       }
-    }
 
-    if (parsed.data.tags !== undefined) {
-      updateData.tags = parsed.data.tags;
+      // NOTE: Tag usageCount is now calculated dynamically per-user in the API
+      // No need to update denormalized counts when item status changes
     }
 
     if (parsed.data.note !== undefined) {
       updateData.note = parsed.data.note;
+    }
+
+    // Handle tags separately with validation and transaction
+    if (parsed.data.tags !== undefined) {
+      // Validate all tags
+      const invalidTags = parsed.data.tags.filter(
+        (tag) => !isValidTag(normalizeTag(tag)),
+      );
+
+      if (invalidTags.length > 0) {
+        return NextResponse.json(
+          {
+            ok: false,
+            error: `Invalid tags: ${invalidTags.join(", ")}`,
+          },
+          { status: 400 },
+        );
+      }
+
+      // Update tags in transaction
+      await db.$transaction(async (tx) => {
+        // Remove existing tags
+        await removeTagsFromItem(tx, id);
+
+        // Assign new tags
+        if (parsed.data.tags && parsed.data.tags.length > 0) {
+          await assignTagsToItem(tx, id, parsed.data.tags);
+        }
+      });
+
+      // Also update legacy tags field for backward compatibility
+      updateData.tags = parsed.data.tags;
     }
 
     // Update the item

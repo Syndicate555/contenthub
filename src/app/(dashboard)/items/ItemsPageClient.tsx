@@ -9,6 +9,8 @@ import { ItemCardCompact } from "@/components/items/item-card-compact";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { CollapsibleSection } from "@/components/ui/collapsible-section";
+import { ActiveFilters } from "@/components/items/active-filters";
 import {
   Search,
   Inbox,
@@ -24,6 +26,7 @@ import type { ItemCategory, ItemStatus } from "@/types";
 import { cn } from "@/lib/utils";
 import { useItems, useCategories, updateItemStatus } from "@/hooks/use-items";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
+import { useTags } from "@/hooks/use-tags";
 
 type ViewMode = "grid" | "list";
 
@@ -56,6 +59,11 @@ export default function ItemsPage() {
     parseInt(searchParams.get("page") || "1", 10),
   );
   const [selectedItem, setSelectedItem] = useState<any | null>(null);
+
+  // Search queries for filter sections
+  const [platformSearchQuery, setPlatformSearchQuery] = useState("");
+  const [authorSearchQuery, setAuthorSearchQuery] = useState("");
+  const [tagSearchQuery, setTagSearchQuery] = useState("");
 
   // Debounce search query to avoid too many API calls
   const debouncedSearchQuery = useDebouncedValue(searchQuery, 300);
@@ -101,11 +109,8 @@ export default function ItemsPage() {
     searchQuery;
   const isInListMode = viewMode === "list";
 
-  // Collect unique tags from items for the filter dropdown
-  const allTags = useMemo(
-    () => [...new Set(items.flatMap((item) => item.tags || []))],
-    [items],
-  );
+  // Fetch tags from API with global counts (not affected by filters)
+  const { tags: tagObjects } = useTags(50, "usage");
 
   // Update URL when filters change (batched to avoid rapid history pushes)
   const updateUrl = (
@@ -224,17 +229,128 @@ export default function ItemsPage() {
   const isBackgroundLoading =
     (isCategoriesValidating || isItemsValidating) && !isItemsLoading;
 
+  // Use API-provided tag counts (global, not filtered)
   const tagOptions = useMemo(() => {
-    const counts = new Map<string, number>();
-    items.forEach((item) => {
-      (item.tags || []).forEach((tag) => {
-        counts.set(tag, (counts.get(tag) || 0) + 1);
+    return tagObjects.map((t) => ({
+      tag: t.displayName,
+      count: t.usageCount,
+    }));
+  }, [tagObjects]);
+
+  // Filter platforms by search query (search both platform and displayName)
+  const filteredPlatforms = useMemo(() => {
+    if (!platformSearchQuery) return platforms || [];
+    const query = platformSearchQuery.toLowerCase();
+    return (platforms || []).filter(
+      (p) =>
+        p.platform.toLowerCase().includes(query) ||
+        p.displayName?.toLowerCase().includes(query),
+    );
+  }, [platforms, platformSearchQuery]);
+
+  // Filter authors by search query
+  const filteredAuthors = useMemo(() => {
+    if (!authorSearchQuery) return authors || [];
+    return (authors || []).filter((a) =>
+      a.author.toLowerCase().includes(authorSearchQuery.toLowerCase()),
+    );
+  }, [authors, authorSearchQuery]);
+
+  // Filter tags by search query
+  const filteredTags = useMemo(() => {
+    if (!tagSearchQuery) return tagOptions;
+    return tagOptions.filter((t) =>
+      t.tag.toLowerCase().includes(tagSearchQuery.toLowerCase()),
+    );
+  }, [tagOptions, tagSearchQuery]);
+
+  // Build active filters array for the summary bar
+  const activeFilters = useMemo(() => {
+    const filters: Array<{
+      type: "category" | "platform" | "tag" | "author" | "status" | "search";
+      label: string;
+      value: string;
+      onRemove: () => void;
+    }> = [];
+
+    if (categoryFilter) {
+      filters.push({
+        type: "category",
+        label: "Category",
+        value: categoryFilter,
+        onRemove: () => handleCategorySelect(null),
       });
-    });
-    return Array.from(counts.entries())
-      .map(([tag, count]) => ({ tag, count }))
-      .sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag));
-  }, [items]);
+    }
+
+    if (platformFilter) {
+      filters.push({
+        type: "platform",
+        label: "Source",
+        value: platformFilter,
+        onRemove: () => {
+          setPlatformFilter(null);
+          updateUrl({ platform: null });
+        },
+      });
+    }
+
+    if (tagFilter) {
+      filters.push({
+        type: "tag",
+        label: "Tag",
+        value: tagFilter,
+        onRemove: () => {
+          setTagFilter(null);
+          updateUrl({ tag: null });
+        },
+      });
+    }
+
+    if (authorFilter) {
+      filters.push({
+        type: "author",
+        label: "Author",
+        value: authorFilter,
+        onRemove: () => {
+          setAuthorFilter(null);
+          updateUrl({ author: null });
+        },
+      });
+    }
+
+    if (statusFilter !== "all") {
+      filters.push({
+        type: "status",
+        label: "Status",
+        value: statusFilter,
+        onRemove: () => {
+          setStatusFilter("all");
+          updateUrl({ status: "all" });
+        },
+      });
+    }
+
+    if (searchQuery) {
+      filters.push({
+        type: "search",
+        label: "Search",
+        value: searchQuery,
+        onRemove: () => {
+          setSearchQuery("");
+          updateUrl({ q: null });
+        },
+      });
+    }
+
+    return filters;
+  }, [
+    categoryFilter,
+    platformFilter,
+    tagFilter,
+    authorFilter,
+    statusFilter,
+    searchQuery,
+  ]);
 
   const totalDisplay = pagination?.total ?? totalItems ?? items.length;
 
@@ -319,12 +435,12 @@ export default function ItemsPage() {
             className={cn(
               "rounded-full border",
               !categoryFilter
-                ? "bg-indigo-600 text-white border-indigo-600"
+                ? "bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700 hover:text-white"
                 : "border-slate-200 text-slate-700",
             )}
             onClick={() => handleCategorySelect(null)}
           >
-            All {totalDisplay ? `(${totalDisplay})` : ""}
+            All {totalItems ? `(${totalItems})` : ""}
           </Button>
           {categories.map((cat) => (
             <Button
@@ -336,7 +452,7 @@ export default function ItemsPage() {
               className={cn(
                 "rounded-full border",
                 categoryFilter === cat.category
-                  ? "bg-indigo-600 text-white border-indigo-600"
+                  ? "bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700 hover:text-white"
                   : "border-slate-200 text-slate-700",
               )}
               onClick={() => handleCategorySelect(cat.category)}
@@ -348,13 +464,16 @@ export default function ItemsPage() {
       </div>
 
       {/* Platform filter */}
-      <div className="space-y-2">
-        <div className="flex items-center gap-2 text-sm font-semibold text-slate-800">
-          <Filter className="w-4 h-4 text-slate-500" />
-          Filter by Source
-        </div>
+      <CollapsibleSection
+        title="Filter by Source"
+        count={platforms?.length || 0}
+        defaultOpen={false}
+        searchable={true}
+        searchPlaceholder="Search sources..."
+        onSearchChange={setPlatformSearchQuery}
+      >
         <div className="flex flex-wrap gap-2">
-          {(platforms || []).map((p) => (
+          {filteredPlatforms.slice(0, 10).map((p) => (
             <Button
               key={p.platform}
               size="sm"
@@ -362,7 +481,7 @@ export default function ItemsPage() {
               className={cn(
                 "rounded-full border",
                 platformFilter === p.platform
-                  ? "bg-indigo-600 text-white border-indigo-600"
+                  ? "bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700 hover:text-white"
                   : "border-slate-200 text-slate-700",
               )}
               onClick={() => {
@@ -371,37 +490,33 @@ export default function ItemsPage() {
                 setCurrentPage(1);
                 updateUrl({ platform: next, page: "1" });
               }}
+              title={`Includes: ${p.variations?.join(", ") || p.platform}`}
             >
-              {p.platform} ({p.count})
+              {p.displayName || p.platform} ({p.count})
             </Button>
           ))}
-        </div>
-      </div>
-
-      {/* Author Filter */}
-      <div className="space-y-2">
-        <div className="flex items-center gap-2 text-sm font-semibold text-slate-800">
-          <Filter className="w-4 h-4 text-slate-500" />
-          Filter by Author
-          {authorFilter && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 px-2 text-slate-500"
-              onClick={() => {
-                setAuthorFilter(null);
-                updateUrl({ author: null });
-              }}
-            >
-              Clear
-            </Button>
+          {filteredPlatforms.length > 10 && (
+            <span className="text-xs text-slate-400 self-center">
+              +{filteredPlatforms.length - 10} more
+            </span>
           )}
         </div>
+      </CollapsibleSection>
+
+      {/* Author Filter */}
+      <CollapsibleSection
+        title="Filter by Author"
+        count={authors?.length || 0}
+        defaultOpen={false}
+        searchable={true}
+        searchPlaceholder="Search authors..."
+        onSearchChange={setAuthorSearchQuery}
+      >
         <div className="flex flex-wrap gap-2">
-          {(authors || []).length === 0 ? (
-            <p className="text-xs text-slate-500">No authors available yet.</p>
+          {filteredAuthors.length === 0 ? (
+            <p className="text-xs text-slate-500">No authors found.</p>
           ) : (
-            (authors || []).slice(0, 10).map((a) => (
+            filteredAuthors.slice(0, 10).map((a) => (
               <Button
                 key={a.author}
                 size="sm"
@@ -409,7 +524,7 @@ export default function ItemsPage() {
                 className={cn(
                   "rounded-full border",
                   authorFilter === a.author
-                    ? "bg-indigo-600 text-white border-indigo-600"
+                    ? "bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700 hover:text-white"
                     : "border-slate-200 text-slate-700",
                 )}
                 onClick={() => {
@@ -423,44 +538,37 @@ export default function ItemsPage() {
               </Button>
             ))
           )}
-          {(authors || []).length > 10 && (
+          {filteredAuthors.length > 10 && (
             <span className="text-xs text-slate-400 self-center">
-              +{(authors || []).length - 10} more
+              +{filteredAuthors.length - 10} more
             </span>
           )}
         </div>
-      </div>
+      </CollapsibleSection>
 
       {/* Tags */}
-      <div className="space-y-2">
-        <div className="flex items-center gap-2 text-sm font-semibold text-slate-800">
-          <Tag className="w-4 h-4 text-slate-500" />
-          Filter by Tags
-          {tagFilter && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 px-2 text-slate-500"
-              onClick={() => {
-                setTagFilter(null);
-                updateUrl({ tag: null });
-              }}
-            >
-              Clear ({tagFilter ? 1 : 0})
-            </Button>
-          )}
-        </div>
+      <CollapsibleSection
+        title="Filter by Tags"
+        count={tagOptions.length}
+        defaultOpen={true}
+        searchable={true}
+        searchPlaceholder="Search tags..."
+        onSearchChange={setTagSearchQuery}
+      >
         <div className="flex flex-wrap gap-2">
-          {tagOptions.length === 0 ? (
+          {filteredTags.length === 0 ? (
             <p className="text-xs text-slate-500">
-              Tags will appear after you add items.
+              {tagSearchQuery
+                ? "No tags found matching your search."
+                : "Tags will appear after you add items."}
             </p>
           ) : (
-            tagOptions.map((t) => (
+            filteredTags.slice(0, 30).map((t) => (
               <TagBadge
                 key={t.tag}
                 tag={`${t.tag} (${t.count})`}
                 clickable
+                isActive={tagFilter === t.tag}
                 onClick={() => {
                   const tagName = t.tag;
                   setTagFilter(tagFilter === tagName ? null : tagName);
@@ -473,11 +581,19 @@ export default function ItemsPage() {
               />
             ))
           )}
-          {tagOptions.length > 12 && (
-            <span className="text-xs text-slate-400 self-center">+ more</span>
+          {filteredTags.length > 30 && (
+            <span className="text-xs text-slate-400 self-center">
+              +{filteredTags.length - 30} more
+            </span>
           )}
         </div>
-      </div>
+      </CollapsibleSection>
+
+      {/* Active Filters Summary */}
+      <ActiveFilters
+        filters={activeFilters}
+        onClearAll={handleClearAllFilters}
+      />
 
       {/* Results */}
       <div
@@ -522,17 +638,6 @@ export default function ItemsPage() {
           <div className="space-y-4">
             <div className="flex items-center justify-between text-sm text-slate-500">
               <span>{pagination?.total || items.length} items</span>
-              {hasActiveFilters && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 px-2 text-slate-500"
-                  onClick={handleClearAllFilters}
-                >
-                  <X className="w-4 h-4 mr-1" />
-                  Clear all
-                </Button>
-              )}
             </div>
 
             {isInListMode ? (

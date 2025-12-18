@@ -1,0 +1,240 @@
+import type { PrismaClient } from "@/generated/prisma";
+import { normalizeTag, isValidTag } from "./normalize";
+
+/**
+ * Tag service for managing standardized tags in the system.
+ *
+ * Provides functions to:
+ * - Get or create tags atomically
+ * - Assign tags to items
+ * - Retrieve top tags for LLM context
+ * - Match generated tags to existing tags
+ */
+
+/**
+ * Type for database client that works with both PrismaClient and transactions
+ */
+type DbClient =
+  | PrismaClient
+  | Parameters<Parameters<PrismaClient["$transaction"]>[0]>[0];
+
+/**
+ * Get or create a tag atomically.
+ *
+ * Uses upsert to handle race conditions when multiple requests try to create
+ * the same tag simultaneously.
+ *
+ * @param db - Prisma client or transaction
+ * @param rawTag - The raw tag string (e.g., "Machine Learning")
+ * @returns Tag record with id, name, and displayName
+ * @throws Error if tag is invalid
+ *
+ * @example
+ * const tag = await getOrCreateTag(db, "Machine Learning")
+ * // Returns: { id: "...", name: "machine learning", displayName: "Machine Learning" }
+ */
+export async function getOrCreateTag(
+  db: DbClient,
+  rawTag: string,
+): Promise<{ id: string; name: string; displayName: string }> {
+  const normalized = normalizeTag(rawTag);
+
+  if (!isValidTag(normalized)) {
+    throw new Error(`Invalid tag: "${rawTag}"`);
+  }
+
+  // Use upsert to handle race conditions (multiple concurrent creates)
+  const tag = await db.tag.upsert({
+    where: { normalizedName: normalized },
+    create: {
+      name: normalized,
+      displayName: rawTag.trim(), // Preserve original casing
+      normalizedName: normalized,
+      usageCount: 0,
+    },
+    update: {}, // No update needed if exists
+    select: { id: true, name: true, displayName: true },
+  });
+
+  return tag;
+}
+
+/**
+ * Assign tags to an item.
+ *
+ * - Deduplicates tags by normalized form
+ * - Creates Tag records for new tags
+ * - Creates ItemTag join records
+ * - Increments usage counts
+ *
+ * @param db - Prisma client or transaction
+ * @param itemId - The item ID to assign tags to
+ * @param rawTags - Array of raw tag strings
+ * @returns Array of assigned tag records
+ *
+ * @example
+ * await assignTagsToItem(db, "item_123", ["AI", "Machine Learning", "ai"])
+ * // Creates/assigns "ai" and "machine learning" (deduped)
+ */
+export async function assignTagsToItem(
+  db: DbClient,
+  itemId: string,
+  rawTags: string[],
+): Promise<Array<{ id: string; name: string; displayName: string }>> {
+  // Deduplicate and normalize
+  const normalizedSet = new Set<string>();
+  const validRawTags: string[] = [];
+
+  for (const raw of rawTags) {
+    const normalized = normalizeTag(raw);
+    if (isValidTag(normalized) && !normalizedSet.has(normalized)) {
+      normalizedSet.add(normalized);
+      validRawTags.push(raw);
+    }
+  }
+
+  if (validRawTags.length === 0) {
+    return [];
+  }
+
+  // Get or create all tags
+  const tags = await Promise.all(
+    validRawTags.map((raw) => getOrCreateTag(db, raw)),
+  );
+
+  // Check which tags are already assigned to this item
+  const existingItemTags = await db.itemTag.findMany({
+    where: {
+      itemId,
+      tagId: { in: tags.map((t) => t.id) },
+    },
+    select: { tagId: true },
+  });
+
+  const existingTagIds = new Set(existingItemTags.map((it) => it.tagId));
+
+  // Only create ItemTag records for new tags
+  const newTags = tags.filter((tag) => !existingTagIds.has(tag.id));
+
+  if (newTags.length > 0) {
+    // Create ItemTag join records for new tags only
+    await db.itemTag.createMany({
+      data: newTags.map((tag) => ({
+        itemId,
+        tagId: tag.id,
+      })),
+    });
+
+    // NOTE: usageCount is now calculated dynamically per-user in the API
+    // No need to update the denormalized count here
+  }
+
+  return tags;
+}
+
+/**
+ * Get top N most used tags for LLM context.
+ *
+ * Returns tags sorted by usage count (descending), using displayName
+ * for proper casing.
+ *
+ * @param db - Prisma client or transaction
+ * @param limit - Maximum number of tags to return (default: 100)
+ * @returns Array of tag display names
+ *
+ * @example
+ * const topTags = await getTopTags(db, 50)
+ * // Returns: ["AI", "Machine Learning", "Programming", ...]
+ */
+export async function getTopTags(
+  db: DbClient,
+  limit: number = 100,
+): Promise<string[]> {
+  const tags = await db.tag.findMany({
+    where: {
+      usageCount: { gt: 0 }, // Only include tags that are actually used
+    },
+    orderBy: { usageCount: "desc" },
+    take: limit,
+    select: { displayName: true },
+  });
+
+  return tags.map((t) => t.displayName);
+}
+
+/**
+ * Match LLM-generated tags to existing tags.
+ *
+ * Performs case-insensitive exact matching. For tags that don't exist,
+ * returns the normalized form (they will be created on assignment).
+ *
+ * @param db - Prisma client or transaction
+ * @param generatedTags - Array of tags generated by LLM
+ * @returns Array of matched/normalized tag names
+ *
+ * @example
+ * await matchGeneratedTags(db, ["ai", "NEW TAG", "machine learning"])
+ * // If "AI" and "Machine Learning" exist in DB:
+ * // Returns: ["AI", "new tag", "Machine Learning"]
+ */
+export async function matchGeneratedTags(
+  db: DbClient,
+  generatedTags: string[],
+): Promise<string[]> {
+  // Normalize all generated tags
+  const normalizedGenerated = generatedTags
+    .map(normalizeTag)
+    .filter(isValidTag);
+
+  if (normalizedGenerated.length === 0) {
+    return [];
+  }
+
+  // Find existing matches
+  const existingTags = await db.tag.findMany({
+    where: {
+      normalizedName: { in: normalizedGenerated },
+    },
+    select: { normalizedName: true, displayName: true },
+  });
+
+  // Create map of normalized -> displayName
+  const existingMap = new Map(
+    existingTags.map((t) => [t.normalizedName, t.displayName]),
+  );
+
+  // For each generated tag, use existing displayName if available, otherwise use normalized form
+  return normalizedGenerated.map(
+    (normalized) => existingMap.get(normalized) || normalized,
+  );
+}
+
+/**
+ * Remove tag assignments from an item.
+ *
+ * Deletes ItemTag join records and decrements usage counts.
+ *
+ * @param db - Prisma client or transaction
+ * @param itemId - The item ID to remove tags from
+ *
+ * @example
+ * await removeTagsFromItem(db, "item_123")
+ */
+export async function removeTagsFromItem(
+  db: DbClient,
+  itemId: string,
+): Promise<void> {
+  // Get current tags to decrement usage counts
+  const itemTags = await db.itemTag.findMany({
+    where: { itemId },
+    include: { tag: { select: { id: true } } },
+  });
+
+  // Delete ItemTag records
+  await db.itemTag.deleteMany({
+    where: { itemId },
+  });
+
+  // NOTE: usageCount is now calculated dynamically per-user in the API
+  // No need to update the denormalized count here
+}

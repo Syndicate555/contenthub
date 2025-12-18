@@ -272,7 +272,7 @@ model Item {
   // Processed content
   title      String?
   summary    String? // bullet points as text
-  tags       String[] // Postgres array
+  tags       String[] // Postgres array - DEPRECATED: kept temporarily for migration, will be removed
   author     String? // Content creator/author name
   type       String? // "learn" | "do" | "reference"
   category   String? // "tech" | "business" | "design" | "productivity" | "learning" | "lifestyle" | "entertainment" | "news" | "other"
@@ -292,6 +292,9 @@ model Item {
   updatedAt  DateTime  @updatedAt
   reviewedAt DateTime?
 
+  // Relations
+  itemTags ItemTag[] // NEW: standardized tagging system
+
   @@unique([userId, importSource, externalId]) // Prevent duplicate imports
   @@index([userId, status])
   @@index([userId, createdAt(sort: Desc)])
@@ -300,4 +303,41 @@ model Item {
   @@index([userId, status, createdAt(sort: Desc)]) // Composite for filtered lists
   @@index([userId, category, createdAt(sort: Desc)]) // Composite for category filtering
   @@index([userId, domainId, createdAt(sort: Desc)]) // Composite for domain filtering
+}
+
+// ============================================
+// TAGGING SYSTEM
+// ============================================
+
+// Tag represents a normalized tag that can be assigned to items
+model Tag {
+  id             String   @id @default(cuid())
+  name           String   @unique // Normalized form (lowercase, trimmed, e.g., "machine learning")
+  displayName    String // Original casing for display (e.g., "Machine Learning")
+  normalizedName String   @unique // Fully normalized: lowercase, no special chars (same as name for now)
+  usageCount     Int      @default(0) // Denormalized count for performance
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  itemTags ItemTag[]
+
+  @@index([usageCount(sort: Desc)]) // For top N queries
+  @@index([normalizedName]) // For fast lookups
+}
+
+// ItemTag - Join table for many-to-many relationship between Items and Tags
+model ItemTag {
+  id     String @id @default(cuid())
+  itemId String
+  item   Item   @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  tagId  String
+  tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([itemId, tagId]) // Prevent duplicate tag assignments
+  @@index([itemId])
+  @@index([tagId])
 }

@@ -8,6 +8,7 @@ interface TagBadgeProps {
   clickable?: boolean;
   size?: "sm" | "md";
   onClick?: () => void;
+  isActive?: boolean;
 }
 
 // Predefined color palette for consistent tag colors
@@ -250,6 +251,7 @@ export function TagBadge({
   clickable = true,
   size = "sm",
   onClick,
+  isActive = false,
 }: TagBadgeProps) {
   const colors = getTagColor(tag);
 
@@ -260,11 +262,10 @@ export function TagBadge({
 
   const baseClasses = cn(
     "inline-flex items-center rounded-full font-medium border transition-colors",
-    colors.bg,
-    colors.text,
-    colors.border,
+    isActive
+      ? "bg-indigo-600 text-white border-indigo-600 ring-2 ring-indigo-200 hover:bg-indigo-700 hover:text-white"
+      : [colors.bg, colors.text, colors.border, clickable && colors.hover],
     sizeClasses[size],
-    clickable && colors.hover,
     clickable && "cursor-pointer",
   );
 

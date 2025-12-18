@@ -8,6 +8,7 @@ import { processItem } from "@/lib/pipeline";
 import { createItemSchema, itemsQuerySchema } from "@/lib/schemas";
 import type { Prisma } from "@/generated/prisma";
 import { getPlatformDomains, normalizePlatformSlug } from "@/lib/platforms";
+import { normalizeDomain } from "@/lib/platform-normalizer";
 
 // GET /api/items - List items with search and filters
 export async function GET(request: NextRequest) {
@@ -57,9 +58,15 @@ export async function GET(request: NextRequest) {
       where.status = query.status;
     }
 
-    // Tag filter
+    // Tag filter (using new ItemTag relation)
     if (query.tag) {
-      where.tags = { has: query.tag };
+      where.itemTags = {
+        some: {
+          tag: {
+            displayName: query.tag,
+          },
+        },
+      };
     }
 
     // Category filter
@@ -73,30 +80,59 @@ export async function GET(request: NextRequest) {
     }
 
     // Platform filter (normalized domain-based filtering)
-    const platformSlug = normalizePlatformSlug(query.platform);
-    if (platformSlug) {
-      const platformFilters: Prisma.ItemWhereInput[] = [];
-      const domains = getPlatformDomains(platformSlug);
+    if (query.platform) {
+      // First, try to match against known platform slugs
+      const platformSlug = normalizePlatformSlug(query.platform);
 
-      // Newsletter: include email import source
-      if (platformSlug === "newsletter") {
-        platformFilters.push({ importSource: "email" });
-      }
+      if (platformSlug) {
+        const platformFilters: Prisma.ItemWhereInput[] = [];
+        const domains = getPlatformDomains(platformSlug);
 
-      if (domains.length > 0) {
-        platformFilters.push({
-          OR: domains.map((domain) => ({
-            source: { contains: domain, mode: "insensitive" },
-          })),
+        // Newsletter: include email import source
+        if (platformSlug === "newsletter") {
+          platformFilters.push({ importSource: "email" });
+        }
+
+        if (domains.length > 0) {
+          platformFilters.push({
+            OR: domains.map((domain) => ({
+              source: { contains: domain, mode: "insensitive" },
+            })),
+          });
+        }
+
+        appendAndFilters(platformFilters);
+      } else {
+        // For non-standard platforms, get all items and filter by normalized domain
+        // This handles cases like "anthropic.skilljar.com" where we want to match
+        // all variations (www.anthropic.skilljar.com, anthropic.skilljar.com, etc.)
+
+        // Get all possible source values that match this platform
+        const allSources = await db.item.findMany({
+          where: {
+            userId: user.id,
+            status: { not: "deleted" },
+            source: { not: null },
+          },
+          select: { source: true },
+          distinct: ["source"],
         });
-      }
 
-      appendAndFilters(platformFilters);
-    } else if (query.platform) {
-      // Fallback: substring match if unknown slug
-      appendAndFilters([
-        { source: { contains: query.platform, mode: "insensitive" } },
-      ]);
+        // Find all sources that normalize to the same platform
+        const matchingSources = allSources
+          .filter(
+            (item) => normalizeDomain(item.source || "") === query.platform,
+          )
+          .map((item) => item.source!);
+
+        if (matchingSources.length > 0) {
+          appendAndFilters([
+            {
+              source: { in: matchingSources },
+            },
+          ]);
+        }
+      }
     }
 
     // Search query
@@ -130,7 +166,7 @@ export async function GET(request: NextRequest) {
           embedHtml: true,
           category: true,
           type: true,
-          tags: true,
+          tags: true, // Keep for backward compatibility during migration
           note: true,
           source: true,
           status: true,
@@ -145,6 +181,16 @@ export async function GET(request: NextRequest) {
               displayName: true,
               icon: true,
               color: true,
+            },
+          },
+          itemTags: {
+            select: {
+              tag: {
+                select: {
+                  id: true,
+                  displayName: true,
+                },
+              },
             },
           },
         },
@@ -196,6 +242,8 @@ export async function GET(request: NextRequest) {
     // Enrich items with gamification data
     const enrichedItems = items.map((item) => ({
       ...item,
+      tags: item.itemTags.map((it) => it.tag.displayName), // Flatten tags from new relation
+      itemTags: undefined, // Remove from response
       xpEarned: xpByItem[item.id]?.total || 0,
       xpBreakdown: xpByItem[item.id]?.breakdown || {},
       isInFocusArea: item.domainId

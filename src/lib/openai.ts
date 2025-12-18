@@ -1,11 +1,13 @@
 import OpenAI from "openai";
 import type { SummarizerOutput, ItemType, ItemCategory } from "@/types";
+import { db } from "./db";
+import { getTopTags } from "./tags/service";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-const SYSTEM_PROMPT = `You are a content analyzer for a personal knowledge management system.
+const SYSTEM_PROMPT_BASE = `You are a content analyzer for a personal knowledge management system.
 
 Given a piece of content from social media or the web, analyze it and return a JSON response with:
 
@@ -37,6 +39,25 @@ Rules:
 
 Respond ONLY with valid JSON, no markdown or explanation.`;
 
+/**
+ * Build system prompt with existing tags for context.
+ *
+ * @param topTags - Array of top existing tags (empty if no tags exist yet)
+ * @returns System prompt with or without existing tags section
+ */
+function buildSystemPrompt(topTags: string[]): string {
+  if (topTags.length === 0) {
+    return SYSTEM_PROMPT_BASE;
+  }
+
+  return `${SYSTEM_PROMPT_BASE}
+
+EXISTING TAGS IN THE SYSTEM (prefer using these when applicable):
+${topTags.join(", ")}
+
+When selecting tags, PRIORITIZE tags from this list if they match the content. Only create new tags if none of the existing tags are suitable.`;
+}
+
 export interface SummarizeInput {
   title: string;
   content: string;
@@ -62,6 +83,10 @@ export async function summarizeContent(
   }
 
   try {
+    // Fetch top tags for LLM context
+    const topTags = await getTopTags(db, 100);
+    const systemPrompt = buildSystemPrompt(topTags);
+
     // Build the message, prioritizing user note for blocked content (like Instagram)
     let userMessage = `
 URL: ${url}
@@ -87,7 +112,7 @@ ${content}
     const completion = await openai.chat.completions.create({
       model: "gpt-4.1-mini",
       messages: [
-        { role: "system", content: SYSTEM_PROMPT },
+        { role: "system", content: systemPrompt },
         { role: "user", content: userMessage },
       ],
       temperature: 0.3,
@@ -152,8 +177,8 @@ function isValidCategory(category: unknown): category is ItemCategory {
   return typeof category === "string" && validCategories.includes(category);
 }
 
-// Vision API system prompt
-const VISION_SYSTEM_PROMPT = `You are a content analyzer for a personal knowledge management system.
+// Vision API system prompt base
+const VISION_SYSTEM_PROMPT_BASE = `You are a content analyzer for a personal knowledge management system.
 
 You will be shown an image (usually from social media like Instagram). Analyze the image and extract all valuable information from it.
 
@@ -193,6 +218,25 @@ Rules:
 
 Respond ONLY with valid JSON, no markdown or explanation.`;
 
+/**
+ * Build vision system prompt with existing tags for context.
+ *
+ * @param topTags - Array of top existing tags (empty if no tags exist yet)
+ * @returns Vision system prompt with or without existing tags section
+ */
+function buildVisionSystemPrompt(topTags: string[]): string {
+  if (topTags.length === 0) {
+    return VISION_SYSTEM_PROMPT_BASE;
+  }
+
+  return `${VISION_SYSTEM_PROMPT_BASE}
+
+EXISTING TAGS IN THE SYSTEM (prefer using these when applicable):
+${topTags.join(", ")}
+
+When selecting tags, PRIORITIZE tags from this list if they match the content. Only create new tags if none of the existing tags are suitable.`;
+}
+
 export interface VisionInput {
   title: string;
   imageUrl: string;
@@ -212,6 +256,10 @@ export async function summarizeWithVision(
   const { title, imageUrl, url, source, userNote, textContent } = input;
 
   try {
+    // Fetch top tags for LLM context
+    const topTags = await getTopTags(db, 100);
+    const visionSystemPrompt = buildVisionSystemPrompt(topTags);
+
     // Build context message
     let contextMessage = `URL: ${url}\nSource: ${source}`;
 
@@ -230,7 +278,7 @@ export async function summarizeWithVision(
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini", // Use gpt-4o-mini for vision (cost-effective)
       messages: [
-        { role: "system", content: VISION_SYSTEM_PROMPT },
+        { role: "system", content: visionSystemPrompt },
         {
           role: "user",
           content: [

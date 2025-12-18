@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { ITEM_CATEGORIES, type ItemCategory } from "@/types";
+import { consolidatePlatforms } from "@/lib/platform-normalizer";
 
 // GET /api/categories - Get category counts with thumbnails (OPTIMIZED)
 export async function GET() {
@@ -105,10 +106,13 @@ export async function GET() {
       orderBy: { _count: { id: "desc" } },
     });
 
-    const platformCounts = platforms.map((p) => ({
+    const rawPlatformCounts = platforms.map((p) => ({
       platform: p.source || "unknown",
       count: p._count.id,
     }));
+
+    // Consolidate platform variations (e.g., www.reddit.com + reddit.com)
+    const platformCounts = consolidatePlatforms(rawPlatformCounts);
 
     // Get unique authors with counts
     const authors = await db.item.groupBy({

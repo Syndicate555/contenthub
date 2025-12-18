@@ -10,6 +10,7 @@ import { awardXP, XP_ACTIONS } from "./xp";
 import { trackActivity, STREAK_ACTIVITIES } from "./activity";
 import { checkAllBadges } from "./badges";
 import { validateItemData } from "./content-validator";
+import { assignTagsToItem } from "./tags/service";
 import type { Item } from "@/generated/prisma";
 
 export interface ProcessItemInput {
@@ -162,28 +163,36 @@ export async function processItem(
       summarized.tags,
     );
 
-    // Step 5: Create item in database with all processed data
+    // Step 5: Create item in database with all processed data (with transaction for atomicity)
     console.log(
       `Pipeline: Saving item with imageUrl=${extracted.imageUrl ? "YES" : "NO"}, domainId=${domainId || "none"}`,
     );
-    const item = await db.item.create({
-      data: {
-        url,
-        note,
-        userId,
-        source: extracted.source,
-        status: "new",
-        title: summarized.title,
-        summary: summarized.summary.join("\n"),
-        tags: summarized.tags,
-        author: extracted.author || null,
-        type: summarized.type,
-        category: summarized.category,
-        rawContent: truncatedContent,
-        imageUrl: extracted.imageUrl,
-        embedHtml: extracted.embedHtml,
-        domainId: domainId || undefined,
-      },
+    const item = await db.$transaction(async (tx) => {
+      // Create the item
+      const newItem = await tx.item.create({
+        data: {
+          url,
+          note,
+          userId,
+          source: extracted.source,
+          status: "new",
+          title: summarized.title,
+          summary: summarized.summary.join("\n"),
+          tags: summarized.tags, // Keep for backward compatibility during migration
+          author: extracted.author || null,
+          type: summarized.type,
+          category: summarized.category,
+          rawContent: truncatedContent,
+          imageUrl: extracted.imageUrl,
+          embedHtml: extracted.embedHtml,
+          domainId: domainId || undefined,
+        },
+      });
+
+      // Assign tags using the tag service (creates Tag + ItemTag records)
+      await assignTagsToItem(tx, newItem.id, summarized.tags);
+
+      return newItem;
     });
 
     // Step 6: Award XP for saving the item
