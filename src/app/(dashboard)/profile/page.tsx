@@ -10,6 +10,9 @@ export const metadata = {
   description: "View your learning progress and achievements",
 };
 
+// Force dynamic rendering because we depend on auth headers during build
+export const dynamic = "force-dynamic";
+
 async function getProfileData() {
   try {
     const { userId: clerkId } = await auth();

@@ -5,6 +5,9 @@ import { db } from "@/lib/db";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 
+// Force dynamic rendering since we depend on authenticated headers during build
+export const dynamic = "force-dynamic";
+
 async function getSettingsData() {
   try {
     const user = await getCurrentUser();
