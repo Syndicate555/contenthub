@@ -20,6 +20,23 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       );
     }
 
+    // Prevent writes in demo mode
+    try {
+      const { assertNotDemoUser } = await import("@/lib/auth");
+      await assertNotDemoUser(user);
+    } catch (error) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error:
+            error instanceof Error
+              ? error.message
+              : "Demo mode is read-only. Sign in to save changes.",
+        },
+        { status: 403 },
+      );
+    }
+
     const { id } = await params;
 
     // Find the item and verify ownership

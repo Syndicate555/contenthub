@@ -304,6 +304,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Prevent writes in demo mode
+    try {
+      const { assertNotDemoUser } = await import("@/lib/auth");
+      await assertNotDemoUser(user);
+    } catch (error) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error:
+            error instanceof Error
+              ? error.message
+              : "Demo mode is read-only. Sign in to save changes.",
+        },
+        { status: 403 },
+      );
+    }
+
     // Parse and validate body
     const body = await request.json();
     const parsed = createItemSchema.safeParse(body);
