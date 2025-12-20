@@ -270,15 +270,17 @@ model Item {
   importMetadata Json? // Provider-specific metadata
 
   // Processed content
-  title      String?
-  summary    String? // bullet points as text
-  tags       String[] // Postgres array - DEPRECATED: kept temporarily for migration, will be removed
-  author     String? // Content creator/author name
-  type       String? // "learn" | "do" | "reference"
-  category   String? // "tech" | "business" | "design" | "productivity" | "learning" | "lifestyle" | "entertainment" | "news" | "other"
-  rawContent String?  @db.Text // truncated extracted text
-  imageUrl   String? // thumbnail/preview image URL
-  embedHtml  String?  @db.Text // embed HTML for video platforms (TikTok, etc.)
+  title       String?
+  summary     String? // bullet points as text
+  tags        String[] // Postgres array - DEPRECATED: kept temporarily for migration, will be removed
+  author      String? // Content creator/author name
+  type        String? // "learn" | "do" | "reference"
+  category    String? // "tech" | "business" | "design" | "productivity" | "learning" | "lifestyle" | "entertainment" | "news" | "other"
+  rawContent  String?  @db.Text // truncated extracted text
+  imageUrl    String? // thumbnail/preview image URL
+  videoUrl    String? // video URL for platforms like LinkedIn, Twitter, etc.
+  documentUrl String? // document/PDF URL for LinkedIn documents, reports, etc.
+  embedHtml   String?  @db.Text // embed HTML for video platforms (TikTok, etc.)
 
   // Domain classification (for gamification)
   domainId String?

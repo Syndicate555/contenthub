@@ -131,9 +131,31 @@ function getYoutubeVideoId(url: string): string | null {
 // Get YouTube Embed URL
 function getYoutubeEmbedUrl(url: string): string | null {
   const videoId = getYoutubeVideoId(url);
-  return videoId
-    ? `https://www.youtube.com/embed/${videoId}?autoplay=1`
-    : null;
+  return videoId ? `https://www.youtube.com/embed/${videoId}?autoplay=1` : null;
+}
+
+// Check if it's a LinkedIn post with video
+function isLinkedInWithVideo(
+  source?: string | null,
+  url?: string,
+  videoUrl?: string | null,
+): boolean {
+  const isLinkedIn =
+    source?.toLowerCase().includes("linkedin") ||
+    url?.toLowerCase().includes("linkedin.com");
+  return !!(isLinkedIn && videoUrl);
+}
+
+// Check if it's a LinkedIn post with document
+function isLinkedInWithDocument(
+  source?: string | null,
+  url?: string,
+  documentUrl?: string | null,
+): boolean {
+  const isLinkedIn =
+    source?.toLowerCase().includes("linkedin") ||
+    url?.toLowerCase().includes("linkedin.com");
+  return !!(isLinkedIn && documentUrl);
 }
 
 const typeIcons = {
@@ -173,6 +195,7 @@ export function ItemCardGamified({
   const [showXpBreakdown, setShowXpBreakdown] = useState(false);
   const [embedFailed, setEmbedFailed] = useState(false);
   const [playYoutube, setPlayYoutube] = useState(false);
+  const [playLinkedInVideo, setPlayLinkedInVideo] = useState(false);
 
   const TypeIcon = item.type
     ? typeIcons[item.type as keyof typeof typeIcons]
@@ -218,9 +241,54 @@ export function ItemCardGamified({
   }, [item.url, item.source, item.embedHtml, item.id, item.title, embedFailed]);
   const showTikTokEmbed = !!tiktokEmbedUrl && !embedFailed;
 
-  const isYoutube = item.source?.includes("youtube") || item.url.includes("youtu");
-  const youtubeVideoId = useMemo(() => isYoutube ? getYoutubeVideoId(item.url) : null, [isYoutube, item.url]);
-  const youtubeEmbedUrl = useMemo(() => isYoutube ? getYoutubeEmbedUrl(item.url) : null, [isYoutube, item.url]);
+  const isYoutube =
+    item.source?.includes("youtube") || item.url.includes("youtu");
+  const youtubeVideoId = useMemo(
+    () => (isYoutube ? getYoutubeVideoId(item.url) : null),
+    [isYoutube, item.url],
+  );
+  const youtubeEmbedUrl = useMemo(
+    () => (isYoutube ? getYoutubeEmbedUrl(item.url) : null),
+    [isYoutube, item.url],
+  );
+
+  const hasLinkedInVideo = useMemo(() => {
+    const result = isLinkedInWithVideo(item.source, item.url, item.videoUrl);
+    if (
+      item.source?.toLowerCase().includes("linkedin") ||
+      item.url.toLowerCase().includes("linkedin")
+    ) {
+      console.log("[LinkedIn Debug]", {
+        itemId: item.id,
+        title: item.title?.substring(0, 50),
+        hasVideoUrl: !!item.videoUrl,
+        videoUrl: item.videoUrl,
+        hasLinkedInVideo: result,
+      });
+    }
+    return result;
+  }, [item.source, item.url, item.videoUrl, item.id, item.title]);
+
+  const hasLinkedInDocument = useMemo(() => {
+    const result = isLinkedInWithDocument(
+      item.source,
+      item.url,
+      item.documentUrl,
+    );
+    if (
+      item.source?.toLowerCase().includes("linkedin") ||
+      item.url.toLowerCase().includes("linkedin")
+    ) {
+      console.log("[LinkedIn Debug]", {
+        itemId: item.id,
+        title: item.title?.substring(0, 50),
+        hasDocumentUrl: !!item.documentUrl,
+        documentUrl: item.documentUrl,
+        hasLinkedInDocument: result,
+      });
+    }
+    return result;
+  }, [item.source, item.url, item.documentUrl, item.id, item.title]);
 
   const handleStatusChange = async (status: string) => {
     setIsUpdating(true);
@@ -404,33 +472,112 @@ export function ItemCardGamified({
             </div>
           )}
 
-          {/* Thumbnail Image (fallback) */}
-          {!showInstagramEmbed && !showTikTokEmbed && !isYoutube && item.imageUrl && (
-            <button
-              onClick={() => setIsImageModalOpen(true)}
-              className="block w-full relative bg-gray-50 overflow-hidden cursor-zoom-in group min-h-[200px] max-h-80"
-            >
-              <Image
-                src={item.imageUrl}
-                alt={item.title || "Content preview"}
-                width={800}
-                height={600}
-                className="w-full h-auto max-h-80 object-contain group-hover:scale-[1.02] transition-transform duration-300"
-                loading="lazy"
-                quality={85}
-                unoptimized={
-                  (item.imageUrl || "").toLowerCase().endsWith(".gif") ||
-                  item.source?.includes("linkedin") ||
-                  item.source?.includes("reddit")
-                }
-                onError={(e) => {
-                  (e.target as HTMLImageElement).parentElement!.style.display =
-                    "none";
-                }}
-              />
-              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors" />
-            </button>
+          {/* LinkedIn Video */}
+          {hasLinkedInVideo && !embedFailed && (
+            <div className="w-full aspect-video bg-gray-900 relative group">
+              {playLinkedInVideo ? (
+                <video
+                  className="w-full h-full"
+                  src={item.videoUrl!}
+                  controls
+                  autoPlay
+                >
+                  Your browser does not support the video tag.
+                </video>
+              ) : (
+                <button
+                  onClick={() => setPlayLinkedInVideo(true)}
+                  className="w-full h-full relative block cursor-pointer group"
+                >
+                  {item.imageUrl ? (
+                    <Image
+                      src={item.imageUrl}
+                      alt="Video thumbnail"
+                      fill
+                      className="object-cover"
+                      onError={() => setEmbedFailed(true)}
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
+                      <Play className="w-16 h-16 text-white/50" />
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                    <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                      <Play className="w-8 h-8 text-white fill-white ml-1" />
+                    </div>
+                  </div>
+                </button>
+              )}
+            </div>
           )}
+
+          {/* LinkedIn Document */}
+          {hasLinkedInDocument && !embedFailed && (
+            <div className="w-full bg-gradient-to-br from-blue-50 to-blue-100 border-y border-blue-200 p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-red-600 rounded-lg flex items-center justify-center shadow-md">
+                    <svg
+                      className="w-6 h-6 text-white"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-900">Document</p>
+                    <p className="text-sm text-gray-600">
+                      View document on LinkedIn
+                    </p>
+                  </div>
+                </div>
+                <a
+                  href={item.documentUrl!}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
+                >
+                  Open Document
+                </a>
+              </div>
+            </div>
+          )}
+
+          {/* Thumbnail Image (fallback) */}
+          {!showInstagramEmbed &&
+            !showTikTokEmbed &&
+            !isYoutube &&
+            !hasLinkedInVideo &&
+            !hasLinkedInDocument &&
+            item.imageUrl && (
+              <button
+                onClick={() => setIsImageModalOpen(true)}
+                className="block w-full relative bg-gray-50 overflow-hidden cursor-zoom-in group min-h-[200px] max-h-80"
+              >
+                <Image
+                  src={item.imageUrl}
+                  alt={item.title || "Content preview"}
+                  width={800}
+                  height={600}
+                  className="w-full h-auto max-h-80 object-contain group-hover:scale-[1.02] transition-transform duration-300"
+                  loading="lazy"
+                  quality={85}
+                  unoptimized={
+                    (item.imageUrl || "").toLowerCase().endsWith(".gif") ||
+                    item.source?.includes("linkedin") ||
+                    item.source?.includes("reddit")
+                  }
+                  onError={(e) => {
+                    (
+                      e.target as HTMLImageElement
+                    ).parentElement!.style.display = "none";
+                  }}
+                />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors" />
+              </button>
+            )}
 
           <CardHeader className="pb-2">
             <div className="flex items-start justify-between gap-4 mb-2">

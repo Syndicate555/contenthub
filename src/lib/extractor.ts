@@ -9,6 +9,7 @@ export interface ExtractedContent {
   author?: string;
   imageUrl?: string;
   videoUrl?: string;
+  documentUrl?: string; // Document/PDF URL for LinkedIn documents, reports, etc.
   embedHtml?: string; // Embed HTML for video platforms (TikTok, etc.)
   imageSource?: "oembed" | "microlink" | "og" | "scrape"; // Track where the image came from
 }
@@ -41,7 +42,14 @@ async function loadJSDOMSafe() {
  */
 function detectPlatform(
   url: string,
-): "twitter" | "instagram" | "linkedin" | "tiktok" | "youtube" | "reddit" | "generic" {
+):
+  | "twitter"
+  | "instagram"
+  | "linkedin"
+  | "tiktok"
+  | "youtube"
+  | "reddit"
+  | "generic" {
   const hostname = new URL(url).hostname.toLowerCase();
 
   if (hostname.includes("twitter.com") || hostname.includes("x.com")) {
@@ -77,9 +85,10 @@ function extractTweetId(url: string): string | null {
  * Extract YouTube Video ID from URL
  */
 function extractYoutubeVideoId(url: string): string | null {
-  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*$/;
+  const regExp =
+    /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*$/;
   const match = url.match(regExp);
-  return (match && match[2].length === 11) ? match[2] : null;
+  return match && match[2].length === 11 ? match[2] : null;
 }
 
 /**
@@ -98,7 +107,7 @@ async function extractYoutubeContent(url: string): Promise<ExtractedContent> {
     const oembedUrl = `https://noembed.com/embed?url=https://www.youtube.com/watch?v=${videoId}`;
     const res = await fetch(oembedUrl);
     const data = await res.json();
-    
+
     title = data.title || title;
     author = data.author_name || author;
   } catch (e) {
@@ -108,14 +117,15 @@ async function extractYoutubeContent(url: string): Promise<ExtractedContent> {
   try {
     console.log(`[YouTube] Fetching transcript for ${videoId}`);
     const transcriptItems = await YoutubeTranscript.fetchTranscript(videoId);
-    transcriptText = transcriptItems.map(t => t.text).join(' ');
+    transcriptText = transcriptItems.map((t) => t.text).join(" ");
   } catch (e) {
     console.log("Could not fetch transcript (might be disabled):", e);
   }
 
-  const content = transcriptText.length > 50 
-    ? transcriptText 
-    : `Video Title: ${title}. Author: ${author}. (Transcript unavailable)`;
+  const content =
+    transcriptText.length > 50
+      ? transcriptText
+      : `Video Title: ${title}. Author: ${author}. (Transcript unavailable)`;
 
   return {
     title,
@@ -124,7 +134,7 @@ async function extractYoutubeContent(url: string): Promise<ExtractedContent> {
     author,
     imageUrl: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
     videoUrl: `https://www.youtube.com/watch?v=${videoId}`,
-    embedHtml: `<iframe width="560" height="315" src="https://www.youtube.com/embed/${videoId}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`
+    embedHtml: `<iframe width="560" height="315" src="https://www.youtube.com/embed/${videoId}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`,
   };
 }
 
@@ -315,10 +325,10 @@ async function extractRedditContent(url: string): Promise<ExtractedContent> {
           const description = doc
             .querySelector('meta[property="og:description"]')
             ?.getAttribute("content");
-          const author = 
+          const author =
             doc.querySelector("p.tagline .author")?.textContent ||
             "Reddit User";
-          const subreddit = 
+          const subreddit =
             doc.querySelector(".redditname a")?.textContent || "r/reddit";
 
           if (
@@ -408,7 +418,7 @@ async function fetchTwitterMedia(
       const json = (await res.json()) as {
         photos?: Array<{ url?: string; expandedUrl?: string }>;
         video?: { poster?: string; variants?: Array<{ src?: string }> };
-        mediaDetails?: Array<{ 
+        mediaDetails?: Array<{
           media_url_https?: string;
           type?: string;
           video_info?: {
@@ -1306,8 +1316,23 @@ async function extractLinkedInContent(url: string): Promise<ExtractedContent> {
     // Get image URL (LinkedIn og:images are usually good quality)
     const imageUrl = image?.url;
 
+    // Extract video URL from Microlink data
+    const videoUrl: string | undefined =
+      (data.data as any).video?.url || undefined;
+
+    // Extract document URL from Microlink data
+    // LinkedIn documents are often shared as attachments or links
+    let documentUrl: string | undefined;
+    if (
+      (data.data as any).logo?.url &&
+      ((data.data as any).logo.url.endsWith(".pdf") ||
+        (data.data as any).logo.url.includes("/doc/"))
+    ) {
+      documentUrl = (data.data as any).logo.url;
+    }
+
     console.log(
-      `LinkedIn Microlink success: author=${author}, content length=${content.length}, has image=${!!imageUrl}, has URN=${!!urn}`,
+      `LinkedIn Microlink success: author=${author}, content length=${content.length}, has image=${!!imageUrl}, has video=${!!videoUrl}, has document=${!!documentUrl}, has URN=${!!urn}`,
     );
 
     return {
@@ -1316,6 +1341,8 @@ async function extractLinkedInContent(url: string): Promise<ExtractedContent> {
       source,
       author,
       imageUrl,
+      videoUrl,
+      documentUrl,
     };
   } catch (microlinkError) {
     console.log(
@@ -1355,9 +1382,31 @@ async function extractLinkedInContent(url: string): Promise<ExtractedContent> {
     const ogImage = document
       .querySelector('meta[property="og:image"]')
       ?.getAttribute("content");
+    const ogVideo =
+      document
+        .querySelector('meta[property="og:video"]')
+        ?.getAttribute("content") ||
+      document
+        .querySelector('meta[property="og:video:url"]')
+        ?.getAttribute("content") ||
+      document
+        .querySelector('meta[property="og:video:secure_url"]')
+        ?.getAttribute("content");
     const metaAuthor = document
       .querySelector('meta[name="author"]')
       ?.getAttribute("content");
+
+    // Try to find document URLs in the page
+    // LinkedIn often has documents as links with specific patterns
+    let documentUrl: string | undefined;
+    const docLinks = document.querySelectorAll(
+      'a[href*=".pdf"], a[href*="/doc/"], link[type="application/pdf"]',
+    );
+    if (docLinks.length > 0) {
+      const firstDocLink = docLinks[0] as HTMLAnchorElement;
+      documentUrl =
+        firstDocLink.href || firstDocLink.getAttribute("href") || undefined;
+    }
 
     // Check for login wall
     if (isLinkedInLoginWall(ogTitle || undefined, ogDesc || undefined)) {
@@ -1375,7 +1424,7 @@ async function extractLinkedInContent(url: string): Promise<ExtractedContent> {
     }
 
     console.log(
-      `LinkedIn direct fetch success: author=${author}, has description=${!!ogDesc}`,
+      `LinkedIn direct fetch success: author=${author}, has description=${!!ogDesc}, has video=${!!ogVideo}, has document=${!!documentUrl}`,
     );
 
     return {
@@ -1384,6 +1433,8 @@ async function extractLinkedInContent(url: string): Promise<ExtractedContent> {
       source,
       author,
       imageUrl: ogImage || undefined,
+      videoUrl: ogVideo || undefined,
+      documentUrl,
     };
   } catch (error) {
     console.error("LinkedIn extraction failed:", error);

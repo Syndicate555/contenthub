@@ -165,7 +165,7 @@ export async function processItem(
 
     // Step 5: Create item in database with all processed data (with transaction for atomicity)
     console.log(
-      `Pipeline: Saving item with imageUrl=${extracted.imageUrl ? "YES" : "NO"}, domainId=${domainId || "none"}`,
+      `Pipeline: Saving item with imageUrl=${extracted.imageUrl ? "YES" : "NO"}, videoUrl=${extracted.videoUrl ? "YES" : "NO"}, documentUrl=${extracted.documentUrl ? "YES" : "NO"}, domainId=${domainId || "none"}`,
     );
     const item = await db.$transaction(async (tx) => {
       // Create the item
@@ -184,6 +184,8 @@ export async function processItem(
           category: summarized.category,
           rawContent: truncatedContent,
           imageUrl: extracted.imageUrl,
+          videoUrl: extracted.videoUrl,
+          documentUrl: extracted.documentUrl,
           embedHtml: extracted.embedHtml,
           domainId: domainId || undefined,
         },

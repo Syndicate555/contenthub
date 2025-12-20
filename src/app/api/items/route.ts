@@ -163,6 +163,8 @@ export async function GET(request: NextRequest) {
           summary: true,
           author: true,
           imageUrl: true,
+          videoUrl: true,
+          documentUrl: true,
           embedHtml: true,
           category: true,
           type: true,

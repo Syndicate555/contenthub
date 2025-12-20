@@ -128,6 +128,30 @@ function getYoutubeEmbedUrl(url: string): string | null {
   return videoId ? `https://www.youtube.com/embed/${videoId}?autoplay=1` : null;
 }
 
+// Check if it's a LinkedIn post with video
+function isLinkedInWithVideo(
+  source?: string | null,
+  url?: string,
+  videoUrl?: string | null,
+): boolean {
+  const isLinkedIn =
+    source?.toLowerCase().includes("linkedin") ||
+    url?.toLowerCase().includes("linkedin.com");
+  return !!(isLinkedIn && videoUrl);
+}
+
+// Check if it's a LinkedIn post with document
+function isLinkedInWithDocument(
+  source?: string | null,
+  url?: string,
+  documentUrl?: string | null,
+): boolean {
+  const isLinkedIn =
+    source?.toLowerCase().includes("linkedin") ||
+    url?.toLowerCase().includes("linkedin.com");
+  return !!(isLinkedIn && documentUrl);
+}
+
 const typeIcons = {
   learn: BookOpen,
   do: Wrench,
@@ -163,6 +187,7 @@ export function ItemCard({
   const [copied, setCopied] = useState(false);
   const [embedFailed, setEmbedFailed] = useState(false);
   const [playYoutube, setPlayYoutube] = useState(false);
+  const [playLinkedInVideo, setPlayLinkedInVideo] = useState(false);
 
   const TypeIcon = item.type
     ? typeIcons[item.type as keyof typeof typeIcons]
@@ -171,7 +196,7 @@ export function ItemCard({
     ? typeColors[item.type as keyof typeof typeColors]
     : "bg-gray-100 text-gray-700 border-gray-200";
   const platformInfo = getPlatformInfo(item.source || "");
-  
+
   const instagramEmbedUrl = useMemo(
     () => getInstagramEmbedUrl(item.url, item.source || undefined),
     [item.url, item.source],
@@ -181,7 +206,7 @@ export function ItemCard({
     [item.url],
   );
   const showInstagramEmbed = !!instagramEmbedUrl && !embedFailed;
-  
+
   const tiktokEmbedUrl = useMemo(() => {
     const url = getTikTokEmbedUrl(
       item.url,
@@ -204,9 +229,27 @@ export function ItemCard({
   }, [item.url, item.source, item.embedHtml, item.id, item.title]);
   const showTikTokEmbed = !!tiktokEmbedUrl && !embedFailed;
 
-  const isYoutube = item.source?.includes("youtube") || item.url.includes("youtu");
-  const youtubeVideoId = useMemo(() => isYoutube ? getYoutubeVideoId(item.url) : null, [isYoutube, item.url]);
-  const youtubeEmbedUrl = useMemo(() => isYoutube ? getYoutubeEmbedUrl(item.url) : null, [isYoutube, item.url]);
+  const isYoutube =
+    item.source?.includes("youtube") || item.url.includes("youtu");
+  const youtubeVideoId = useMemo(
+    () => (isYoutube ? getYoutubeVideoId(item.url) : null),
+    [isYoutube, item.url],
+  );
+  const youtubeEmbedUrl = useMemo(
+    () => (isYoutube ? getYoutubeEmbedUrl(item.url) : null),
+    [isYoutube, item.url],
+  );
+
+  const hasLinkedInVideo = isLinkedInWithVideo(
+    item.source,
+    item.url,
+    item.videoUrl,
+  );
+  const hasLinkedInDocument = isLinkedInWithDocument(
+    item.source,
+    item.url,
+    item.documentUrl,
+  );
 
   const handleStatusChange = async (status: string) => {
     setIsUpdating(true);
@@ -375,33 +418,132 @@ export function ItemCard({
           </div>
         )}
 
-        {/* Thumbnail Image - Click to open modal (fallback) */}
-        {!showInstagramEmbed && !showTikTokEmbed && !isYoutube && item.imageUrl && (
-          <button
-            onClick={() => setIsImageModalOpen(true)}
-            className="block w-full relative bg-gray-50 overflow-hidden cursor-zoom-in group min-h-[200px] max-h-80"
-          >
-            <Image
-              src={item.imageUrl}
-              alt={item.title || "Content preview"}
-              width={800}
-              height={600}
-              className="w-full h-auto max-h-80 object-contain group-hover:scale-[1.02] transition-transform duration-300"
-              loading="lazy"
-              quality={85}
-              unoptimized={
-                (item.imageUrl || "").toLowerCase().endsWith(".gif") ||
-                item.source?.includes("linkedin") ||
-                item.source?.includes("reddit")
-              }
-              onError={(e) => {
-                (e.target as HTMLImageElement).parentElement!.style.display =
-                  "none";
-              }}
-            />
-            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors" />
-          </button>
+        {/* LinkedIn Video Embed */}
+        {hasLinkedInVideo && !embedFailed && (
+          <div className="w-full aspect-video bg-gray-900 relative group">
+            {playLinkedInVideo ? (
+              <div className="absolute inset-0 w-full h-full">
+                <video
+                  className="w-full h-full"
+                  src={item.videoUrl!}
+                  controls
+                  autoPlay
+                  onError={() => setEmbedFailed(true)}
+                >
+                  Your browser does not support the video tag.
+                </video>
+              </div>
+            ) : (
+              <button
+                onClick={() => setPlayLinkedInVideo(true)}
+                className="w-full h-full relative block cursor-pointer group"
+              >
+                {item.imageUrl ? (
+                  <Image
+                    src={item.imageUrl}
+                    alt="Video thumbnail"
+                    fill
+                    className="object-cover"
+                    onError={() => setEmbedFailed(true)}
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gray-800 flex items-center justify-center">
+                    <Play className="w-16 h-16 text-gray-400" />
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                  <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                    <Play className="w-8 h-8 text-white fill-white ml-1" />
+                  </div>
+                </div>
+              </button>
+            )}
+          </div>
         )}
+
+        {/* LinkedIn Document Preview */}
+        {hasLinkedInDocument && !embedFailed && (
+          <div className="w-full bg-gradient-to-br from-blue-50 to-blue-100 border-y border-blue-200 p-6">
+            <div className="flex items-center gap-4">
+              <div className="flex-shrink-0 w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
+                <svg
+                  className="w-6 h-6 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+                  />
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="text-sm font-semibold text-gray-900 mb-1">
+                  LinkedIn Document
+                </h4>
+                <p className="text-xs text-gray-600 truncate">
+                  {item.documentUrl?.split("/").pop() || "Document.pdf"}
+                </p>
+              </div>
+              <a
+                href={item.documentUrl!}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-shrink-0 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  />
+                </svg>
+                Download
+              </a>
+            </div>
+          </div>
+        )}
+
+        {/* Thumbnail Image - Click to open modal (fallback) */}
+        {!showInstagramEmbed &&
+          !showTikTokEmbed &&
+          !isYoutube &&
+          !hasLinkedInVideo &&
+          item.imageUrl && (
+            <button
+              onClick={() => setIsImageModalOpen(true)}
+              className="block w-full relative bg-gray-50 overflow-hidden cursor-zoom-in group min-h-[200px] max-h-80"
+            >
+              <Image
+                src={item.imageUrl}
+                alt={item.title || "Content preview"}
+                width={800}
+                height={600}
+                className="w-full h-auto max-h-80 object-contain group-hover:scale-[1.02] transition-transform duration-300"
+                loading="lazy"
+                quality={85}
+                unoptimized={
+                  (item.imageUrl || "").toLowerCase().endsWith(".gif") ||
+                  item.source?.includes("linkedin") ||
+                  item.source?.includes("reddit")
+                }
+                onError={(e) => {
+                  (e.target as HTMLImageElement).parentElement!.style.display =
+                    "none";
+                }}
+              />
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors" />
+            </button>
+          )}
 
         <CardHeader className="pb-2">
           <div className="flex items-start justify-between gap-4">
