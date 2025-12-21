@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Analytics } from "@vercel/analytics/react";
 import { Toaster } from "@/components/ui/sonner";
 import { SWRProvider } from "@/components/providers/swr-provider";
 import { WebVitals } from "@/components/web-vitals";
@@ -38,6 +39,7 @@ export default function RootLayout({
         >
           <WebVitals />
           <SpeedInsights />
+          <Analytics />
           <SWRProvider>{children}</SWRProvider>
           <Toaster richColors position="top-right" />
         </body>
