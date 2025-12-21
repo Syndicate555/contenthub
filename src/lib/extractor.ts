@@ -1321,8 +1321,10 @@ async function extractLinkedInContent(url: string): Promise<ExtractedContent> {
       (data.data as any).video?.url || undefined;
 
     // Extract document URL from Microlink data
-    // LinkedIn documents are often shared as attachments or links
+    // Check multiple possible fields where LinkedIn might expose document URLs
     let documentUrl: string | undefined;
+
+    // Check logo field (for some document types)
     if (
       (data.data as any).logo?.url &&
       ((data.data as any).logo.url.endsWith(".pdf") ||
@@ -1331,8 +1333,47 @@ async function extractLinkedInContent(url: string): Promise<ExtractedContent> {
       documentUrl = (data.data as any).logo.url;
     }
 
+    // Check for document in media array
+    if (!documentUrl && (data.data as any).media) {
+      const media = Array.isArray((data.data as any).media)
+        ? (data.data as any).media
+        : [(data.data as any).media];
+      const docMedia = media.find(
+        (m: any) =>
+          m.url &&
+          (m.url.endsWith(".pdf") ||
+            m.url.includes("/doc/") ||
+            m.type === "application/pdf"),
+      );
+      if (docMedia?.url) {
+        documentUrl = docMedia.url;
+      }
+    }
+
+    // Check description for document links
+    if (!documentUrl && description) {
+      const pdfMatch = description.match(
+        /https?:\/\/[^\s]+\.pdf|https?:\/\/[^\s]+\/doc\/[^\s]+/i,
+      );
+      if (pdfMatch) {
+        documentUrl = pdfMatch[0];
+      }
+    }
+
+    // Generate embed HTML for LinkedIn posts (works for text, images, and videos)
+    const embedHtml = urn ? generateLinkedInEmbedCode(urn) : undefined;
+
+    // Log full Microlink response for debugging document extraction
+    console.log("[LinkedIn Microlink] Full data keys:", Object.keys(data.data));
+    if ((data.data as any).media) {
+      console.log(
+        "[LinkedIn Microlink] Media:",
+        JSON.stringify((data.data as any).media, null, 2),
+      );
+    }
+
     console.log(
-      `LinkedIn Microlink success: author=${author}, content length=${content.length}, has image=${!!imageUrl}, has video=${!!videoUrl}, has document=${!!documentUrl}, has URN=${!!urn}`,
+      `LinkedIn Microlink success: author=${author}, content length=${content.length}, has image=${!!imageUrl}, has video=${!!videoUrl}, has document=${!!documentUrl}, has URN=${!!urn}, has embedHtml=${!!embedHtml}`,
     );
 
     return {
@@ -1343,6 +1384,7 @@ async function extractLinkedInContent(url: string): Promise<ExtractedContent> {
       imageUrl,
       videoUrl,
       documentUrl,
+      embedHtml,
     };
   } catch (microlinkError) {
     console.log(
@@ -1423,8 +1465,11 @@ async function extractLinkedInContent(url: string): Promise<ExtractedContent> {
       title = `LinkedIn post by ${author}`;
     }
 
+    // Generate embed HTML for LinkedIn posts
+    const embedHtml = urn ? generateLinkedInEmbedCode(urn) : undefined;
+
     console.log(
-      `LinkedIn direct fetch success: author=${author}, has description=${!!ogDesc}, has video=${!!ogVideo}, has document=${!!documentUrl}`,
+      `LinkedIn direct fetch success: author=${author}, has description=${!!ogDesc}, has video=${!!ogVideo}, has document=${!!documentUrl}, has embedHtml=${!!embedHtml}`,
     );
 
     return {
@@ -1435,6 +1480,7 @@ async function extractLinkedInContent(url: string): Promise<ExtractedContent> {
       imageUrl: ogImage || undefined,
       videoUrl: ogVideo || undefined,
       documentUrl,
+      embedHtml,
     };
   } catch (error) {
     console.error("LinkedIn extraction failed:", error);

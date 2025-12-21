@@ -28,7 +28,7 @@ import {
 import { toast } from "sonner";
 import type { EnhancedItem } from "@/hooks/use-items";
 import { cn } from "@/lib/utils";
-import { fadeInUp, hoverLift } from "@/lib/animations";
+import { fadeInUp } from "@/lib/animations";
 
 interface ItemCardGamifiedProps {
   item: EnhancedItem;
@@ -134,18 +134,6 @@ function getYoutubeEmbedUrl(url: string): string | null {
   return videoId ? `https://www.youtube.com/embed/${videoId}?autoplay=1` : null;
 }
 
-// Check if it's a LinkedIn post with video
-function isLinkedInWithVideo(
-  source?: string | null,
-  url?: string,
-  videoUrl?: string | null,
-): boolean {
-  const isLinkedIn =
-    source?.toLowerCase().includes("linkedin") ||
-    url?.toLowerCase().includes("linkedin.com");
-  return !!(isLinkedIn && videoUrl);
-}
-
 // Check if it's a LinkedIn post with document
 function isLinkedInWithDocument(
   source?: string | null,
@@ -156,6 +144,91 @@ function isLinkedInWithDocument(
     source?.toLowerCase().includes("linkedin") ||
     url?.toLowerCase().includes("linkedin.com");
   return !!(isLinkedIn && documentUrl);
+}
+
+// Detect if LinkedIn post likely has a document based on content
+function linkedInLikelyHasDocument(
+  source?: string | null,
+  url?: string,
+  title?: string | null,
+  summary?: string | null,
+  embedHtml?: string | null,
+): boolean {
+  const isLinkedIn =
+    source?.toLowerCase().includes("linkedin") ||
+    url?.toLowerCase().includes("linkedin.com");
+
+  if (!isLinkedIn) return false;
+
+  // Check URL for document patterns
+  const urlLower = (url || "").toLowerCase();
+  if (
+    urlLower.includes("/document/") ||
+    urlLower.includes("contentType=document") ||
+    urlLower.includes("documentId=")
+  ) {
+    return true;
+  }
+
+  // Check embedHtml for document indicators
+  if (embedHtml) {
+    const embedLower = embedHtml.toLowerCase();
+    if (
+      embedLower.includes("document") ||
+      embedLower.includes(".pdf") ||
+      embedLower.includes("acrobat")
+    ) {
+      return true;
+    }
+  }
+
+  // Check content for document keywords (expanded list)
+  const content = `${title} ${summary}`.toLowerCase();
+  const documentIndicators = [
+    "pdf",
+    "guide",
+    "whitepaper",
+    "white paper",
+    "ebook",
+    "e-book",
+    "report",
+    "download",
+    "pages",
+    "document",
+    "acrobat",
+    "handbook",
+    "manual",
+    "playbook",
+    "template",
+    "worksheet",
+    "checklist",
+    "free download",
+    "get the",
+    "grab the",
+    "download now",
+    "read the full",
+    "full report",
+  ];
+
+  return documentIndicators.some((indicator) => content.includes(indicator));
+}
+
+// Check if it's a LinkedIn post with embed HTML
+function isLinkedInWithEmbed(
+  source?: string | null,
+  url?: string,
+  embedHtml?: string | null,
+): boolean {
+  const isLinkedIn =
+    source?.toLowerCase().includes("linkedin") ||
+    url?.toLowerCase().includes("linkedin.com");
+  return !!(isLinkedIn && embedHtml);
+}
+
+// Extract LinkedIn embed URL from embedHtml
+function getLinkedInEmbedUrl(embedHtml: string): string | null {
+  const match = embedHtml.match(/src="([^"]+)"/);
+  return match ? match[1] : null;
 }
 
 const typeIcons = {
@@ -195,7 +268,6 @@ export function ItemCardGamified({
   const [showXpBreakdown, setShowXpBreakdown] = useState(false);
   const [embedFailed, setEmbedFailed] = useState(false);
   const [playYoutube, setPlayYoutube] = useState(false);
-  const [playLinkedInVideo, setPlayLinkedInVideo] = useState(false);
 
   const TypeIcon = item.type
     ? typeIcons[item.type as keyof typeof typeIcons]
@@ -252,23 +324,6 @@ export function ItemCardGamified({
     [isYoutube, item.url],
   );
 
-  const hasLinkedInVideo = useMemo(() => {
-    const result = isLinkedInWithVideo(item.source, item.url, item.videoUrl);
-    if (
-      item.source?.toLowerCase().includes("linkedin") ||
-      item.url.toLowerCase().includes("linkedin")
-    ) {
-      console.log("[LinkedIn Debug]", {
-        itemId: item.id,
-        title: item.title?.substring(0, 50),
-        hasVideoUrl: !!item.videoUrl,
-        videoUrl: item.videoUrl,
-        hasLinkedInVideo: result,
-      });
-    }
-    return result;
-  }, [item.source, item.url, item.videoUrl, item.id, item.title]);
-
   const hasLinkedInDocument = useMemo(() => {
     const result = isLinkedInWithDocument(
       item.source,
@@ -289,6 +344,85 @@ export function ItemCardGamified({
     }
     return result;
   }, [item.source, item.url, item.documentUrl, item.id, item.title]);
+
+  const linkedInEmbedUrl = useMemo(() => {
+    if (!isLinkedInWithEmbed(item.source, item.url, item.embedHtml)) {
+      return null;
+    }
+    const url = getLinkedInEmbedUrl(item.embedHtml!);
+    console.log("[LinkedIn Embed Debug]", {
+      itemId: item.id,
+      title: item.title?.substring(0, 50),
+      hasEmbedHtml: !!item.embedHtml,
+      embedUrl: url,
+    });
+    return url;
+  }, [item.source, item.url, item.embedHtml, item.id, item.title]);
+
+  const linkedInHasDocument = useMemo(
+    () =>
+      linkedInLikelyHasDocument(
+        item.source,
+        item.url,
+        item.title,
+        item.summary,
+        item.embedHtml,
+      ),
+    [item.source, item.url, item.title, item.summary, item.embedHtml],
+  );
+
+  // Detect if LinkedIn post has a video
+  const linkedInHasVideo = useMemo(() => {
+    const isLinkedIn =
+      item.source?.toLowerCase().includes("linkedin") ||
+      item.url?.toLowerCase().includes("linkedin.com");
+    if (!isLinkedIn) return false;
+
+    // Primary indicator: check if videoUrl field is populated (most reliable)
+    if (item.videoUrl) {
+      return true;
+    }
+
+    // Secondary: Check URL for video patterns
+    if (
+      item.url.includes("/video/") ||
+      item.url.includes("activity:") ||
+      item.url.includes("ugcPost:")
+    ) {
+      return true;
+    }
+
+    // Tertiary: Check title/summary for strong video keywords
+    const content = `${item.title} ${item.summary}`.toLowerCase();
+    const videoKeywords = [
+      "播放", // "play" in Chinese
+      "視頻", // "video" in Chinese
+    ];
+
+    return videoKeywords.some((keyword) => content.includes(keyword));
+  }, [item.source, item.url, item.videoUrl, item.title, item.summary]);
+
+  // Show LinkedIn embed for ALL LinkedIn posts that have embedHtml
+  // No complex detection - just show the embed for everything
+  const showLinkedInEmbed = !!linkedInEmbedUrl && !embedFailed;
+
+  // Debug logging for LinkedIn posts
+  if (
+    item.source?.toLowerCase().includes("linkedin") ||
+    item.url?.toLowerCase().includes("linkedin.com")
+  ) {
+    console.log("[LinkedIn Post Debug]", {
+      itemId: item.id,
+      title: item.title?.substring(0, 50),
+      url: item.url?.substring(0, 80),
+      hasImageUrl: !!item.imageUrl,
+      hasVideoUrl: !!item.videoUrl,
+      hasDocumentUrl: !!item.documentUrl,
+      hasEmbedHtml: !!item.embedHtml,
+      linkedInEmbedUrl,
+      showLinkedInEmbed,
+    });
+  }
 
   const handleStatusChange = async (status: string) => {
     setIsUpdating(true);
@@ -363,12 +497,7 @@ export function ItemCardGamified({
 
   return (
     <>
-      <motion.div
-        variants={fadeInUp}
-        initial="initial"
-        animate="animate"
-        {...hoverLift}
-      >
+      <motion.div variants={fadeInUp} initial="initial" animate="animate">
         <Card
           className={cn(
             "overflow-hidden transition-all duration-200",
@@ -427,6 +556,67 @@ export function ItemCardGamified({
             </div>
           ) : null}
 
+          {/* LinkedIn embed for posts with videos/documents */}
+          {showLinkedInEmbed ? (
+            <div className="w-full bg-gray-50 py-4">
+              {/* Hint to scroll for video/document/content */}
+              <div className="flex justify-center mb-2 gap-3">
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                  {linkedInHasDocument
+                    ? "Scroll to view document"
+                    : linkedInHasVideo
+                      ? "Scroll to play video"
+                      : "Scroll to view full content"}
+                </div>
+                {/* View Image Fullscreen button (if post has an image) */}
+                {item.imageUrl && (
+                  <button
+                    onClick={() => setIsImageModalOpen(true)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-300 text-gray-700 rounded-full text-xs font-medium hover:bg-gray-50 hover:border-gray-400 transition-colors"
+                  >
+                    <svg
+                      className="w-3.5 h-3.5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"
+                      />
+                    </svg>
+                    View Image Fullscreen
+                  </button>
+                )}
+              </div>
+              <div className="flex justify-center">
+                <iframe
+                  src={linkedInEmbedUrl!}
+                  className="w-full max-w-[504px] h-[700px] border-0"
+                  allowFullScreen
+                  scrolling="yes"
+                  title="LinkedIn post"
+                  onError={() => setEmbedFailed(true)}
+                />
+              </div>
+            </div>
+          ) : null}
+
           {/* YouTube Embed / Facade */}
           {isYoutube && youtubeVideoId && !embedFailed && (
             <div className="w-full aspect-video bg-black relative group">
@@ -472,84 +662,42 @@ export function ItemCardGamified({
             </div>
           )}
 
-          {/* LinkedIn Video */}
-          {hasLinkedInVideo && !embedFailed && (
-            <div className="w-full aspect-video bg-gray-900 relative group">
-              {playLinkedInVideo ? (
-                <video
-                  className="w-full h-full"
-                  src={item.videoUrl!}
-                  controls
-                  autoPlay
-                >
-                  Your browser does not support the video tag.
-                </video>
-              ) : (
-                <button
-                  onClick={() => setPlayLinkedInVideo(true)}
-                  className="w-full h-full relative block cursor-pointer group"
-                >
-                  {item.imageUrl ? (
-                    <Image
-                      src={item.imageUrl}
-                      alt="Video thumbnail"
-                      fill
-                      className="object-cover"
-                      onError={() => setEmbedFailed(true)}
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
-                      <Play className="w-16 h-16 text-white/50" />
+          {/* LinkedIn Document - with fallback for detected documents */}
+          {(hasLinkedInDocument ||
+            (linkedInHasDocument && showLinkedInEmbed)) &&
+            !embedFailed && (
+              <div className="w-full bg-gradient-to-br from-blue-50 to-blue-100 border-y border-blue-200 p-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-red-600 rounded-lg flex items-center justify-center shadow-md">
+                      <svg
+                        className="w-6 h-6 text-white"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" />
+                      </svg>
                     </div>
-                  )}
-                  <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors flex items-center justify-center">
-                    <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-                      <Play className="w-8 h-8 text-white fill-white ml-1" />
+                    <div>
+                      <p className="font-semibold text-gray-900">
+                        📄 PDF Document Detected
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        {hasLinkedInDocument
+                          ? "Click to download or view the PDF"
+                          : ""}
+                      </p>
                     </div>
-                  </div>
-                </button>
-              )}
-            </div>
-          )}
-
-          {/* LinkedIn Document */}
-          {hasLinkedInDocument && !embedFailed && (
-            <div className="w-full bg-gradient-to-br from-blue-50 to-blue-100 border-y border-blue-200 p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-red-600 rounded-lg flex items-center justify-center shadow-md">
-                    <svg
-                      className="w-6 h-6 text-white"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="font-semibold text-gray-900">Document</p>
-                    <p className="text-sm text-gray-600">
-                      View document on LinkedIn
-                    </p>
                   </div>
                 </div>
-                <a
-                  href={item.documentUrl!}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
-                >
-                  Open Document
-                </a>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Thumbnail Image (fallback) */}
+          {/* Thumbnail Image (shows for regular images, including LinkedIn image-only posts) */}
           {!showInstagramEmbed &&
             !showTikTokEmbed &&
+            !showLinkedInEmbed &&
             !isYoutube &&
-            !hasLinkedInVideo &&
             !hasLinkedInDocument &&
             item.imageUrl && (
               <button
@@ -561,7 +709,7 @@ export function ItemCardGamified({
                   alt={item.title || "Content preview"}
                   width={800}
                   height={600}
-                  className="w-full h-auto max-h-80 object-contain group-hover:scale-[1.02] transition-transform duration-300"
+                  className="w-full h-auto max-h-80 object-contain"
                   loading="lazy"
                   quality={85}
                   unoptimized={
