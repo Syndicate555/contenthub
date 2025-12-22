@@ -112,6 +112,12 @@ function getYoutubeVideoId(url: string): string | null {
     const hostname = urlObj.hostname.toLowerCase();
 
     if (hostname.includes("youtube.com")) {
+      // Handle /shorts/ path
+      if (urlObj.pathname.startsWith("/shorts/")) {
+        const pathParts = urlObj.pathname.split("/");
+        return pathParts[2] || null;
+      }
+      // Handle standard watch URL
       return urlObj.searchParams.get("v");
     } else if (hostname.includes("youtu.be")) {
       return urlObj.pathname.slice(1);
