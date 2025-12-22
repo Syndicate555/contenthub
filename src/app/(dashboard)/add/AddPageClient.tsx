@@ -502,33 +502,28 @@ export default function AddPageClient({ inboundEmail }: AddPageClientProps) {
                 <CardTitle className="flex items-center gap-2">
                   <Mail className="w-5 h-5" />
                   Forward Newsletters
+                  <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-amber-100 text-amber-800 px-2 py-0.5 text-[11px] font-semibold border border-amber-200">
+                    Coming soon
+                  </span>
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <p className="text-sm text-gray-600">
-                  Forward email newsletters to your personalized address to
-                  automatically save and summarize them:
-                </p>
-                <div className="flex items-center gap-2 w-full">
-                  <code className="flex-1 min-w-0 px-3 py-2 text-sm bg-gray-100 rounded-md border border-gray-200 select-all font-mono break-all">
+                <div className="rounded-xl border border-dashed border-amber-200 bg-amber-50/60 p-4 text-sm text-amber-900">
+                  Newsletter forwarding is temporarily disabled while we finish
+                  the new ingestion pipeline. Stay tuned—your personalized
+                  address will be back shortly.
+                </div>
+                <div className="flex items-center gap-2 w-full opacity-60 pointer-events-none select-none">
+                  <code className="flex-1 min-w-0 px-3 py-2 text-sm bg-gray-100 rounded-md border border-gray-200 font-mono break-all">
                     {inboundEmail}
                   </code>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={handleCopyEmail}
-                    className="shrink-0"
-                  >
-                    {emailCopied ? (
-                      <Check className="w-4 h-4 text-green-600" />
-                    ) : (
-                      <Copy className="w-4 h-4" />
-                    )}
+                  <Button variant="outline" size="icon" disabled className="shrink-0">
+                    <Copy className="w-4 h-4" />
                   </Button>
                 </div>
                 <p className="text-xs text-gray-500">
-                  Newsletters are automatically processed with AI summaries,
-                  tags, and categorization
+                  We’ll process newsletters with AI summaries, tags, and
+                  categorization once this is live.
                 </p>
               </CardContent>
             </Card>
