@@ -28,8 +28,23 @@ export function Pagination({
 }: PaginationProps) {
   if (totalPages <= 1) return null;
 
-  const startItem = (currentPage - 1) * itemsPerPage + 1;
-  const endItem = Math.min(currentPage * itemsPerPage, totalItems);
+  const safeTotalItems =
+    Number.isFinite(totalItems) && totalItems > 0 ? totalItems : 0;
+  const safeItemsPerPage =
+    Number.isFinite(itemsPerPage) && itemsPerPage > 0
+      ? itemsPerPage
+      : safeTotalItems || 1;
+  const safeCurrentPage =
+    Number.isFinite(currentPage) && currentPage > 0 ? currentPage : 1;
+
+  const startItem =
+    safeTotalItems === 0
+      ? 0
+      : (safeCurrentPage - 1) * safeItemsPerPage + 1;
+  const endItem =
+    safeTotalItems === 0
+      ? 0
+      : Math.min(safeCurrentPage * safeItemsPerPage, safeTotalItems);
 
   // Generate page numbers to show
   const getPageNumbers = () => {

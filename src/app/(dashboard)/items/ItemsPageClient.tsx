@@ -1,87 +1,83 @@
 "use client";
 
-import { useState, useMemo, useTransition, useEffect, useRef } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ItemCardGamified } from "@/components/items/item-card-gamified";
-import { TagBadge } from "@/components/items/tag-badge";
 import { Pagination } from "@/components/items/pagination";
-import { ItemCardCompact } from "@/components/items/item-card-compact";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CollapsibleSection } from "@/components/ui/collapsible-section";
-import { ActiveFilters } from "@/components/items/active-filters";
-import {
-  Search,
-  Inbox,
-  X,
-  Tag,
-  Grid3X3,
-  List,
-  Loader2,
-  Filter,
-} from "lucide-react";
-import Link from "next/link";
-import type { ItemCategory, ItemStatus } from "@/types";
-import { cn } from "@/lib/utils";
 import { useItems, useCategories, updateItemStatus } from "@/hooks/use-items";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Search,
+  Filter,
+  Loader2,
+  X,
+  ChevronDown,
+  Briefcase,
+  MonitorSmartphone,
+  Palette,
+  Zap,
+  GraduationCap,
+  Coffee,
+  Film,
+  Sparkles,
+} from "lucide-react";
+import type { ItemCategory, ItemStatus } from "@/types";
 import { useTags } from "@/hooks/use-tags";
+import Image from "next/image";
+import PlatformIcon, {
+  getPlatformInfo,
+} from "@/components/items/platform-icon";
 
-type ViewMode = "grid" | "list";
+type FacetOption = { value: string; label: string; count?: number };
 
 export default function ItemsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
 
-  // View mode
-  const [viewMode, setViewMode] = useState<ViewMode>("grid");
-
-  // Filter state (local, synced to URL)
   const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
   const [statusFilter, setStatusFilter] = useState<ItemStatus | "all">(
     (searchParams.get("status") as ItemStatus | "all") || "all",
   );
-  const [categoryFilter, setCategoryFilter] = useState<ItemCategory | null>(
-    (searchParams.get("category") as ItemCategory) || null,
+  const [categoryFilter, setCategoryFilter] = useState<ItemCategory[]>(
+    searchParams.getAll("category") as ItemCategory[],
   );
-  const [platformFilter, setPlatformFilter] = useState<string | null>(
-    searchParams.get("platform") || null,
+  const platformParams = searchParams.getAll("platform");
+  const platformSingle = searchParams.get("platform");
+  const [platformFilter, setPlatformFilter] = useState<string[]>(
+    platformParams.length > 0
+      ? [platformParams[0]]
+      : platformSingle
+        ? [platformSingle]
+        : [],
   );
-  const [tagFilter, setTagFilter] = useState<string | null>(
-    searchParams.get("tag") || null,
+  const [tagFilter, setTagFilter] = useState<string[]>(
+    searchParams.getAll("tag"),
   );
-  const [authorFilter, setAuthorFilter] = useState<string | null>(
-    searchParams.get("author") || null,
+  const [authorFilter, setAuthorFilter] = useState<string[]>(
+    searchParams.getAll("author"),
   );
+  const [selectedItem, setSelectedItem] = useState<any | null>(null);
   const [currentPage, setCurrentPage] = useState(
     parseInt(searchParams.get("page") || "1", 10),
   );
-  const [selectedItem, setSelectedItem] = useState<any | null>(null);
+  const [showFiltersDrawer, setShowFiltersDrawer] = useState(false);
 
-  // Search queries for filter sections
-  const [platformSearchQuery, setPlatformSearchQuery] = useState("");
-  const [authorSearchQuery, setAuthorSearchQuery] = useState("");
-  const [tagSearchQuery, setTagSearchQuery] = useState("");
-
-  // Debounce search query to avoid too many API calls
   const debouncedSearchQuery = useDebouncedValue(searchQuery, 300);
-
-  // Batch URL updates to avoid excessive history pushes during rapid filter changes
   const urlUpdateTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Fetch categories with SWR (cached across navigations)
-  const {
-    categories,
-    totalItems,
-    platforms,
-    authors,
-    isLoading: isCategoriesLoading,
-    isValidating: isCategoriesValidating,
-  } = useCategories();
-
-  // Fetch items with SWR (cached across navigations)
   const {
     items,
     pagination,
@@ -99,93 +95,109 @@ export default function ItemsPage() {
     limit: 16,
   });
 
-  // Compute derived state
+  const {
+    categories,
+    totalItems,
+    platforms,
+    authors,
+    isLoading: isCategoriesLoading,
+    isValidating: isCategoriesValidating,
+  } = useCategories();
+  const { tags: tagObjects } = useTags(100, "usage");
+
+  const derivedTagCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    items.forEach((item) => {
+      if (item.itemTags?.length) {
+        item.itemTags.forEach((it: any) => {
+          const name = it.tag?.displayName;
+          if (name) counts.set(name, (counts.get(name) || 0) + 1);
+        });
+      } else if (item.tags?.length) {
+        item.tags.forEach((tag: string) =>
+          counts.set(tag, (counts.get(tag) || 0) + 1),
+        );
+      }
+    });
+    return Array.from(counts.entries())
+      .map(([tag, count]) => ({ tag, count }))
+      .sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag));
+  }, [items]);
+
   const hasActiveFilters =
-    categoryFilter ||
-    platformFilter ||
+    categoryFilter.length > 0 ||
+    platformFilter.length > 0 ||
+    tagFilter.length > 0 ||
+    authorFilter.length > 0 ||
     statusFilter !== "all" ||
-    tagFilter ||
-    authorFilter ||
-    searchQuery;
-  const isInListMode = viewMode === "list";
+    !!searchQuery;
 
-  // Fetch tags from API with global counts (not affected by filters)
-  const { tags: tagObjects } = useTags(50, "usage");
+  const isBackgroundLoading =
+    (isCategoriesValidating || isItemsValidating) && !isItemsLoading;
 
-  // Update URL when filters change (batched to avoid rapid history pushes)
   const updateUrl = (
-    updates: Record<string, string | null>,
+    updates: Record<string, string | string[] | null>,
     immediate = false,
   ) => {
-    // Clear existing timer
-    if (urlUpdateTimerRef.current) {
-      clearTimeout(urlUpdateTimerRef.current);
-    }
+    if (urlUpdateTimerRef.current) clearTimeout(urlUpdateTimerRef.current);
 
-    const performUpdate = () => {
+    const performUpdate = () =>
       startTransition(() => {
         const params = new URLSearchParams();
 
-        const newSearchQuery =
-          updates.q !== undefined ? updates.q : searchQuery;
-        const newStatus =
-          updates.status !== undefined ? updates.status : statusFilter;
-        const newCategory =
-          updates.category !== undefined ? updates.category : categoryFilter;
-        const newPlatform =
-          updates.platform !== undefined ? updates.platform : platformFilter;
-        const newTag = updates.tag !== undefined ? updates.tag : tagFilter;
-        const newAuthor =
-          updates.author !== undefined ? updates.author : authorFilter;
-        const newPage =
-          updates.page !== undefined ? updates.page : String(currentPage);
+        const nextSearch = updates.q ?? searchQuery;
+        const nextStatus =
+          (updates.status as ItemStatus | "all" | undefined) ?? statusFilter;
+        const nextCategory = updates.category ?? categoryFilter;
+        const nextPlatformRaw = updates.platform ?? platformFilter;
+        const nextTag = updates.tag ?? tagFilter;
+        const nextAuthor = updates.author ?? authorFilter;
+        const nextPage = updates.page ?? String(currentPage);
 
-        if (newSearchQuery) params.set("q", newSearchQuery);
-        if (newStatus && newStatus !== "all") params.set("status", newStatus);
-        if (newCategory) params.set("category", newCategory);
-        if (newPlatform) params.set("platform", newPlatform);
-        if (newTag) params.set("tag", newTag);
-        if (newAuthor) params.set("author", newAuthor);
-        if (newPage && parseInt(newPage) > 1) params.set("page", newPage);
+        if (nextSearch) params.set("q", nextSearch as string);
+        if (nextStatus && nextStatus !== "all")
+          params.set("status", nextStatus as string);
+
+        const appendAll = (key: string, vals?: string | string[] | null) => {
+          if (!vals) return;
+          (Array.isArray(vals) ? vals : [vals]).forEach((v) =>
+            params.append(key, v),
+          );
+        };
+
+        appendAll("category", nextCategory as any);
+        appendAll(
+          "platform",
+          Array.isArray(nextPlatformRaw)
+            ? nextPlatformRaw.slice(0, 1)
+            : nextPlatformRaw
+              ? [nextPlatformRaw]
+              : [],
+        );
+        appendAll("tag", nextTag as any);
+        appendAll("author", nextAuthor as any);
+
+        if (nextPage && parseInt(nextPage as string) > 1)
+          params.set("page", nextPage as string);
 
         router.replace(`/items?${params.toString()}`, { scroll: false });
       });
-    };
 
-    // For immediate updates (like pagination), update right away
-    // For filter changes, batch with 100ms delay to catch rapid changes
-    if (immediate) {
-      performUpdate();
-    } else {
-      urlUpdateTimerRef.current = setTimeout(performUpdate, 100);
-    }
+    if (immediate) performUpdate();
+    else urlUpdateTimerRef.current = setTimeout(performUpdate, 120);
   };
 
-  // Cleanup timer on unmount
-  useEffect(() => {
-    return () => {
-      if (urlUpdateTimerRef.current) {
-        clearTimeout(urlUpdateTimerRef.current);
-      }
-    };
-  }, []);
+  useEffect(
+    () => () => {
+      if (urlUpdateTimerRef.current) clearTimeout(urlUpdateTimerRef.current);
+    },
+    [],
+  );
 
-  // Handle status change with optimistic update
   const handleStatusChange = async (id: string, newStatus: string) => {
-    // Optimistically update local state
     mutateItems(
       (current) => {
         if (!current) return current;
-
-        // If filtering by status and item no longer matches, remove it
-        if (statusFilter !== "all" && newStatus !== statusFilter) {
-          return {
-            ...current,
-            data: current.data.filter((item) => item.id !== id),
-          };
-        }
-
-        // Otherwise update the item's status
         return {
           ...current,
           data: current.data.map((item) =>
@@ -195,526 +207,745 @@ export default function ItemsPage() {
       },
       { revalidate: false },
     );
-
-    // Make the actual API call
     await updateItemStatus(id, newStatus as ItemStatus);
   };
 
   const handleClearAllFilters = () => {
     setSearchQuery("");
     setStatusFilter("all");
-    setCategoryFilter(null);
-    setPlatformFilter(null);
-    setTagFilter(null);
-    setAuthorFilter(null);
+    setCategoryFilter([]);
+    setPlatformFilter([]);
+    setTagFilter([]);
+    setAuthorFilter([]);
     setCurrentPage(1);
-    setViewMode("grid");
     router.replace("/items", { scroll: false });
   };
-
-  const handleCategorySelect = (category: ItemCategory | null) => {
-    setCategoryFilter(category);
-    setCurrentPage(1);
-    setViewMode("grid");
-    updateUrl({ category, page: "1" });
-  };
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    updateUrl({ page: String(page) }, true); // Immediate update for pagination
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  // Show loading indicator when validating in background (but not during initial load)
-  const isBackgroundLoading =
-    (isCategoriesValidating || isItemsValidating) && !isItemsLoading;
-
-  // Use API-provided tag counts (global, not filtered)
-  const tagOptions = useMemo(() => {
-    return tagObjects.map((t) => ({
-      tag: t.displayName,
-      count: t.usageCount,
-    }));
-  }, [tagObjects]);
-
-  // Filter platforms by search query (search both platform and displayName)
-  const filteredPlatforms = useMemo(() => {
-    if (!platformSearchQuery) return platforms || [];
-    const query = platformSearchQuery.toLowerCase();
-    return (platforms || []).filter(
-      (p) =>
-        p.platform.toLowerCase().includes(query) ||
-        p.displayName?.toLowerCase().includes(query),
-    );
-  }, [platforms, platformSearchQuery]);
-
-  // Filter authors by search query
-  const filteredAuthors = useMemo(() => {
-    if (!authorSearchQuery) return authors || [];
-    return (authors || []).filter((a) =>
-      a.author.toLowerCase().includes(authorSearchQuery.toLowerCase()),
-    );
-  }, [authors, authorSearchQuery]);
-
-  // Filter tags by search query
-  const filteredTags = useMemo(() => {
-    if (!tagSearchQuery) return tagOptions;
-    return tagOptions.filter((t) =>
-      t.tag.toLowerCase().includes(tagSearchQuery.toLowerCase()),
-    );
-  }, [tagOptions, tagSearchQuery]);
-
-  // Build active filters array for the summary bar
-  const activeFilters = useMemo(() => {
-    const filters: Array<{
-      type: "category" | "platform" | "tag" | "author" | "status" | "search";
-      label: string;
-      value: string;
-      onRemove: () => void;
-    }> = [];
-
-    if (categoryFilter) {
-      filters.push({
-        type: "category",
-        label: "Category",
-        value: categoryFilter,
-        onRemove: () => handleCategorySelect(null),
-      });
-    }
-
-    if (platformFilter) {
-      filters.push({
-        type: "platform",
-        label: "Source",
-        value: platformFilter,
-        onRemove: () => {
-          setPlatformFilter(null);
-          updateUrl({ platform: null });
-        },
-      });
-    }
-
-    if (tagFilter) {
-      filters.push({
-        type: "tag",
-        label: "Tag",
-        value: tagFilter,
-        onRemove: () => {
-          setTagFilter(null);
-          updateUrl({ tag: null });
-        },
-      });
-    }
-
-    if (authorFilter) {
-      filters.push({
-        type: "author",
-        label: "Author",
-        value: authorFilter,
-        onRemove: () => {
-          setAuthorFilter(null);
-          updateUrl({ author: null });
-        },
-      });
-    }
-
-    if (statusFilter !== "all") {
-      filters.push({
-        type: "status",
-        label: "Status",
-        value: statusFilter,
-        onRemove: () => {
-          setStatusFilter("all");
-          updateUrl({ status: "all" });
-        },
-      });
-    }
-
-    if (searchQuery) {
-      filters.push({
-        type: "search",
-        label: "Search",
-        value: searchQuery,
-        onRemove: () => {
-          setSearchQuery("");
-          updateUrl({ q: null });
-        },
-      });
-    }
-
-    return filters;
-  }, [
-    categoryFilter,
-    platformFilter,
-    tagFilter,
-    authorFilter,
-    statusFilter,
-    searchQuery,
-  ]);
 
   const totalDisplay = pagination?.total ?? totalItems ?? items.length;
 
   return (
-    <div className="space-y-6">
-      {/* Hero + controls */}
-      <div className="flex flex-col gap-4">
-        <div className="flex items-center justify-between flex-wrap gap-3">
-          <div>
-            <h1 className="text-3xl font-semibold text-slate-900">Library</h1>
-            <p className="text-sm text-slate-500">
-              {totalDisplay} total items
-              {categories.length
-                ? ` across ${categories.length} categories`
-                : ""}
-            </p>
-          </div>
-          <div className="flex items-center gap-2 bg-slate-100 rounded-lg p-1">
-            <button
-              onClick={() => setViewMode("grid")}
-              className={cn(
-                "p-2 rounded-md transition-colors",
-                viewMode === "grid"
-                  ? "bg-white shadow-sm text-slate-900"
-                  : "text-slate-500 hover:text-slate-700",
-              )}
-              aria-label="Grid view"
-            >
-              <Grid3X3 className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => setViewMode("list")}
-              className={cn(
-                "p-2 rounded-md transition-colors",
-                viewMode === "list"
-                  ? "bg-white shadow-sm text-slate-900"
-                  : "text-slate-500 hover:text-slate-700",
-              )}
-              aria-label="List view"
-            >
-              <List className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-
-        {/* Search + sort */}
-        <div className="flex flex-wrap gap-3 items-center">
-          <div className="relative flex-1 min-w-[240px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <Input
-              type="search"
-              placeholder="Search by title or tags..."
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="pl-10"
-            />
-            {searchQuery !== debouncedSearchQuery && (
-              <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-gray-400" />
-            )}
-          </div>
-          <Button variant="outline" className="text-sm">
-            Newest First
-          </Button>
-        </div>
-      </div>
-
-      {/* Categories */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <p className="text-sm font-semibold text-slate-800">Categories</p>
-          {isBackgroundLoading && (
-            <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
-          )}
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button
-            size="sm"
-            variant={categoryFilter ? "outline" : "secondary"}
-            className={cn(
-              "rounded-full border",
-              !categoryFilter
-                ? "bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700 hover:text-white"
-                : "border-slate-200 text-slate-700",
-            )}
-            onClick={() => handleCategorySelect(null)}
-          >
-            All {totalItems ? `(${totalItems})` : ""}
-          </Button>
-          {categories.map((cat) => (
-            <Button
-              key={cat.category}
-              size="sm"
-              variant={
-                categoryFilter === cat.category ? "secondary" : "outline"
-              }
-              className={cn(
-                "rounded-full border",
-                categoryFilter === cat.category
-                  ? "bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700 hover:text-white"
-                  : "border-slate-200 text-slate-700",
-              )}
-              onClick={() => handleCategorySelect(cat.category)}
-            >
-              {cat.label} ({cat.count})
-            </Button>
-          ))}
-        </div>
-      </div>
-
-      {/* Platform filter */}
-      <CollapsibleSection
-        title="Filter by Source"
-        count={platforms?.length || 0}
-        defaultOpen={false}
-        searchable={true}
-        searchPlaceholder="Search sources..."
-        onSearchChange={setPlatformSearchQuery}
-      >
-        <div className="flex flex-wrap gap-2">
-          {filteredPlatforms.slice(0, 10).map((p) => (
-            <Button
-              key={p.platform}
-              size="sm"
-              variant={platformFilter === p.platform ? "secondary" : "outline"}
-              className={cn(
-                "rounded-full border",
-                platformFilter === p.platform
-                  ? "bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700 hover:text-white"
-                  : "border-slate-200 text-slate-700",
-              )}
-              onClick={() => {
-                const next = platformFilter === p.platform ? null : p.platform;
-                setPlatformFilter(next);
-                setCurrentPage(1);
-                updateUrl({ platform: next, page: "1" });
-              }}
-              title={`Includes: ${p.variations?.join(", ") || p.platform}`}
-            >
-              {p.displayName || p.platform} ({p.count})
-            </Button>
-          ))}
-          {filteredPlatforms.length > 10 && (
-            <span className="text-xs text-slate-400 self-center">
-              +{filteredPlatforms.length - 10} more
-            </span>
-          )}
-        </div>
-      </CollapsibleSection>
-
-      {/* Author Filter */}
-      <CollapsibleSection
-        title="Filter by Author"
-        count={authors?.length || 0}
-        defaultOpen={false}
-        searchable={true}
-        searchPlaceholder="Search authors..."
-        onSearchChange={setAuthorSearchQuery}
-      >
-        <div className="flex flex-wrap gap-2">
-          {filteredAuthors.length === 0 ? (
-            <p className="text-xs text-slate-500">No authors found.</p>
-          ) : (
-            filteredAuthors.slice(0, 10).map((a) => (
-              <Button
-                key={a.author}
-                size="sm"
-                variant={authorFilter === a.author ? "secondary" : "outline"}
-                className={cn(
-                  "rounded-full border",
-                  authorFilter === a.author
-                    ? "bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700 hover:text-white"
-                    : "border-slate-200 text-slate-700",
-                )}
-                onClick={() => {
-                  const next = authorFilter === a.author ? null : a.author;
-                  setAuthorFilter(next);
-                  setCurrentPage(1);
-                  updateUrl({ author: next, page: "1" });
-                }}
-              >
-                {a.author} ({a.count})
-              </Button>
-            ))
-          )}
-          {filteredAuthors.length > 10 && (
-            <span className="text-xs text-slate-400 self-center">
-              +{filteredAuthors.length - 10} more
-            </span>
-          )}
-        </div>
-      </CollapsibleSection>
-
-      {/* Tags */}
-      <CollapsibleSection
-        title="Filter by Tags"
-        count={tagOptions.length}
-        defaultOpen={true}
-        searchable={true}
-        searchPlaceholder="Search tags..."
-        onSearchChange={setTagSearchQuery}
-      >
-        <div className="flex flex-wrap gap-2">
-          {filteredTags.length === 0 ? (
-            <p className="text-xs text-slate-500">
-              {tagSearchQuery
-                ? "No tags found matching your search."
-                : "Tags will appear after you add items."}
-            </p>
-          ) : (
-            filteredTags.slice(0, 30).map((t) => (
-              <TagBadge
-                key={t.tag}
-                tag={`${t.tag} (${t.count})`}
-                clickable
-                isActive={tagFilter === t.tag}
-                onClick={() => {
-                  const tagName = t.tag;
-                  setTagFilter(tagFilter === tagName ? null : tagName);
-                  setCurrentPage(1);
-                  updateUrl({
-                    tag: tagFilter === tagName ? null : tagName,
-                    page: "1",
-                  });
-                }}
-              />
-            ))
-          )}
-          {filteredTags.length > 30 && (
-            <span className="text-xs text-slate-400 self-center">
-              +{filteredTags.length - 30} more
-            </span>
-          )}
-        </div>
-      </CollapsibleSection>
-
-      {/* Active Filters Summary */}
-      <ActiveFilters
-        filters={activeFilters}
+    <div className="space-y-4 lg:space-y-6">
+      <StickyTopBar
+        searchQuery={searchQuery}
+        setSearchQuery={(v) => {
+          setSearchQuery(v);
+          setCurrentPage(1);
+        }}
+        isSearching={searchQuery !== debouncedSearchQuery}
+        totalDisplay={totalDisplay}
+        totalItems={totalItems}
+        onClearSearch={() => setSearchQuery("")}
+        hasFilters={hasActiveFilters}
         onClearAll={handleClearAllFilters}
-      />
-
-      {/* Results */}
-      <div
-        className={cn(
-          "transition-opacity duration-150",
-          isItemsValidating && !isItemsLoading ? "opacity-75" : "",
-        )}
+        statusFilter={statusFilter}
+        setStatusFilter={(s) => {
+          setStatusFilter(s);
+          setCurrentPage(1);
+          updateUrl({ status: s });
+        }}
+        onOpenMobileFilters={() => setShowFiltersDrawer(true)}
       >
-        {isItemsLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <Skeleton key={i} className="h-40 w-full rounded-lg" />
-            ))}
-          </div>
-        ) : items.length === 0 ? (
-          <div className="text-center py-16">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Inbox className="w-8 h-8 text-gray-400" />
-            </div>
-            <h2 className="text-lg font-medium text-gray-900 mb-2">
-              No items found
-            </h2>
-            <p className="text-gray-500 mb-6">
-              {hasActiveFilters
-                ? "Try adjusting your filters"
-                : "Start by adding some content."}
-            </p>
-            {hasActiveFilters ? (
-              <Button variant="outline" onClick={handleClearAllFilters}>
-                Clear all filters
-              </Button>
-            ) : (
-              <Link
-                href="/add"
-                className="inline-flex items-center px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors"
-              >
-                Add Content
-              </Link>
-            )}
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between text-sm text-slate-500">
-              <span>{pagination?.total || items.length} items</span>
-            </div>
+        <ActiveFiltersRow
+          categoryFilter={categoryFilter}
+          platformFilter={platformFilter}
+          tagFilter={tagFilter}
+          authorFilter={authorFilter}
+          onRemoveFilter={(type, value) => {
+            const updater = (
+              current: string[],
+              setter: (v: string[]) => void,
+              key: string,
+            ) => {
+              const next = current.filter((v) => v !== value);
+              setter(next);
+              updateUrl({ [key]: next });
+            };
+            if (type === "category")
+              updater(categoryFilter, setCategoryFilter, "category");
+            if (type === "platform")
+              updater(platformFilter, setPlatformFilter, "platform");
+            if (type === "tag") updater(tagFilter, setTagFilter, "tag");
+            if (type === "author") updater(authorFilter, setAuthorFilter, "author");
+          }}
+        />
+      </StickyTopBar>
 
-            {isInListMode ? (
-              <div className="space-y-3">
+      <div className="grid grid-cols-1 lg:grid-cols-[320px_minmax(0,1fr)] gap-4 lg:gap-6">
+        <div className="hidden lg:block">
+          <FiltersSidebar
+            categories={categories}
+            platforms={platforms}
+            authors={authors || []}
+            tags={
+              tagObjects && tagObjects.length
+                ? tagObjects.map((t) => ({
+                    tag: t.displayName,
+                    count: t.usageCount,
+                  }))
+                : derivedTagCounts
+            }
+            selectedCategories={categoryFilter}
+            selectedPlatforms={platformFilter}
+            selectedAuthors={authorFilter}
+            selectedTags={tagFilter}
+            onCategoriesUpdate={(vals) => {
+              setCategoryFilter(vals as ItemCategory[]);
+              updateUrl({ category: vals, page: "1" });
+            }}
+            onPlatformsUpdate={(vals) => {
+              const single = vals.slice(0, 1);
+              setPlatformFilter(single);
+              updateUrl({ platform: single, page: "1" });
+            }}
+            onAuthorsUpdate={(vals) => {
+              setAuthorFilter(vals);
+              updateUrl({ author: vals, page: "1" });
+            }}
+            onTagsUpdate={(vals) => {
+              setTagFilter(vals);
+              updateUrl({ tag: vals, page: "1" });
+            }}
+          />
+        </div>
+
+        <div className="space-y-4">
+          {isItemsLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <Skeleton key={i} className="h-48 w-full rounded-lg" />
+              ))}
+            </div>
+          ) : items.length === 0 ? (
+            <div className="text-center py-10">
+              <p className="text-lg font-semibold text-slate-800">
+                No items found
+              </p>
+              <p className="text-sm text-slate-500">
+                Try adjusting your search or filters.
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="grid gap-4 grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
                 {items.map((item) => (
-                  <ItemCardGamified
+                  <ItemThumbnailCard
                     key={item.id}
                     item={item}
-                    showActions={item.status === "new"}
-                    onStatusChange={handleStatusChange}
-                    onTagClick={(tag) => {
-                      setTagFilter(tag);
-                      setCurrentPage(1);
-                      updateUrl({ tag, page: "1" });
-                    }}
+                    onClick={() => setSelectedItem(item)}
                   />
                 ))}
               </div>
-            ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
-                {items.map((item) => (
-                  <ItemCardCompact
-                    key={item.id}
-                    item={item}
-                    onOpen={setSelectedItem}
-                  />
-                ))}
-              </div>
-            )}
-
-            {pagination && pagination.totalPages > 1 && (
-              <Pagination
-                currentPage={pagination.page}
-                totalPages={pagination.totalPages}
-                totalItems={pagination.total}
-                itemsPerPage={pagination.limit}
-                onPageChange={handlePageChange}
-                isLoading={isItemsValidating}
-              />
-            )}
-          </div>
-        )}
+              {pagination && pagination.totalPages > 1 && (
+                <Pagination
+                  currentPage={pagination.page}
+                  totalPages={pagination.totalPages}
+                  totalItems={pagination.total ?? items.length}
+                  itemsPerPage={pagination.limit ?? 16}
+                  onPageChange={(page) => {
+                    setCurrentPage(page);
+                    updateUrl({ page: String(page) }, true);
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  className="justify-center"
+                />
+              )}
+            </>
+          )}
+        </div>
       </div>
 
-      {/* Detail modal */}
-      {selectedItem && (
-        <div
-          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start justify-center p-4 overflow-y-auto"
-          onClick={() => setSelectedItem(null)}
-        >
-          <div
-            className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full mt-10 relative"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              className="absolute right-4 top-4 p-2 bg-white/90 hover:bg-white rounded-full text-slate-500 hover:text-slate-800 transition-all z-10 shadow-sm border border-slate-100"
-              onClick={() => setSelectedItem(null)}
-              aria-label="Close"
-            >
-              <X className="w-5 h-5" />
-            </button>
-            <div className="p-4">
+      <Dialog
+        open={!!selectedItem}
+        onOpenChange={(open) => {
+          if (!open) setSelectedItem(null);
+        }}
+      >
+        <DialogContent className="max-w-5xl w-[94vw] sm:w-[90vw] lg:w-[80vw] max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              {selectedItem?.title || "Item details"}
+            </DialogTitle>
+            <DialogDescription>
+              {selectedItem?.source || "Content"}
+            </DialogDescription>
+          </DialogHeader>
+          {selectedItem && (
+            <div className="pb-4">
               <ItemCardGamified
                 item={selectedItem}
-                showActions={selectedItem.status === "new"}
+                showActions
                 onStatusChange={handleStatusChange}
-                onTagClick={(tag) => {
-                  setTagFilter(tag);
-                  setCurrentPage(1);
-                  updateUrl({ tag, page: "1" });
-                  setSelectedItem(null);
-                }}
               />
             </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <FiltersDrawer
+        open={showFiltersDrawer}
+        onOpenChange={setShowFiltersDrawer}
+        categories={categories}
+        platforms={platforms}
+        authors={authors || []}
+        tags={
+          tagObjects && tagObjects.length
+            ? tagObjects.map((t) => ({
+                tag: t.displayName,
+                count: t.usageCount,
+              }))
+            : derivedTagCounts
+        }
+        selectedCategories={categoryFilter}
+        selectedPlatforms={platformFilter}
+        selectedAuthors={authorFilter}
+        selectedTags={tagFilter}
+        onCategoriesUpdate={(vals) => {
+          setCategoryFilter(vals as ItemCategory[]);
+          updateUrl({ category: vals, page: "1" });
+        }}
+        onPlatformsUpdate={(vals) => {
+          const single = vals.slice(0, 1);
+          setPlatformFilter(single);
+          updateUrl({ platform: single, page: "1" });
+        }}
+        onAuthorsUpdate={(vals) => {
+          setAuthorFilter(vals);
+          updateUrl({ author: vals, page: "1" });
+        }}
+        onTagsUpdate={(vals) => {
+          setTagFilter(vals);
+          updateUrl({ tag: vals, page: "1" });
+        }}
+        onClearAll={() => {
+          handleClearAllFilters();
+          setShowFiltersDrawer(false);
+        }}
+      />
+    </div>
+  );
+}
+
+function toggleValue(list: string[], value: string) {
+  return list.includes(value) ? list.filter((v) => v !== value) : [...list, value];
+}
+
+function StickyTopBar({
+  searchQuery,
+  setSearchQuery,
+  isSearching,
+  totalDisplay,
+  totalItems,
+  onClearSearch,
+  hasFilters,
+  onClearAll,
+  statusFilter,
+  setStatusFilter,
+  onOpenMobileFilters,
+  children,
+}: {
+  searchQuery: string;
+  setSearchQuery: (v: string) => void;
+  isSearching: boolean;
+  totalDisplay: number;
+  totalItems: number;
+  onClearSearch: () => void;
+  hasFilters: boolean;
+  onClearAll: () => void;
+  statusFilter: ItemStatus | "all";
+  setStatusFilter: (s: ItemStatus | "all") => void;
+  onOpenMobileFilters: () => void;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div className="sticky top-0 z-20 bg-gray-50/95 backdrop-blur-sm border-b border-gray-200 shadow-sm">
+      <div className="flex flex-col gap-4 px-3 sm:px-4 lg:px-6 pt-4 pb-5">
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="relative flex-1 min-w-[260px]">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Input
+              type="search"
+              placeholder="Search your library…"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-11 pr-16 h-11 rounded-xl border-gray-200 shadow-sm focus:ring-2 focus:ring-gray-900/10"
+            />
+            {searchQuery && (
+              <button
+                aria-label="Clear search"
+                onClick={onClearSearch}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+            {isSearching && (
+              <Loader2 className="absolute right-9 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-gray-400" />
+            )}
+          </div>
+
+          <div className="flex items-center gap-3 ml-auto">
+            <span className="text-sm text-gray-600 whitespace-nowrap">
+              Showing {totalDisplay} of {totalItems || totalDisplay}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              className="lg:hidden h-11 rounded-xl border-gray-200 shadow-sm"
+              onClick={onOpenMobileFilters}
+            >
+              <Filter className="w-4 h-4 mr-2" />
+              Filters
+            </Button>
           </div>
         </div>
+
+        <div className="flex items-center gap-2 text-sm text-gray-600 flex-wrap">
+          {["all", "new", "reviewed", "pinned"].map((status) => (
+            <Button
+              key={status}
+              variant={statusFilter === status ? "default" : "outline"}
+              size="sm"
+              className={
+                statusFilter === status
+                  ? "bg-gray-900 text-white shadow-sm"
+                  : "border-gray-200 text-gray-700 bg-white hover:border-gray-300"
+              }
+              onClick={() => setStatusFilter(status as ItemStatus | "all")}
+            >
+              {status.charAt(0).toUpperCase() + status.slice(1)}
+            </Button>
+          ))}
+        </div>
+
+        {children}
+
+        {hasFilters && (
+          <div className="flex justify-end">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-gray-600 hover:text-gray-900"
+              onClick={onClearAll}
+            >
+              Clear all
+            </Button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ActiveFiltersRow({
+  categoryFilter,
+  platformFilter,
+  tagFilter,
+  authorFilter,
+  onRemoveFilter,
+}: {
+  categoryFilter: string[];
+  platformFilter: string[];
+  tagFilter: string[];
+  authorFilter: string[];
+  onRemoveFilter: (type: "category" | "platform" | "tag" | "author", value: string) => void;
+}) {
+  const tokens = [
+    ...categoryFilter.map((c) => ({ type: "category" as const, label: c })),
+    ...platformFilter.map((p) => ({ type: "platform" as const, label: p })),
+    ...tagFilter.map((t) => ({ type: "tag" as const, label: t })),
+    ...authorFilter.map((a) => ({ type: "author" as const, label: a })),
+  ];
+
+  if (!tokens.length) return null;
+
+  return (
+    <div className="flex items-center gap-2 overflow-x-auto pb-1">
+      {tokens.map((token) => (
+        <button
+          key={`${token.type}-${token.label}`}
+          onClick={() => onRemoveFilter(token.type, token.label)}
+          className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gray-100 text-gray-700 text-sm border border-gray-200"
+          aria-label={`Remove ${token.type} ${token.label}`}
+        >
+          <span className="capitalize">{token.type}:</span>
+          <span>{token.label}</span>
+          <X className="w-3 h-3" />
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function FiltersSidebar({
+  categories,
+  platforms,
+  authors,
+  tags,
+  selectedCategories,
+  selectedPlatforms,
+  selectedAuthors,
+  selectedTags,
+  onCategoriesUpdate,
+  onPlatformsUpdate,
+  onAuthorsUpdate,
+  onTagsUpdate,
+}: {
+  categories: { category: ItemCategory; label: string; count: number }[];
+  platforms: { platform: string; count: number }[];
+  authors: { author: string; count: number }[];
+  tags: { tag: string; count: number }[];
+  selectedCategories: string[];
+  selectedPlatforms: string[];
+  selectedAuthors: string[];
+  selectedTags: string[];
+  onCategoriesUpdate: (vals: string[]) => void;
+  onPlatformsUpdate: (vals: string[]) => void;
+  onAuthorsUpdate: (vals: string[]) => void;
+  onTagsUpdate: (vals: string[]) => void;
+}) {
+  const categoryIcons: Record<string, JSX.Element> = {
+    Technology: <MonitorSmartphone className="w-4 h-4 text-blue-500" />,
+    Business: <Briefcase className="w-4 h-4 text-amber-600" />,
+    Design: <Palette className="w-4 h-4 text-pink-500" />,
+    Productivity: <Zap className="w-4 h-4 text-yellow-500" />,
+    Learning: <GraduationCap className="w-4 h-4 text-indigo-500" />,
+    Lifestyle: <Coffee className="w-4 h-4 text-emerald-500" />,
+    Entertainment: <Film className="w-4 h-4 text-purple-500" />,
+    Other: <Sparkles className="w-4 h-4 text-gray-500" />,
+  };
+
+  const platformDomainMap: Record<string, string> = {
+    linkedin: "linkedin.com",
+    twitter: "x.com",
+    x: "x.com",
+    instagram: "instagram.com",
+    reddit: "reddit.com",
+    youtube: "youtube.com",
+    tiktok: "tiktok.com",
+    facebook: "facebook.com",
+    medium: "medium.com",
+  };
+
+  const resolvePlatformSource = (label: string) => {
+    const key = (label || "").toLowerCase();
+    if (platformDomainMap[key]) return platformDomainMap[key];
+    if (key.includes(".")) return label;
+    return `${key}.com`;
+  };
+
+  const renderFacet = (
+    title: string,
+    options: FacetOption[],
+    selected: string[],
+    onChange: (val: string[]) => void,
+    getIcon?: (opt: FacetOption) => JSX.Element | null,
+    selectionMode: "multi" | "single" = "multi",
+  ) => {
+    const cleaned = (options || []).filter(
+      (opt) => opt.value && opt.label,
+    );
+    const top = cleaned.slice(0, 10);
+    const selectedNormalized =
+      selectionMode === "single" && selected.length > 0
+        ? [selected[0]]
+        : selected;
+    return (
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-semibold text-slate-800">{title}</p>
+        </div>
+        <div className="space-y-1">
+          {top.map((opt, idx) => (
+            <label
+              key={opt.value || `${title}-${idx}`}
+              className="flex items-center gap-2 text-sm text-gray-700"
+            >
+              <input
+                type={selectionMode === "single" ? "radio" : "checkbox"}
+                checked={selectedNormalized.includes(opt.value)}
+                onChange={() =>
+                  selectionMode === "single"
+                    ? onChange([opt.value])
+                    : onChange(toggleValue(selectedNormalized, opt.value))
+                }
+                name={selectionMode === "single" ? `${title}-facet` : undefined}
+                aria-label={`${title} ${opt.label}`}
+                className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+              />
+              {getIcon ? (
+                <span className="flex items-center justify-center w-5">
+                  {getIcon(opt)}
+                </span>
+              ) : null}
+              <span className="flex-1 truncate flex items-center gap-1">
+                {opt.label}
+              </span>
+              {opt.count !== undefined && (
+                <span className="text-xs text-gray-500">{opt.count}</span>
+              )}
+            </label>
+          ))}
+          {cleaned.length > top.length && (
+            <FacetViewAllModal
+              title={title}
+              options={cleaned}
+              selected={selectedNormalized}
+              onApply={onChange}
+              selectionMode={selectionMode}
+            />
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="sticky top-24 space-y-6 bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
+      {renderFacet(
+        "Categories",
+        categories.map((c) => ({
+          value: c.category,
+          label: c.label,
+          count: c.count,
+        })),
+        selectedCategories,
+        onCategoriesUpdate,
+        (opt) => categoryIcons[opt.label] ?? null,
+      )}
+
+      {renderFacet(
+        "Sources",
+        platforms
+          .filter((p) => !!p.platform)
+          .map((p) => ({
+            value: p.platform,
+            label: p.platform,
+            count: p.count,
+          })),
+        selectedPlatforms,
+        onPlatformsUpdate,
+        (opt) => (
+          <div className="scale-90">
+            <PlatformIcon source={resolvePlatformSource(opt.label)} size="sm" />
+          </div>
+        ),
+        "single",
+      )}
+
+      {renderFacet(
+        "Authors",
+        authors
+          .filter((a) => !!a.author)
+          .map((a) => ({
+            value: a.author,
+            label: a.author,
+            count: a.count,
+          })),
+        selectedAuthors,
+        onAuthorsUpdate,
+      )}
+
+      {renderFacet(
+        "Tags",
+        tags
+          .filter((t) => !!t.tag)
+          .map((t) => ({ value: t.tag, label: t.tag, count: t.count })),
+        selectedTags,
+        onTagsUpdate,
       )}
     </div>
+  );
+}
+
+function FiltersDrawer(props: Parameters<typeof FiltersSidebar>[0] & {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  onClearAll: () => void;
+}) {
+  const { open, onOpenChange, onClearAll, ...rest } = props;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-lg max-w-none w-full rounded-t-2xl sm:rounded-lg left-1/2 sm:translate-x-[-50%] translate-y-0 top-auto bottom-0 sm:top-1/2 sm:translate-y-[-50%]">
+        <DialogHeader>
+          <DialogTitle>Filters</DialogTitle>
+          <DialogDescription>
+            Narrow results by categories, sources, authors, and tags.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+          <FiltersSidebar {...rest} />
+        </div>
+        <div className="flex justify-between pt-2">
+          <Button variant="ghost" onClick={onClearAll}>
+            Clear all
+          </Button>
+          <DialogClose asChild>
+            <Button>Close</Button>
+          </DialogClose>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ItemThumbnailCard({
+  item,
+  onClick,
+}: {
+  item: any;
+  onClick: () => void;
+}) {
+  const image = item.imageUrl || null;
+  const fallbackLabel = item.source || "Content";
+  const platform = getPlatformInfo(item.source || item.url || "");
+  return (
+    <button
+      onClick={onClick}
+      className="group relative overflow-hidden rounded-xl bg-gray-100 border border-gray-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+      aria-label={item.title || "View item"}
+    >
+      <div className="aspect-[3/4] w-full relative">
+        <div className="absolute left-2 top-2 z-10">
+          <div className="inline-flex items-center gap-2 rounded-full bg-white/90 px-2.5 py-1 text-xs font-medium text-gray-800 shadow-sm backdrop-blur">
+            <PlatformIcon source={platform.domain} size="sm" />
+            <span className="max-w-[120px] truncate">{platform.name}</span>
+          </div>
+        </div>
+        {image ? (
+          <Image
+            src={image}
+            alt={item.title || fallbackLabel}
+            fill
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            sizes="(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 50vw"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-gray-200 to-gray-300 text-gray-600 text-sm font-medium">
+            {fallbackLabel}
+          </div>
+        )}
+        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-3">
+          <p className="text-white text-sm font-semibold line-clamp-2">
+            {item.title || "Untitled"}
+          </p>
+        </div>
+      </div>
+    </button>
+  );
+}
+
+function FacetViewAllModal({
+  title,
+  options,
+  selected,
+  onApply,
+  selectionMode = "multi",
+}: {
+  title: string;
+  options: FacetOption[];
+  selected: string[];
+  onApply: (vals: string[]) => void;
+  selectionMode?: "multi" | "single";
+}) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const normalizedInitial =
+    selectionMode === "single" && selected.length > 0
+      ? [selected[0]]
+      : selected;
+  const [localSelected, setLocalSelected] =
+    useState<string[]>(normalizedInitial);
+
+  useEffect(() => {
+    setLocalSelected(
+      selectionMode === "single" && selected.length > 0
+        ? [selected[0]]
+        : selected,
+    );
+  }, [selected, selectionMode]);
+
+  const cleaned = (options || []).filter((opt) => opt.value && opt.label);
+  const filtered = cleaned.filter((opt) =>
+    opt.label!.toLowerCase().includes(search.toLowerCase()),
+  );
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <button className="text-sm text-indigo-600 hover:text-indigo-700 flex items-center gap-1">
+          View all <ChevronDown className="w-4 h-4" />
+        </button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>
+            {selectionMode === "single"
+              ? "Select one option"
+              : "Select multiple options"}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          <Input
+            placeholder={`Search ${title.toLowerCase()}...`}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <div className="max-h-64 overflow-y-auto space-y-2">
+            {filtered.map((opt, idx) => (
+              <label
+                key={opt.value || `${title}-modal-${idx}`}
+                className="flex items-center gap-2 text-sm text-gray-700"
+              >
+                <input
+                  type={selectionMode === "single" ? "radio" : "checkbox"}
+                  name={
+                    selectionMode === "single"
+                      ? `${title}-facet-modal`
+                      : undefined
+                  }
+                  checked={localSelected.includes(opt.value)}
+                  onChange={() =>
+                    setLocalSelected((prev) =>
+                      selectionMode === "single"
+                        ? [opt.value]
+                        : prev.includes(opt.value)
+                          ? prev.filter((p) => p !== opt.value)
+                          : [...prev, opt.value],
+                    )
+                  }
+                  className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                />
+                <span className="flex-1">{opt.label}</span>
+                {opt.count !== undefined && (
+                  <span className="text-xs text-gray-500">{opt.count}</span>
+                )}
+              </label>
+            ))}
+          </div>
+        </div>
+        <div className="flex justify-between pt-2">
+          <Button
+            variant="ghost"
+            onClick={() => {
+              setLocalSelected([]);
+            }}
+          >
+            Clear
+          </Button>
+          <DialogClose asChild>
+            <Button
+              onClick={() => {
+                onApply(localSelected);
+                setOpen(false);
+              }}
+            >
+              Done
+            </Button>
+          </DialogClose>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

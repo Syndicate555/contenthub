@@ -28,10 +28,22 @@ export async function GET(request: NextRequest) {
     const query = itemsQuerySchema.parse({
       q: searchParams.get("q") || undefined,
       status: searchParams.get("status") || undefined,
-      tag: searchParams.get("tag") || undefined,
-      category: searchParams.get("category") || undefined,
-      platform: searchParams.get("platform") || undefined,
-      author: searchParams.get("author") || undefined,
+      tag:
+        searchParams.getAll("tag").length > 0
+          ? searchParams.getAll("tag")
+          : searchParams.get("tag") || undefined,
+      category:
+        searchParams.getAll("category").length > 0
+          ? searchParams.getAll("category")
+          : searchParams.get("category") || undefined,
+      platform:
+        searchParams.getAll("platform").length > 0
+          ? searchParams.getAll("platform")
+          : searchParams.get("platform") || undefined,
+      author:
+        searchParams.getAll("author").length > 0
+          ? searchParams.getAll("author")
+          : searchParams.get("author") || undefined,
       page: searchParams.get("page") || undefined,
       limit: searchParams.get("limit") || undefined,
     });
@@ -53,85 +65,88 @@ export async function GET(request: NextRequest) {
       where.AND = [...existing, ...filters];
     };
 
+    const toArray = <T>(val: T | T[] | undefined): T[] =>
+      val === undefined ? [] : Array.isArray(val) ? val : [val];
+
     // Status filter
     if (query.status && query.status !== "all") {
       where.status = query.status;
     }
 
-    // Tag filter (using new ItemTag relation)
-    if (query.tag) {
+    // Tag filter (multi-select, using ItemTag relation)
+    const tags = toArray(query.tag);
+    if (tags.length) {
       where.itemTags = {
         some: {
           tag: {
-            displayName: query.tag,
+            displayName: { in: tags },
           },
         },
       };
     }
 
-    // Category filter
-    if (query.category) {
-      where.category = query.category;
+    // Category filter (multi-select)
+    const categories = toArray(query.category);
+    if (categories.length) {
+      where.category = { in: categories as any };
     }
 
-    // Author filter
-    if (query.author) {
-      where.author = query.author;
+    // Author filter (multi-select)
+    const authors = toArray(query.author);
+    if (authors.length) {
+      where.author = { in: authors };
     }
 
     // Platform filter (normalized domain-based filtering)
-    if (query.platform) {
-      // First, try to match against known platform slugs
-      const platformSlug = normalizePlatformSlug(query.platform);
+    const platformInputs = toArray(query.platform);
+    if (platformInputs.length) {
+      const platformFilters: Prisma.ItemWhereInput[] = [];
 
-      if (platformSlug) {
-        const platformFilters: Prisma.ItemWhereInput[] = [];
-        const domains = getPlatformDomains(platformSlug);
+      for (const platformInput of platformInputs) {
+        const platformSlug = normalizePlatformSlug(platformInput);
 
-        // Newsletter: include email import source
-        if (platformSlug === "newsletter") {
-          platformFilters.push({ importSource: "email" });
-        }
+        if (platformSlug) {
+          const domains = getPlatformDomains(platformSlug);
 
-        if (domains.length > 0) {
-          platformFilters.push({
-            OR: domains.map((domain) => ({
-              source: { contains: domain, mode: "insensitive" },
-            })),
-          });
-        }
+          if (platformSlug === "newsletter") {
+            platformFilters.push({ importSource: "email" });
+          }
 
-        appendAndFilters(platformFilters);
-      } else {
-        // For non-standard platforms, get all items and filter by normalized domain
-        // This handles cases like "anthropic.skilljar.com" where we want to match
-        // all variations (www.anthropic.skilljar.com, anthropic.skilljar.com, etc.)
-
-        // Get all possible source values that match this platform
-        const allSources = await db.item.findMany({
-          where: {
-            userId: user.id,
-            status: { not: "deleted" },
-            source: { not: null },
-          },
-          select: { source: true },
-          distinct: ["source"],
-        });
-
-        // Find all sources that normalize to the same platform
-        const matchingSources = allSources
-          .filter(
-            (item) => normalizeDomain(item.source || "") === query.platform,
-          )
-          .map((item) => item.source!);
-
-        if (matchingSources.length > 0) {
-          appendAndFilters([
-            {
-              source: { in: matchingSources },
+          if (domains.length > 0) {
+            platformFilters.push({
+              OR: domains.map((domain) => ({
+                source: { contains: domain, mode: "insensitive" },
+              })),
+            });
+          }
+        } else {
+          // For non-standard platforms, match by normalized domain
+          const allSources = await db.item.findMany({
+            where: {
+              userId: user.id,
+              status: { not: "deleted" },
+              source: { not: null },
             },
-          ]);
+            select: { source: true },
+            distinct: ["source"],
+          });
+
+          const matchingSources = allSources
+            .filter(
+              (item) => normalizeDomain(item.source || "") === platformInput,
+            )
+            .map((item) => item.source!);
+
+          if (matchingSources.length > 0) {
+            platformFilters.push({
+              source: { in: matchingSources },
+            });
+          }
         }
+      }
+
+      if (platformFilters.length) {
+        appendAndFilters(platformFilters);
       }
     }
 

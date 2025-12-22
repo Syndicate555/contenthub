@@ -54,10 +54,10 @@ export interface CategoryData {
 export interface ItemsQueryParams {
   q?: string;
   status?: ItemStatus | "all";
-  category?: ItemCategory | null;
-  platform?: string | null;
-  tag?: string | null;
-  author?: string | null;
+  category?: ItemCategory | null | ItemCategory[];
+  platform?: string | null | string[];
+  tag?: string | null | string[];
+  author?: string | null | string[];
   page?: number;
   limit?: number;
 }
@@ -69,10 +69,16 @@ function buildItemsUrl(params: ItemsQueryParams): string {
   if (params.q) searchParams.set("q", params.q);
   if (params.status && params.status !== "all")
     searchParams.set("status", params.status);
-  if (params.category) searchParams.set("category", params.category);
-  if (params.platform) searchParams.set("platform", params.platform);
-  if (params.tag) searchParams.set("tag", params.tag);
-  if (params.author) searchParams.set("author", params.author);
+  const addMulti = (key: string, value?: string | string[] | null) => {
+    if (!value) return;
+    const values = Array.isArray(value) ? value : [value];
+    values.forEach((v) => searchParams.append(key, v));
+  };
+
+  addMulti("category", params.category as any);
+  addMulti("platform", params.platform as any);
+  addMulti("tag", params.tag as any);
+  addMulti("author", params.author as any);
   searchParams.set("page", String(params.page || 1));
   searchParams.set("limit", String(params.limit || 16));
 

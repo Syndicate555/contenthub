@@ -40,10 +40,10 @@ export type UpdateItemInput = z.infer<typeof updateItemSchema>;
 export const itemsQuerySchema = z.object({
   q: z.string().optional(),
   status: z.enum(["new", "reviewed", "pinned", "deleted", "all"]).optional(),
-  tag: z.string().optional(),
-  category: categoryEnum.optional(),
-  platform: z.string().optional(),
-  author: z.string().optional(),
+  tag: z.union([z.string(), z.array(z.string())]).optional(),
+  category: z.union([categoryEnum, z.array(categoryEnum)]).optional(),
+  platform: z.union([z.string(), z.array(z.string())]).optional(),
+  author: z.union([z.string(), z.array(z.string())]).optional(),
   page: z.coerce.number().min(1).default(1),
   limit: z.coerce.number().min(1).max(100).default(16),
 });
