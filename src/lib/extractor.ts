@@ -49,6 +49,7 @@ function detectPlatform(
   | "tiktok"
   | "youtube"
   | "reddit"
+  | "facebook"
   | "generic" {
   const hostname = new URL(url).hostname.toLowerCase();
 
@@ -70,6 +71,14 @@ function detectPlatform(
   if (hostname.includes("reddit.com") || hostname.includes("redd.it")) {
     return "reddit";
   }
+  if (
+    hostname.includes("facebook.com") ||
+    hostname.includes("fb.com") ||
+    hostname.includes("fb.me") ||
+    hostname.includes("fb.watch")
+  ) {
+    return "facebook";
+  }
   return "generic";
 }
 
@@ -89,6 +98,67 @@ function extractYoutubeVideoId(url: string): string | null {
     /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*$/;
   const match = url.match(regExp);
   return match && match[2].length === 11 ? match[2] : null;
+}
+
+/**
+ * Extract Facebook post ID from URL
+ * Handles: /posts/pfbid..., /posts/1234..., /photo.php?fbid=, /videos/1234, /watch/?v=
+ */
+function extractFacebookPostId(url: string): string | null {
+  // Pattern 1: /posts/pfbid... or /posts/1234...
+  const postsMatch = url.match(/\/posts\/(pfbid[A-Za-z0-9]+|\d+)/);
+  if (postsMatch) return postsMatch[1];
+
+  // Pattern 2: /photo.php?fbid=1234
+  const photoMatch = url.match(/photo\.php\?fbid=(\d+)/);
+  if (photoMatch) return photoMatch[1];
+
+  // Pattern 3: /videos/1234
+  const videoMatch = url.match(/\/videos\/(\d+)/);
+  if (videoMatch) return videoMatch[1];
+
+  // Pattern 4: /watch/?v=1234
+  const watchMatch = url.match(/\/watch\/?\?v=(\d+)/);
+  if (watchMatch) return watchMatch[1];
+
+  return null;
+}
+
+/**
+ * Extract Facebook page/profile name from URL
+ */
+function extractFacebookAuthor(url: string): string | null {
+  // Pattern: facebook.com/username/posts/...
+  const match = url.match(/facebook\.com\/([^\/\?]+)\//);
+  return match && match[1] !== "photo.php" && match[1] !== "watch"
+    ? match[1]
+    : null;
+}
+
+/**
+ * Resolve Facebook short URLs (fb.watch, fb.me)
+ */
+async function resolveFacebookUrl(url: string): Promise<string> {
+  try {
+    const res = await fetchWithTimeout(url, { redirect: "follow" }, 5000);
+    return res.url || url;
+  } catch (err) {
+    console.log("[Facebook] Failed to resolve redirect:", err);
+    return url;
+  }
+}
+
+/**
+ * Check if Facebook URL is a video post
+ */
+function isFacebookVideo(url: string): boolean {
+  const urlLower = url.toLowerCase();
+  return (
+    urlLower.includes("/videos/") ||
+    urlLower.includes("/watch") ||
+    urlLower.includes("fb.watch") ||
+    urlLower.includes("/reel/")
+  );
 }
 
 /**
@@ -1232,6 +1302,235 @@ async function extractTikTokContent(url: string): Promise<ExtractedContent> {
 }
 
 /**
+ * Check if content appears to be from a Facebook login wall
+ */
+function isFacebookLoginWall(title?: string, description?: string): boolean {
+  if (!title && !description) return false;
+
+  const combinedText = `${title || ""} ${description || ""}`.toLowerCase();
+
+  // Login wall indicators
+  const loginWallPatterns = [
+    "log into facebook",
+    "log in to facebook",
+    "facebook login",
+    "create an account",
+    "sign up for facebook",
+    "connect with friends",
+    "see posts, photos and more on facebook",
+    "facebook helps you connect",
+    "to continue to facebook",
+  ];
+
+  return loginWallPatterns.some((pattern) => combinedText.includes(pattern));
+}
+
+/**
+ * Extract content from Facebook posts using improved fallback strategy
+ * Primary: Facebook oEmbed API (only reliable method for public posts)
+ * Fallback: Microlink API with strict login wall detection
+ * Note: Direct Facebook scraping almost always hits login walls
+ */
+async function extractFacebookContent(url: string): Promise<ExtractedContent> {
+  const source = new URL(url).hostname;
+
+  try {
+    console.log(`[Facebook] Starting extraction for ${url}`);
+
+    // Resolve short URLs first (fb.watch, fb.me)
+    const resolvedUrl = await resolveFacebookUrl(url);
+    console.log(`[Facebook] Resolved URL: ${resolvedUrl}`);
+
+    // Detect if this is a video post
+    const isVideo = isFacebookVideo(resolvedUrl);
+    console.log(`[Facebook] Is video: ${isVideo}`);
+
+    // Extract post ID and author from URL
+    const postId = extractFacebookPostId(resolvedUrl);
+    const author = extractFacebookAuthor(resolvedUrl);
+
+    let title = "";
+    let content = "";
+    let authorName = author || "Facebook User";
+    let imageUrl: string | undefined;
+    let videoUrl: string | undefined;
+    let embedHtml: string | undefined;
+    let oembedSucceeded = false;
+
+    // Tier 1: Try Facebook oEmbed API (ONLY reliable method for public posts)
+    try {
+      console.log("[Facebook] Tier 1: Trying oEmbed API");
+      const oembedUrl = `https://www.facebook.com/plugins/post/oembed.json/?url=${encodeURIComponent(resolvedUrl)}`;
+      const response = await fetchWithTimeout(
+        oembedUrl,
+        { headers: { Accept: "application/json" } },
+        8000,
+      );
+
+      if (response.ok) {
+        const data = (await response.json()) as {
+          html?: string;
+          author_name?: string;
+          author_url?: string;
+          provider_name?: string;
+        };
+
+        if (data.html && data.html.includes("facebook.com/plugins")) {
+          // Valid oEmbed response with actual embed code
+          embedHtml = data.html;
+          authorName = data.author_name || authorName;
+          oembedSucceeded = true;
+
+          // If this is a video, mark it as such
+          if (isVideo) {
+            videoUrl = resolvedUrl; // Store original URL as video URL for frontend reference
+          }
+
+          // Extract post text from blockquote in embed HTML
+          const blockquoteMatch = data.html.match(
+            /<blockquote[^>]*>([\s\S]*?)<\/blockquote>/i,
+          );
+          if (blockquoteMatch) {
+            // Remove HTML tags and get text content
+            const blockquoteText = blockquoteMatch[1]
+              .replace(/<[^>]+>/g, " ")
+              .replace(/\s+/g, " ")
+              .trim();
+            if (blockquoteText && blockquoteText.length > 10) {
+              content = blockquoteText.substring(0, 500); // Limit to 500 chars
+            }
+          }
+
+          console.log(
+            `[Facebook] oEmbed success: author=${authorName}, content=${content.length} chars, embedHtml=${!!embedHtml}, isVideo=${isVideo}`,
+          );
+        } else {
+          console.log("[Facebook] oEmbed returned invalid data");
+        }
+      } else {
+        console.log(`[Facebook] oEmbed failed with status ${response.status}`);
+      }
+    } catch (err) {
+      console.log("[Facebook] oEmbed error:", err);
+    }
+
+    // Tier 2: Try Microlink API only if oEmbed completely failed
+    // Note: Microlink often returns login wall content, so we validate heavily
+    if (!oembedSucceeded) {
+      try {
+        console.log("[Facebook] Tier 2: Trying Microlink API");
+        const microlinkUrl = `https://api.microlink.io?url=${encodeURIComponent(resolvedUrl)}`;
+        const microlinkRes = await fetchWithTimeout(
+          microlinkUrl,
+          { headers: { Accept: "application/json" } },
+          10000,
+        );
+
+        if (microlinkRes.ok) {
+          const data = (await microlinkRes.json()) as {
+            status?: string;
+            data?: {
+              title?: string;
+              description?: string;
+              author?: string;
+              image?: { url?: string };
+              video?: { url?: string };
+            };
+          };
+
+          if (data.status === "success" && data.data) {
+            const microlinkTitle = data.data.title || "";
+            const microlinkDescription = data.data.description || "";
+
+            // Check if this is a login wall
+            if (isFacebookLoginWall(microlinkTitle, microlinkDescription)) {
+              console.log(
+                "[Facebook] Microlink returned login wall content - rejecting",
+              );
+            } else {
+              // Looks like legitimate content
+              title = microlinkTitle;
+              content = microlinkDescription;
+              authorName = data.data.author || authorName;
+              imageUrl = data.data.image?.url;
+              videoUrl = data.data.video?.url;
+
+              // Try to generate embed iframe if we have a post ID
+              if (postId) {
+                // Use video player plugin for videos, post plugin for regular posts
+                if (isVideo) {
+                  embedHtml = `<iframe src="https://www.facebook.com/plugins/video.php?height=476&href=${encodeURIComponent(resolvedUrl)}&show_text=false&t=0" width="500" height="476" style="border:none;overflow:hidden" scrolling="no" frameborder="0" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>`;
+                } else {
+                  embedHtml = `<iframe src="https://www.facebook.com/plugins/post.php?href=${encodeURIComponent(resolvedUrl)}" width="500" height="700" style="border:none;overflow:hidden" scrolling="no" frameborder="0" allowfullscreen="true"></iframe>`;
+                }
+              }
+
+              console.log(
+                `[Facebook] Microlink success: title=${!!title}, description=${!!content}`,
+              );
+            }
+          }
+        }
+      } catch (err) {
+        console.log("[Facebook] Microlink fallback failed:", err);
+      }
+    }
+
+    // If we got embedHtml from oEmbed but no content, create a generic message
+    if (embedHtml && !content) {
+      if (isVideo) {
+        content = "Facebook video (scroll to watch in player below)";
+        title = `Facebook video by ${authorName}`;
+      } else {
+        content = "Facebook post content (scroll to view in embed below)";
+        title = `Facebook post by ${authorName}`;
+      }
+    }
+
+    // Ultimate fallback: If all methods failed or returned login walls
+    if (!embedHtml && !content) {
+      console.log(
+        "[Facebook] All extraction methods failed - post may be private, deleted, or restricted",
+      );
+      throw new Error(
+        "Unable to access this Facebook post. The post may be private, deleted, or require login to view. Please ensure the post is publicly accessible.",
+      );
+    }
+
+    // Build final response
+    const finalTitle =
+      title ||
+      (isVideo
+        ? `Facebook video by ${authorName}`
+        : `Facebook post by ${authorName}`);
+    const finalContent =
+      content ||
+      (isVideo
+        ? "Facebook video (scroll to watch in player below)"
+        : "Facebook post (scroll to view in embed below)");
+
+    console.log(
+      `[Facebook] Extraction complete: author=${authorName}, title length=${finalTitle.length}, content length=${finalContent.length}, embedHtml=${!!embedHtml}`,
+    );
+
+    return {
+      title: finalTitle,
+      content: finalContent,
+      source,
+      author: authorName,
+      imageUrl,
+      videoUrl,
+      embedHtml,
+    };
+  } catch (error) {
+    console.error("[Facebook] Extraction failed:", error);
+    throw new Error(
+      `Failed to extract Facebook content: ${error instanceof Error ? error.message : "Unknown error"}`,
+    );
+  }
+}
+
+/**
  * Extract content from LinkedIn using Microlink API
  * LinkedIn doesn't have a public oEmbed API, so we use Microlink for metadata extraction
  * Note: LinkedIn heavily restricts unauthenticated access, so we extract what we can
@@ -1641,6 +1940,8 @@ export async function extractContent(url: string): Promise<ExtractedContent> {
       return extractInstagramContent(url);
     case "linkedin":
       return extractLinkedInContent(url);
+    case "facebook":
+      return extractFacebookContent(url);
     case "tiktok":
       return extractTikTokContent(url);
     case "youtube":

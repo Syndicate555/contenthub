@@ -27,6 +27,7 @@ import {
   Video,
   Youtube,
   MessageSquare,
+  Users,
 } from "lucide-react";
 import { showMultipleBadgesNotification } from "@/components/badge-notification";
 
@@ -112,6 +113,18 @@ export default function AddPageClient({ inboundEmail }: AddPageClientProps) {
         label: "LinkedIn",
         color: "bg-blue-100 text-blue-800 border-blue-200",
         Icon: Linkedin,
+      };
+    }
+    if (
+      lower.includes("facebook.com") ||
+      lower.includes("fb.com") ||
+      lower.includes("fb.watch") ||
+      lower.includes("fb.me")
+    ) {
+      return {
+        label: "Facebook",
+        color: "bg-blue-100 text-blue-800 border-blue-200",
+        Icon: Users,
       };
     }
     if (lower.includes("tiktok.com")) {
@@ -297,8 +310,8 @@ export default function AddPageClient({ inboundEmail }: AddPageClientProps) {
                       autoFocus
                     />
                     <p className="text-xs text-gray-500">
-                      Paste a link from Twitter, Instagram, LinkedIn, TikTok, or
-                      any webpage
+                      Paste a link from Twitter, Instagram, LinkedIn, Facebook,
+                      TikTok, or any webpage
                     </p>
                   </div>
 
