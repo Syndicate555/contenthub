@@ -251,35 +251,63 @@ export default function TodayPage() {
             animate={{ opacity: 1, y: 0 }}
             className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-all"
           >
-            <div className="flex items-center gap-4">
-              {/* Left: Title + Count */}
-              <div className="flex items-center gap-3 min-w-fit">
-                <motion.div
-                  whileHover={{ scale: 1.05, rotate: 5 }}
-                  className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-gray-900 to-gray-700 rounded-xl shadow-md"
-                >
-                  <Inbox className="w-5 h-5 text-white" />
-                </motion.div>
-                <div className="flex items-baseline gap-3">
-                  <h1 className="text-2xl font-bold text-gray-900">Inbox</h1>
-                  <div className="flex items-center gap-2">
-                    <motion.span
-                      key={headerCount}
-                      initial={{ scale: 1.2, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      className="text-2xl font-black text-gray-900"
-                    >
-                      {headerCount}
-                    </motion.span>
-                    <span className="text-sm text-gray-500 font-medium">
-                      items
-                    </span>
+            <div className="flex flex-col gap-3 md:gap-4">
+              <div className="flex items-center gap-4">
+                {/* Left: Title + Count */}
+                <div className="flex items-center gap-3 min-w-fit">
+                  <motion.div
+                    whileHover={{ scale: 1.05, rotate: 5 }}
+                    className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-gray-900 to-gray-700 rounded-xl shadow-md"
+                  >
+                    <Inbox className="w-5 h-5 text-white" />
+                  </motion.div>
+                  <div className="flex items-baseline gap-3">
+                    <h1 className="text-2xl font-bold text-gray-900">Inbox</h1>
+                    <div className="flex items-center gap-2">
+                      <motion.span
+                        key={headerCount}
+                        initial={{ scale: 1.2, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        className="text-2xl font-black text-gray-900"
+                      >
+                        {headerCount}
+                      </motion.span>
+                      <span className="text-sm text-gray-500 font-medium">
+                        items
+                      </span>
+                    </div>
                   </div>
+                </div>
+
+                {/* Top-right badges */}
+                <div className="flex items-center gap-2 ml-auto">
+                  {processedToday > 0 && (
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="flex items-center gap-1.5 text-xs text-white bg-gradient-to-r from-green-500 to-emerald-600 px-3 py-1.5 rounded-full shadow-md"
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span className="font-semibold">{processedToday}</span>
+                    </motion.div>
+                  )}
+                  {isValidating && !isLoading && (
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{
+                        duration: 1,
+                        repeat: Infinity,
+                        ease: "linear",
+                      }}
+                    >
+                      <Loader2 className="w-4 h-4 text-gray-400" />
+                    </motion.div>
+                  )}
                 </div>
               </div>
 
-              {/* Right: Search */}
-              <div className="flex-1 relative group max-w-md ml-auto">
+              {/* Search on its own row for better responsiveness */}
+              <div className="relative group w-full">
                 <div className="absolute left-3 top-1/2 -translate-y-1/2">
                   <Search className="w-4 h-4 text-gray-400 group-focus-within:text-gray-600 transition-colors" />
                 </div>
@@ -287,7 +315,7 @@ export default function TodayPage() {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Search by title, tags, or content..."
-                  className="pl-10 pr-16 h-10 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:border-gray-400 focus:ring-2 focus:ring-gray-100 transition-all"
+                  className="pl-10 pr-16 h-10 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:border-gray-400 focus:ring-2 focus:ring-gray-100 transition-all w-full"
                 />
                 {searchTerm && (
                   <motion.button
@@ -300,32 +328,6 @@ export default function TodayPage() {
                   >
                     Clear
                   </motion.button>
-                )}
-              </div>
-
-              {/* Top-right badges */}
-              <div className="flex items-center gap-2">
-                {processedToday > 0 && (
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="flex items-center gap-1.5 text-xs text-white bg-gradient-to-r from-green-500 to-emerald-600 px-3 py-1.5 rounded-full shadow-md"
-                  >
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span className="font-semibold">{processedToday}</span>
-                  </motion.div>
-                )}
-                {isValidating && !isLoading && (
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{
-                      duration: 1,
-                      repeat: Infinity,
-                      ease: "linear",
-                    }}
-                  >
-                    <Loader2 className="w-4 h-4 text-gray-400" />
-                  </motion.div>
                 )}
               </div>
             </div>
