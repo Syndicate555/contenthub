@@ -91,7 +91,7 @@ export function TodaySidebar() {
   return (
     <div className="sticky top-20 space-y-3">
       {/* User Profile Card */}
-      <div className="bg-white rounded-lg border border-gray-200 p-3 shadow-sm hover:shadow-md transition-shadow">
+      <div className="bg-white rounded-lg border border-gray-200 p-3 shadow-sm">
         <UserProfileSection
           level={stats.level}
           totalXp={stats.totalXp}
@@ -100,7 +100,7 @@ export function TodaySidebar() {
       </div>
 
       {/* Quick Stats Card */}
-      <div className="bg-white rounded-lg border border-gray-200 p-3 shadow-sm hover:shadow-md transition-shadow">
+      <div className="bg-white rounded-lg border border-gray-200 p-3 shadow-sm">
         <h3 className="text-xs font-semibold text-gray-900 mb-2">
           Quick Stats
         </h3>
@@ -112,7 +112,7 @@ export function TodaySidebar() {
       </div>
 
       {/* Content Sources Card */}
-      <div className="bg-white rounded-lg border border-gray-200 p-3 shadow-sm hover:shadow-md transition-shadow">
+      <div className="bg-white rounded-lg border border-gray-200 p-3 shadow-sm">
         <h3 className="text-xs font-semibold text-gray-900 mb-2">
           Content Sources
         </h3>

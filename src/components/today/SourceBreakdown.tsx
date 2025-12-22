@@ -1,6 +1,5 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { Mail } from "lucide-react";
 import {
   Twitter,
@@ -110,35 +109,25 @@ export function SourceBreakdown({ sources }: SourceBreakdownProps) {
         const Icon = config.icon;
 
         return (
-          <motion.div
+          <div
             key={source.source}
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: index * 0.05 }}
-            className="group flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg transition-all cursor-pointer border border-transparent hover:border-gray-200"
+            className="flex items-center justify-between p-2 rounded-lg border border-transparent bg-white"
           >
             <div className="flex items-center gap-2 min-w-0 flex-1">
-              <motion.div
-                whileHover={{ scale: 1.1, rotate: 5 }}
-                transition={{ type: "spring", stiffness: 400 }}
-                className={`flex items-center justify-center w-7 h-7 rounded-lg ${config.bgColor} flex-shrink-0 shadow-sm group-hover:shadow-md transition-shadow`}
+              <div
+                className={`flex items-center justify-center w-7 h-7 rounded-lg ${config.bgColor} flex-shrink-0 shadow-sm`}
                 style={{ color: config.color }}
               >
                 <Icon className="w-3.5 h-3.5" />
-              </motion.div>
-              <span className="text-xs text-gray-700 font-medium truncate group-hover:text-gray-900 transition-colors">
+              </div>
+              <span className="text-xs text-gray-700 font-medium truncate">
                 {source.displayName}
               </span>
             </div>
-            <motion.span
-              key={source.count}
-              initial={{ scale: 1.2, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="text-xs font-bold text-gray-900 ml-2 flex-shrink-0 min-w-[1.5rem] text-right"
-            >
+            <span className="text-xs font-bold text-gray-900 ml-2 flex-shrink-0 min-w-[1.5rem] text-right">
               {formatCount(source.count)}
-            </motion.span>
-          </motion.div>
+            </span>
+          </div>
         );
       })}
     </div>
