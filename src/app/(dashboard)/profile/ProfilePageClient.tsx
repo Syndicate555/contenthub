@@ -202,6 +202,11 @@ export function ProfilePageClient({ fallbackData }: ProfilePageClientProps) {
       {/* Streak Warning */}
       <StreakWarning />
 
+      {/* Usage streak heatmap (full width) */}
+      <Suspense fallback={<Skeleton className="h-32 w-full rounded-xl" />}>
+        <StreakCalendar days={180} />
+      </Suspense>
+
       {/* Main Content Grid */}
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Left Column - Domain Stats, Badges & Calendar */}
@@ -215,11 +220,6 @@ export function ProfilePageClient({ fallbackData }: ProfilePageClientProps) {
               badgeStats={badgeStats}
               userStats={stats}
             />
-          </Suspense>
-
-          {/* Streak Calendar */}
-          <Suspense fallback={<Skeleton className="h-32 w-full rounded-xl" />}>
-            <StreakCalendar days={60} />
           </Suspense>
         </div>
 
