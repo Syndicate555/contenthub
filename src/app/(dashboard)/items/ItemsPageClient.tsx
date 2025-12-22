@@ -108,16 +108,17 @@ export default function ItemsPage() {
   const derivedTagCounts = useMemo(() => {
     const counts = new Map<string, number>();
     items.forEach((item) => {
-      if (item.itemTags?.length) {
-        item.itemTags.forEach((it: any) => {
-          const name = it.tag?.displayName;
-          if (name) counts.set(name, (counts.get(name) || 0) + 1);
-        });
-      } else if (item.tags?.length) {
-        item.tags.forEach((tag: string) =>
-          counts.set(tag, (counts.get(tag) || 0) + 1),
-        );
-      }
+      const tagList: string[] = Array.isArray((item as any).tags)
+        ? (item as any).tags
+        : Array.isArray((item as any).itemTags)
+          ? (item as any).itemTags
+              .map((it: any) => it?.tag?.displayName)
+              .filter((t: string | undefined): t is string => Boolean(t))
+          : [];
+
+      tagList.forEach((tag) =>
+        counts.set(tag, (counts.get(tag) || 0) + 1),
+      );
     });
     return Array.from(counts.entries())
       .map(([tag, count]) => ({ tag, count }))
