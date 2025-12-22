@@ -283,6 +283,7 @@ export function ItemCardGamified({
 }: ItemCardGamifiedProps) {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [isEmbedModalOpen, setIsEmbedModalOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showXpBreakdown, setShowXpBreakdown] = useState(false);
@@ -442,6 +443,28 @@ export function ItemCardGamified({
   }, [item.source, item.url, item.embedHtml, item.id, item.title]);
 
   const showFacebookEmbed = !!facebookEmbedUrl && !embedFailed;
+
+  // Debug logging for Facebook posts
+  if (
+    item.source?.toLowerCase().includes("facebook") ||
+    item.url?.toLowerCase().includes("facebook.com") ||
+    item.url?.toLowerCase().includes("fb.com") ||
+    item.url?.toLowerCase().includes("fb.watch")
+  ) {
+    console.log("[Facebook Post Debug]", {
+      itemId: item.id,
+      title: item.title?.substring(0, 50),
+      url: item.url?.substring(0, 80),
+      hasImageUrl: !!item.imageUrl,
+      hasVideoUrl: !!item.videoUrl,
+      hasEmbedHtml: !!item.embedHtml,
+      embedHtmlLength: item.embedHtml?.length || 0,
+      embedHtmlPreview: item.embedHtml?.substring(0, 150),
+      facebookEmbedUrl,
+      showFacebookEmbed,
+      embedFailed,
+    });
+  }
 
   // Debug logging for LinkedIn posts
   if (
@@ -656,9 +679,9 @@ export function ItemCardGamified({
 
           {/* Facebook embed for posts */}
           {showFacebookEmbed ? (
-            <div className="w-full bg-gray-50 py-4">
+            <div className="w-full bg-gray-50 py-6 px-4">
               {/* Hint to scroll for content and View Image button */}
-              <div className="flex justify-center mb-2 gap-3">
+              <div className="flex flex-wrap justify-center items-center mb-4 gap-3">
                 <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
                   <svg
                     className="w-4 h-4"
@@ -673,8 +696,32 @@ export function ItemCardGamified({
                       d="M19 9l-7 7-7-7"
                     />
                   </svg>
-                  Scroll to view full content
+                  {item.videoUrl
+                    ? "Scroll or click to play video"
+                    : "Scroll to view full content"}
                 </div>
+                {/* View Video Fullscreen button (if post has a video) */}
+                {item.videoUrl && (
+                  <button
+                    onClick={() => setIsVideoModalOpen(true)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-blue-300 text-blue-700 rounded-full text-xs font-medium hover:bg-blue-50 hover:border-blue-400 transition-colors"
+                  >
+                    <svg
+                      className="w-3.5 h-3.5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"
+                      />
+                    </svg>
+                    View Video Fullscreen
+                  </button>
+                )}
                 {/* View Image Fullscreen button (if post has an image) */}
                 {item.imageUrl && (
                   <button
@@ -1139,6 +1186,50 @@ export function ItemCardGamified({
             >
               Close
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Facebook Video Modal */}
+      {showFacebookEmbed && item.videoUrl && isVideoModalOpen && (
+        <div
+          className="fixed inset-0 z-[9999] bg-black/95 backdrop-blur-sm flex items-center justify-center p-6"
+          onClick={() => setIsVideoModalOpen(false)}
+        >
+          <div
+            className="relative w-full max-w-6xl h-full max-h-[95vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-end mb-3">
+              <button
+                className="bg-white/10 hover:bg-white/20 text-white rounded-full p-3 transition-colors backdrop-blur-sm"
+                onClick={() => setIsVideoModalOpen(false)}
+                aria-label="Close fullscreen"
+              >
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+            <div className="flex-1 flex items-center justify-center overflow-hidden">
+              <iframe
+                src={facebookEmbedUrl!}
+                className="w-full h-full border-0 rounded-lg bg-gray-900"
+                allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+                allowFullScreen
+                scrolling="yes"
+              />
+            </div>
           </div>
         </div>
       )}

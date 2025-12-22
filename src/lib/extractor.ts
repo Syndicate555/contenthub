@@ -102,7 +102,7 @@ function extractYoutubeVideoId(url: string): string | null {
 
 /**
  * Extract Facebook post ID from URL
- * Handles: /posts/pfbid..., /posts/1234..., /photo.php?fbid=, /videos/1234, /watch/?v=
+ * Handles: /posts/pfbid..., /posts/1234..., /photo.php?fbid=, /videos/1234, /watch/?v=, /share/r/, /share/v/
  */
 function extractFacebookPostId(url: string): string | null {
   // Pattern 1: /posts/pfbid... or /posts/1234...
@@ -121,6 +121,14 @@ function extractFacebookPostId(url: string): string | null {
   const watchMatch = url.match(/\/watch\/?\?v=(\d+)/);
   if (watchMatch) return watchMatch[1];
 
+  // Pattern 5: /share/r/... or /share/v/... (newer share URLs)
+  const shareMatch = url.match(/\/share\/[rv]\/([A-Za-z0-9]+)/);
+  if (shareMatch) return shareMatch[1];
+
+  // Pattern 6: /reel/1234
+  const reelMatch = url.match(/\/reel\/(\d+)/);
+  if (reelMatch) return reelMatch[1];
+
   return null;
 }
 
@@ -136,12 +144,64 @@ function extractFacebookAuthor(url: string): string | null {
 }
 
 /**
- * Resolve Facebook short URLs (fb.watch, fb.me)
+ * Resolve Facebook short URLs (fb.watch, fb.me, /share/r/, etc.)
+ * Manually follows redirects to get the final URL
  */
 async function resolveFacebookUrl(url: string): Promise<string> {
   try {
-    const res = await fetchWithTimeout(url, { redirect: "follow" }, 5000);
-    return res.url || url;
+    console.log(`[Facebook] Attempting to resolve URL: ${url}`);
+
+    // Use manual redirect following to capture final URL
+    let currentUrl = url;
+    let redirectCount = 0;
+    const maxRedirects = 10;
+
+    while (redirectCount < maxRedirects) {
+      const res = await fetchWithTimeout(
+        currentUrl,
+        {
+          redirect: "manual", // Don't follow automatically
+          headers: {
+            "User-Agent":
+              "facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)",
+          },
+        },
+        8000,
+      );
+
+      // Check if it's a redirect (3xx status)
+      if (res.status >= 300 && res.status < 400) {
+        const location = res.headers.get("location");
+        if (!location) {
+          console.log(
+            `[Facebook] Redirect without location header at: ${currentUrl}`,
+          );
+          break;
+        }
+
+        // Handle relative URLs
+        const nextUrl = location.startsWith("http")
+          ? location
+          : new URL(location, currentUrl).toString();
+
+        console.log(
+          `[Facebook] Redirect ${redirectCount + 1}: ${currentUrl} → ${nextUrl}`,
+        );
+        currentUrl = nextUrl;
+        redirectCount++;
+      } else {
+        // No more redirects
+        console.log(
+          `[Facebook] Final URL after ${redirectCount} redirects: ${currentUrl}`,
+        );
+        return currentUrl;
+      }
+    }
+
+    console.log(
+      `[Facebook] Max redirects (${maxRedirects}) reached, using: ${currentUrl}`,
+    );
+    return currentUrl;
   } catch (err) {
     console.log("[Facebook] Failed to resolve redirect:", err);
     return url;
@@ -157,7 +217,8 @@ function isFacebookVideo(url: string): boolean {
     urlLower.includes("/videos/") ||
     urlLower.includes("/watch") ||
     urlLower.includes("fb.watch") ||
-    urlLower.includes("/reel/")
+    urlLower.includes("/reel/") ||
+    urlLower.includes("/share/v/") // Share video URLs
   );
 }
 
@@ -1337,17 +1398,79 @@ async function extractFacebookContent(url: string): Promise<ExtractedContent> {
   try {
     console.log(`[Facebook] Starting extraction for ${url}`);
 
-    // Resolve short URLs first (fb.watch, fb.me)
-    const resolvedUrl = await resolveFacebookUrl(url);
-    console.log(`[Facebook] Resolved URL: ${resolvedUrl}`);
+    // Always try to resolve URLs to get actual post URL
+    // Share URLs and short URLs redirect to the actual post
+    let resolvedUrl = url;
 
-    // Detect if this is a video post
-    const isVideo = isFacebookVideo(resolvedUrl);
+    // Try multiple resolution methods
+    // Method 1: Direct fetch with redirect following
+    try {
+      const directResolve = await resolveFacebookUrl(url);
+      if (
+        directResolve &&
+        directResolve !== url &&
+        !directResolve.includes("/share/")
+      ) {
+        resolvedUrl = directResolve;
+        console.log(`[Facebook] Direct resolution: ${url} → ${resolvedUrl}`);
+      } else {
+        console.log(
+          `[Facebook] Direct resolution failed or returned share URL: ${directResolve}`,
+        );
+      }
+    } catch (err) {
+      console.log(`[Facebook] Direct resolution error:`, err);
+    }
+
+    // Method 2: If still a share URL, try Microlink to get canonical URL
+    if (resolvedUrl === url || resolvedUrl.includes("/share/")) {
+      try {
+        console.log(`[Facebook] Trying Microlink to resolve share URL`);
+        const microlinkUrl = `https://api.microlink.io?url=${encodeURIComponent(url)}`;
+        const microlinkRes = await fetchWithTimeout(
+          microlinkUrl,
+          { headers: { Accept: "application/json" } },
+          10000,
+        );
+
+        if (microlinkRes.ok) {
+          const data = (await microlinkRes.json()) as {
+            status?: string;
+            data?: { url?: string };
+          };
+
+          if (data.status === "success" && data.data?.url) {
+            const canonicalUrl = data.data.url;
+            if (canonicalUrl !== url && !canonicalUrl.includes("/share/")) {
+              resolvedUrl = canonicalUrl;
+              console.log(
+                `[Facebook] Microlink resolution: ${url} → ${resolvedUrl}`,
+              );
+            }
+          }
+        }
+      } catch (err) {
+        console.log(`[Facebook] Microlink resolution error:`, err);
+      }
+    }
+
+    console.log(`[Facebook] Final resolved URL: ${resolvedUrl}`);
+
+    // Detect if this is a video post (check both original and resolved URLs)
+    const isVideo = isFacebookVideo(url) || isFacebookVideo(resolvedUrl);
     console.log(`[Facebook] Is video: ${isVideo}`);
 
-    // Extract post ID and author from URL
-    const postId = extractFacebookPostId(resolvedUrl);
-    const author = extractFacebookAuthor(resolvedUrl);
+    // Extract post ID and author from URL (prefer resolved, fallback to original)
+    const postId =
+      extractFacebookPostId(resolvedUrl) || extractFacebookPostId(url);
+    const author =
+      extractFacebookAuthor(resolvedUrl) || extractFacebookAuthor(url);
+
+    // Determine which URL to use for embeds
+    // Use resolved URL if we have it and it's different from original
+    // This ensures embed plugins get the actual post URL, not share URL
+    const urlForEmbed = resolvedUrl && resolvedUrl !== url ? resolvedUrl : url;
+    console.log(`[Facebook] URL for embeds: ${urlForEmbed}`);
 
     let title = "";
     let content = "";
@@ -1358,61 +1481,103 @@ async function extractFacebookContent(url: string): Promise<ExtractedContent> {
     let oembedSucceeded = false;
 
     // Tier 1: Try Facebook oEmbed API (ONLY reliable method for public posts)
-    try {
-      console.log("[Facebook] Tier 1: Trying oEmbed API");
-      const oembedUrl = `https://www.facebook.com/plugins/post/oembed.json/?url=${encodeURIComponent(resolvedUrl)}`;
-      const response = await fetchWithTimeout(
-        oembedUrl,
-        { headers: { Accept: "application/json" } },
-        8000,
-      );
-
-      if (response.ok) {
-        const data = (await response.json()) as {
-          html?: string;
-          author_name?: string;
-          author_url?: string;
-          provider_name?: string;
-        };
-
-        if (data.html && data.html.includes("facebook.com/plugins")) {
-          // Valid oEmbed response with actual embed code
-          embedHtml = data.html;
-          authorName = data.author_name || authorName;
-          oembedSucceeded = true;
-
-          // If this is a video, mark it as such
-          if (isVideo) {
-            videoUrl = resolvedUrl; // Store original URL as video URL for frontend reference
-          }
-
-          // Extract post text from blockquote in embed HTML
-          const blockquoteMatch = data.html.match(
-            /<blockquote[^>]*>([\s\S]*?)<\/blockquote>/i,
-          );
-          if (blockquoteMatch) {
-            // Remove HTML tags and get text content
-            const blockquoteText = blockquoteMatch[1]
-              .replace(/<[^>]+>/g, " ")
-              .replace(/\s+/g, " ")
-              .trim();
-            if (blockquoteText && blockquoteText.length > 10) {
-              content = blockquoteText.substring(0, 500); // Limit to 500 chars
-            }
-          }
-
-          console.log(
-            `[Facebook] oEmbed success: author=${authorName}, content=${content.length} chars, embedHtml=${!!embedHtml}, isVideo=${isVideo}`,
-          );
-        } else {
-          console.log("[Facebook] oEmbed returned invalid data");
-        }
-      } else {
-        console.log(`[Facebook] oEmbed failed with status ${response.status}`);
-      }
-    } catch (err) {
-      console.log("[Facebook] oEmbed error:", err);
+    // Note: Try with both resolved URL and original URL (in case resolution failed)
+    const urlsToTry = [urlForEmbed];
+    if (urlForEmbed.includes("/share/") && urlForEmbed !== url) {
+      // If still a share URL after resolution, also try original in case it's different
+      urlsToTry.push(url);
     }
+
+    for (const tryUrl of urlsToTry) {
+      if (oembedSucceeded) break; // Already succeeded, skip remaining URLs
+
+      try {
+        console.log(`[Facebook] Tier 1: Trying oEmbed API with URL: ${tryUrl}`);
+        const oembedUrl = `https://www.facebook.com/plugins/post/oembed.json/?url=${encodeURIComponent(tryUrl)}`;
+        console.log(`[Facebook] oEmbed request URL: ${oembedUrl}`);
+        const response = await fetchWithTimeout(
+          oembedUrl,
+          { headers: { Accept: "application/json" } },
+          10000,
+        );
+
+        if (response.ok) {
+          const data = (await response.json()) as {
+            html?: string;
+            author_name?: string;
+            author_url?: string;
+            provider_name?: string;
+          };
+
+          if (data.html && data.html.includes("facebook.com/plugins")) {
+            // Valid oEmbed response with actual embed code
+            console.log(`[Facebook] oEmbed succeeded with URL: ${tryUrl}`);
+            authorName = data.author_name || authorName;
+            oembedSucceeded = true;
+
+            // Extract the actual post URL from the oEmbed HTML if it contains one
+            // This helps resolve share URLs to actual post URLs
+            const hrefMatch = data.html.match(/href="([^"]+)"/);
+            const extractedUrl = hrefMatch ? hrefMatch[1] : null;
+            let finalEmbedUrl = tryUrl;
+
+            if (extractedUrl && !extractedUrl.includes("/share/")) {
+              console.log(
+                `[Facebook] Extracted resolved URL from oEmbed: ${extractedUrl}`,
+              );
+              finalEmbedUrl = extractedUrl;
+            }
+
+            // For videos, oEmbed often returns generic post embed instead of video player
+            // Generate proper video player embed manually using the best URL we have
+            if (isVideo) {
+              console.log(
+                "[Facebook] Video detected - generating video player embed",
+              );
+              embedHtml = `<iframe src="https://www.facebook.com/plugins/video.php?height=476&href=${encodeURIComponent(finalEmbedUrl)}&show_text=false&t=0" width="500" height="476" style="border:none;overflow:hidden" scrolling="no" frameborder="0" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>`;
+              videoUrl = finalEmbedUrl;
+            } else {
+              // For regular posts, use oEmbed HTML but replace share URL with resolved URL if available
+              if (extractedUrl && extractedUrl !== tryUrl) {
+                embedHtml = data.html.replace(
+                  /href="[^"]+"/,
+                  `href="${extractedUrl}"`,
+                );
+              } else {
+                embedHtml = data.html;
+              }
+            }
+
+            // Extract post text from blockquote in embed HTML
+            const blockquoteMatch = data.html.match(
+              /<blockquote[^>]*>([\s\S]*?)<\/blockquote>/i,
+            );
+            if (blockquoteMatch) {
+              // Remove HTML tags and get text content
+              const blockquoteText = blockquoteMatch[1]
+                .replace(/<[^>]+>/g, " ")
+                .replace(/\s+/g, " ")
+                .trim();
+              if (blockquoteText && blockquoteText.length > 10) {
+                content = blockquoteText.substring(0, 500); // Limit to 500 chars
+              }
+            }
+
+            console.log(
+              `[Facebook] oEmbed success: author=${authorName}, content=${content.length} chars, embedHtml=${!!embedHtml}, isVideo=${isVideo}`,
+            );
+          } else {
+            console.log("[Facebook] oEmbed returned invalid data");
+          }
+        } else {
+          console.log(
+            `[Facebook] oEmbed failed with status ${response.status}`,
+          );
+        }
+      } catch (err) {
+        console.log("[Facebook] oEmbed error:", err);
+      }
+    } // Close for loop
 
     // Tier 2: Try Microlink API only if oEmbed completely failed
     // Note: Microlink often returns login wall content, so we validate heavily
@@ -1456,12 +1621,15 @@ async function extractFacebookContent(url: string): Promise<ExtractedContent> {
               videoUrl = data.data.video?.url;
 
               // Try to generate embed iframe if we have a post ID
+              // Use resolved URL for embed plugins
               if (postId) {
                 // Use video player plugin for videos, post plugin for regular posts
                 if (isVideo) {
-                  embedHtml = `<iframe src="https://www.facebook.com/plugins/video.php?height=476&href=${encodeURIComponent(resolvedUrl)}&show_text=false&t=0" width="500" height="476" style="border:none;overflow:hidden" scrolling="no" frameborder="0" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>`;
+                  embedHtml = `<iframe src="https://www.facebook.com/plugins/video.php?height=476&href=${encodeURIComponent(urlForEmbed)}&show_text=false&t=0" width="500" height="476" style="border:none;overflow:hidden" scrolling="no" frameborder="0" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>`;
+                  // Set videoUrl so frontend knows this is a video
+                  videoUrl = urlForEmbed;
                 } else {
-                  embedHtml = `<iframe src="https://www.facebook.com/plugins/post.php?href=${encodeURIComponent(resolvedUrl)}" width="500" height="700" style="border:none;overflow:hidden" scrolling="no" frameborder="0" allowfullscreen="true"></iframe>`;
+                  embedHtml = `<iframe src="https://www.facebook.com/plugins/post.php?href=${encodeURIComponent(urlForEmbed)}" width="500" height="700" style="border:none;overflow:hidden" scrolling="no" frameborder="0" allowfullscreen="true"></iframe>`;
                 }
               }
 
