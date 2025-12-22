@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ItemCardGamified } from "@/components/items/item-card-gamified";
@@ -252,9 +253,9 @@ export default function ItemsPage() {
           tagFilter={tagFilter}
           authorFilter={authorFilter}
           onRemoveFilter={(type, value) => {
-            const updater = (
-              current: string[],
-              setter: (v: string[]) => void,
+            const updater = <T extends string>(
+              current: T[],
+              setter: (v: T[]) => void,
               key: string,
             ) => {
               const next = current.filter((v) => v !== value);
@@ -262,7 +263,11 @@ export default function ItemsPage() {
               updateUrl({ [key]: next });
             };
             if (type === "category")
-              updater(categoryFilter, setCategoryFilter, "category");
+              updater<ItemCategory>(
+                categoryFilter as ItemCategory[],
+                setCategoryFilter as (v: ItemCategory[]) => void,
+                "category",
+              );
             if (type === "platform")
               updater(platformFilter, setPlatformFilter, "platform");
             if (type === "tag") updater(tagFilter, setTagFilter, "tag");
@@ -347,7 +352,6 @@ export default function ItemsPage() {
                     updateUrl({ page: String(page) }, true);
                     window.scrollTo({ top: 0, behavior: "smooth" });
                   }}
-                  className="justify-center"
                 />
               )}
             </>
@@ -604,7 +608,7 @@ function FiltersSidebar({
   onAuthorsUpdate: (vals: string[]) => void;
   onTagsUpdate: (vals: string[]) => void;
 }) {
-  const categoryIcons: Record<string, JSX.Element> = {
+  const categoryIcons: Record<string, ReactNode> = {
     Technology: <MonitorSmartphone className="w-4 h-4 text-blue-500" />,
     Business: <Briefcase className="w-4 h-4 text-amber-600" />,
     Design: <Palette className="w-4 h-4 text-pink-500" />,
@@ -639,7 +643,7 @@ function FiltersSidebar({
     options: FacetOption[],
     selected: string[],
     onChange: (val: string[]) => void,
-    getIcon?: (opt: FacetOption) => JSX.Element | null,
+    getIcon?: (opt: FacetOption) => ReactNode,
     selectionMode: "multi" | "single" = "multi",
   ) => {
     const cleaned = (options || []).filter(
