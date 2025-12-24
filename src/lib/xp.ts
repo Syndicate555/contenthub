@@ -168,10 +168,11 @@ export async function awardXP(params: AwardXPParams): Promise<AwardXPResult> {
   const levelUp = newLevel > previousLevel;
 
   // Prepare stats update based on action
+  // NOTE: Do NOT update lastActivityAt here - it's managed by the streak system (updateStreak)
+  // to avoid race conditions where awarding XP before tracking activity breaks streak detection
   const statsUpdate: Record<string, unknown> = {
     totalXp: newTotalXp,
     overallLevel: newLevel,
-    lastActivityAt: new Date(),
   };
 
   // Increment specific counters based on action
@@ -221,7 +222,7 @@ export async function awardXP(params: AwardXPParams): Promise<AwardXPResult> {
           action === XP_ACTIONS.COMPLETE_WEEKLY_QUEST
             ? 1
             : 0,
-        lastActivityAt: new Date(),
+        // lastActivityAt will be set by updateStreak() to avoid race conditions
       },
       update: statsUpdate,
     });
