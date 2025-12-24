@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion, useReducedMotion, type MotionProps } from "framer-motion";
 import { DotLottieReact } from "@lottiefiles/dotlottie-react";
 import { Reveal } from "@/components/motion";
 
@@ -130,8 +130,8 @@ const Integrations = () => {
     [],
   );
 
-  const marqueeAnimation = prefersReducedMotion
-    ? {}
+  const marqueeAnimation: MotionProps = prefersReducedMotion
+    ? { animate: { x: 0 } }
     : {
         initial: { x: "-50%" },
         animate: { x: "0%" },
