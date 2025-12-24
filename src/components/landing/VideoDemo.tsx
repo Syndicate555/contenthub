@@ -200,7 +200,7 @@ const ChapterButton = ({
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-0.5">
-            <h4
+            <h3
               className={`font-semibold transition-colors ${
                 isActive
                   ? "text-brand-1"
@@ -208,7 +208,7 @@ const ChapterButton = ({
               }`}
             >
               {chapter.title}
-            </h4>
+            </h3>
             <span className="text-xs text-text-muted">{chapter.subtitle}</span>
           </div>
           <p className="text-sm text-text-secondary leading-relaxed line-clamp-2">
@@ -387,13 +387,21 @@ const VideoDemo = () => {
                   onPause={() => setIsPlaying(false)}
                   onError={() => setIsLoaded(true)}
                   className="w-full h-full object-contain"
-                />
+                  aria-label="Product demonstration video"
+                >
+                  <track
+                    kind="captions"
+                    srcLang="en"
+                    label="English captions"
+                  />
+                </video>
                 {/* Video controls overlay */}
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity bg-black/20">
                   <div className="flex items-center gap-3">
                     <button
                       onClick={togglePlay}
                       className="w-14 h-14 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center hover:bg-white transition-colors shadow-lg"
+                      aria-label={isPlaying ? "Pause video" : "Play video"}
                     >
                       {isPlaying ? (
                         <Pause className="w-6 h-6 text-text-primary" />
@@ -422,7 +430,8 @@ const VideoDemo = () => {
                     <div className="flex items-center gap-2">
                       <button
                         onClick={toggleMute}
-                        className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-colors"
+                        className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-colors"
+                        aria-label={isMuted ? "Unmute video" : "Mute video"}
                       >
                         {isMuted ? (
                           <VolumeX className="w-4 h-4 text-white" />
@@ -432,7 +441,8 @@ const VideoDemo = () => {
                       </button>
                       <button
                         onClick={openFullscreen}
-                        className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-colors"
+                        className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-colors"
+                        aria-label="Open fullscreen"
                       >
                         <Maximize2 className="w-4 h-4 text-white" />
                       </button>

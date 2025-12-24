@@ -43,18 +43,18 @@ const Footer = () => {
                 {link.label}
               </button>
             ))}
-            <a
-              href="#"
+            <Link
+              href="/privacy"
               className="text-sm text-text-secondary hover:text-brand-1 transition-colors"
             >
-              Privacy
-            </a>
-            <a
-              href="#"
+              Privacy Policy
+            </Link>
+            <Link
+              href="/terms"
               className="text-sm text-text-secondary hover:text-brand-1 transition-colors"
             >
-              Terms
-            </a>
+              Terms of Service
+            </Link>
           </div>
 
           {/* Socials */}

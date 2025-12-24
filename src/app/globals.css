@@ -118,8 +118,9 @@
   --ink: #0b1220;
   --text-primary: #0b1220;
   --text-body: #1a2332;
-  --text-secondary: #5b6475;
-  --text-muted: #8b95a5;
+  /* Darkened for WCAG AA contrast (4.5:1 on light backgrounds) */
+  --text-secondary: #475569;
+  --text-muted: #64748b;
 
   --border-light: rgba(11, 18, 32, 0.06);
   --border-medium: rgba(11, 18, 32, 0.12);
@@ -827,4 +828,20 @@
   .recording-dot {
     animation: none;
   }
+}
+
+/* Optimized background orbs - radial gradient instead of expensive blur */
+.orb-brand-1 {
+  --orb-start: oklch(0.7 0.15 270 / 0.25);
+  border-radius: 9999px;
+}
+
+.orb-brand-2 {
+  --orb-start: oklch(0.7 0.15 210 / 0.2);
+  border-radius: 9999px;
+}
+
+.orb-brand-3 {
+  --orb-start: oklch(0.7 0.12 300 / 0.2);
+  border-radius: 9999px;
 }

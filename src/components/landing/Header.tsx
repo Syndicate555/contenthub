@@ -38,12 +38,12 @@ export const Navbar = () => {
 
 const Logo = () => {
   return (
-    <Link 
-      href="/" 
+    <Link
+      href="/"
       className="flex items-center gap-2.5 font-bold text-lg text-text-primary group"
       aria-label="Tavlo - Home"
     >
-      <motion.span 
+      <motion.span
         className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-1 to-brand-2 flex items-center justify-center text-white text-xs font-bold shadow-lg shadow-brand-1/25"
         whileHover={{ scale: 1.05, rotate: 5 }}
       >
@@ -68,10 +68,10 @@ const DesktopNav = ({ navItems, visible }: NavbarProps) => {
   const [hovered, setHovered] = useState<number | null>(null);
 
   const scrollToSection = (href: string) => {
-    if (href.startsWith('#')) {
+    if (href.startsWith("#")) {
       const element = document.querySelector(href);
       if (element) {
-        element.scrollIntoView({ behavior: 'smooth' });
+        element.scrollIntoView({ behavior: "smooth" });
       }
     }
   };
@@ -100,7 +100,9 @@ const DesktopNav = ({ navItems, visible }: NavbarProps) => {
         boxShadow: visible
           ? "0 0 24px rgba(34, 42, 53, 0.06), 0 1px 1px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(34, 42, 53, 0.04), 0 0 4px rgba(34, 42, 53, 0.08), 0 16px 68px rgba(47, 48, 55, 0.05), 0 1px 0 rgba(255, 255, 255, 0.1) inset"
           : "none",
-        backgroundColor: visible ? "rgba(255, 255, 255, 0.9)" : "rgba(255, 255, 255, 0.0)",
+        backgroundColor: visible
+          ? "rgba(255, 255, 255, 0.9)"
+          : "rgba(255, 255, 255, 0.0)",
         borderRadius: visible ? "1rem" : "2rem",
       }}
       transition={{
@@ -109,7 +111,7 @@ const DesktopNav = ({ navItems, visible }: NavbarProps) => {
         damping: 30,
       }}
       className={cn(
-        "hidden lg:flex flex-row items-center justify-between py-2 px-4 fixed z-[60] left-1/2" 
+        "hidden lg:flex flex-row items-center justify-between py-2 px-4 fixed z-[60] left-1/2",
       )}
     >
       <Logo />
@@ -119,7 +121,8 @@ const DesktopNav = ({ navItems, visible }: NavbarProps) => {
             key={`link=${idx}`}
             onClick={() => scrollToSection(navItem.href)}
             onMouseEnter={() => setHovered(idx)}
-            className="text-neutral-600 relative px-4 py-2"
+            className="text-neutral-600 relative px-4 py-2 min-h-[48px] min-w-[48px]"
+            aria-label={`Navigate to ${navItem.label}`}
           >
             {hovered === idx && (
               <motion.div
@@ -133,14 +136,15 @@ const DesktopNav = ({ navItems, visible }: NavbarProps) => {
       </motion.div>
       <div className="flex items-center gap-4">
         <Link href="/sign-in">
-          <Button variant="ghost" className="hidden md:block text-text-secondary hover:text-brand-1">
+          <Button
+            variant="ghost"
+            className="hidden md:block text-text-secondary hover:text-brand-1"
+          >
             Sign In
           </Button>
         </Link>
         <Link href="/sign-in">
-          <Button
-            className="hidden md:flex bg-gradient-to-r from-brand-1 to-brand-2 text-white hover:shadow-lg hover:shadow-brand-1/20 rounded-full"
-          >
+          <Button className="hidden md:flex bg-gradient-to-r from-brand-1 to-brand-2 text-white hover:shadow-lg hover:shadow-brand-1/20 rounded-full">
             Try for free
           </Button>
         </Link>
@@ -153,10 +157,10 @@ const MobileNav = ({ navItems, visible }: NavbarProps) => {
   const [open, setOpen] = useState(false);
 
   const scrollToSection = (href: string) => {
-    if (href.startsWith('#')) {
+    if (href.startsWith("#")) {
       const element = document.querySelector(href);
       if (element) {
-        element.scrollIntoView({ behavior: 'smooth' });
+        element.scrollIntoView({ behavior: "smooth" });
       }
     }
     setOpen(false);
@@ -177,17 +181,21 @@ const MobileNav = ({ navItems, visible }: NavbarProps) => {
           boxShadow: "none",
         }}
         animate={{
-          width: (visible && !open) ? "calc(90% - 2rem)" : "calc(100% - 2rem)",
+          width: visible && !open ? "calc(90% - 2rem)" : "calc(100% - 2rem)",
           y: visible ? 16 : 0,
           x: "-50%",
           left: "50%",
           top: visible ? 16 : 0,
-          backdropFilter: (visible || open) ? "blur(10px)" : "none",
-          boxShadow: (visible || open)
-            ? "0 0 24px rgba(34, 42, 53, 0.06), 0 1px 1px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(34, 42, 53, 0.04), 0 0 4px rgba(34, 42, 53, 0.08), 0 16px 68px rgba(47, 48, 55, 0.05), 0 1px 0 rgba(255, 255, 255, 0.1) inset"
-            : "none",
-          backgroundColor: (visible || open) ? "rgba(255, 255, 255, 0.9)" : "rgba(255, 255, 255, 0.0)",
-          borderRadius: open ? "1rem" : (visible ? "1rem" : "2rem"),
+          backdropFilter: visible || open ? "blur(10px)" : "none",
+          boxShadow:
+            visible || open
+              ? "0 0 24px rgba(34, 42, 53, 0.06), 0 1px 1px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(34, 42, 53, 0.04), 0 0 4px rgba(34, 42, 53, 0.08), 0 16px 68px rgba(47, 48, 55, 0.05), 0 1px 0 rgba(255, 255, 255, 0.1) inset"
+              : "none",
+          backgroundColor:
+            visible || open
+              ? "rgba(255, 255, 255, 0.9)"
+              : "rgba(255, 255, 255, 0.0)",
+          borderRadius: open ? "1rem" : visible ? "1rem" : "2rem",
         }}
         transition={{
           type: "spring",
@@ -196,22 +204,23 @@ const MobileNav = ({ navItems, visible }: NavbarProps) => {
         }}
         className={cn(
           "flex relative flex-col lg:hidden justify-between items-center bg-transparent fixed z-[101]",
-          "rounded-2xl"
+          "rounded-2xl",
         )}
       >
         <div className="flex flex-row justify-between items-center w-full px-4 py-2">
           <Logo />
-          {open ? (
-            <X
-              className="text-black"
-              onClick={() => setOpen(!open)}
-            />
-          ) : (
-            <Menu
-              className="text-black"
-              onClick={() => setOpen(!open)}
-            />
-          )}
+          <button
+            onClick={() => setOpen(!open)}
+            className="p-2 min-h-[48px] min-w-[48px] flex items-center justify-center"
+            aria-label={open ? "Close menu" : "Open menu"}
+            aria-expanded={open}
+          >
+            {open ? (
+              <X className="text-black w-6 h-6" />
+            ) : (
+              <Menu className="text-black w-6 h-6" />
+            )}
+          </button>
         </div>
 
         <AnimatePresence>
@@ -229,16 +238,14 @@ const MobileNav = ({ navItems, visible }: NavbarProps) => {
                 <button
                   key={`link=${idx}`}
                   onClick={() => scrollToSection(navItem.href)}
-                  className="relative text-neutral-600 w-full text-left py-2 font-medium"
+                  className="relative text-neutral-600 w-full text-left py-2 font-medium min-h-[48px]"
+                  aria-label={`Navigate to ${navItem.label}`}
                 >
                   <motion.span className="block">{navItem.label}</motion.span>
                 </button>
               ))}
               <Link href="/sign-in" className="w-full">
-                <Button
-                  variant="outline"
-                  className="block md:hidden w-full"
-                >
+                <Button variant="outline" className="block md:hidden w-full">
                   Sign In
                 </Button>
               </Link>

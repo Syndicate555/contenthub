@@ -35,12 +35,12 @@ const WhyTavlo = () => {
               aria-hidden="true"
             />
 
-            <h3
+            <h2
               id="why-tavlo-heading"
               className="text-lg md:text-xl font-bold text-text-primary mb-5 leading-snug"
             >
               {whyTavloContent.headline}
-            </h3>
+            </h2>
 
             <ul className="space-y-2.5 mb-5" role="list">
               {whyTavloContent.points.map((point, index) => (

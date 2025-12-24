@@ -17,7 +17,7 @@ const optimizeCloudinaryUrl = (url: string): string => {
 
 const TavloLoop = () => {
   const [loadedVideos, setLoadedVideos] = useState<Set<number>>(
-    new Set([0, 1, 2, 3])
+    new Set([0, 1, 2, 3]),
   );
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const innerContainerRef = useRef<HTMLDivElement>(null);
@@ -107,13 +107,13 @@ const TavloLoop = () => {
           if (entry.isIntersecting) {
             const index = parseInt(
               entry.target.getAttribute("data-index") || "0",
-              10
+              10,
             );
             setLoadedVideos((prev) => new Set([...prev, index]));
           }
         });
       },
-      { rootMargin: "200px" }
+      { rootMargin: "200px" },
     );
 
     // Observe all video containers
@@ -169,7 +169,14 @@ const TavloLoop = () => {
                       preload="metadata"
                       className="w-full h-full object-cover"
                       poster={item.thumbnail}
-                    />
+                      aria-label={`Content preview ${index + 1}`}
+                    >
+                      <track
+                        kind="captions"
+                        srcLang="en"
+                        label="English captions"
+                      />
+                    </video>
                   ) : (
                     // Placeholder while video loads
                     <div className="w-full h-full bg-surface-secondary flex items-center justify-center">
@@ -216,7 +223,14 @@ const TavloLoop = () => {
                       preload="metadata"
                       className="w-full h-full object-cover"
                       poster={item.thumbnail}
-                    />
+                      aria-label={`Content preview ${index + 1}`}
+                    >
+                      <track
+                        kind="captions"
+                        srcLang="en"
+                        label="English captions"
+                      />
+                    </video>
                   ) : (
                     <div className="w-full h-full bg-surface-secondary" />
                   )}
