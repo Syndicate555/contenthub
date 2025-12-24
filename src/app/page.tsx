@@ -37,6 +37,9 @@ export default function HomePage() {
         <br></br>
         <br></br>
         <TavloLoop />
+        <br></br>
+        <br></br>
+        <br></br>
         <SocialProof />
         <Features />
         <VideoDemo />

@@ -68,7 +68,7 @@ const TavloLoop = () => {
     if (!scrollContainer) return;
 
     let scrollPosition = 0;
-    const scrollSpeed = 0.5; // Adjust speed as needed
+    const scrollSpeed = 1.2; // Adjust speed as needed
 
     const scroll = () => {
       scrollPosition += scrollSpeed;
