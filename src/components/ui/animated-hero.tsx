@@ -31,7 +31,38 @@ function AnimatedHero() {
 
   return (
     <div className="w-full relative z-10">
-      <div className="container mx-auto px-4">
+      {/* Desktop Only: Video Background - Right Side */}
+      <div className="hidden lg:block absolute inset-0 overflow-hidden">
+        <div className="container mx-auto px-4 h-full">
+          <div className="grid grid-cols-2 gap-8 lg:gap-12 h-full">
+            {/* Empty left space */}
+            <div />
+            {/* Video on right side */}
+            <div className="relative">
+              <div className="absolute inset-0 rounded-2xl overflow-hidden">
+                <video
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  className="w-full h-full object-cover"
+                >
+                  <source
+                    src="https://res.cloudinary.com/dggvt0gzu/video/upload/v1766546298/Screen_Recording_2025-12-23_at_10.11.45_PM_nxxtlj.mp4"
+                    type="video/mp4"
+                  />
+                </video>
+                {/* Seamless integration overlay */}
+                <div className="absolute inset-0 bg-gradient-to-l from-transparent via-transparent to-bg-page/40" />
+                <div className="absolute inset-0 bg-gradient-to-b from-bg-page/20 via-transparent to-bg-page/20" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Content Layer */}
+      <div className="container mx-auto px-4 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 py-8 lg:py-12 items-center">
           {/* Left Column: Text Content */}
           <div className="flex flex-col items-center lg:items-start text-center lg:text-left gap-6">
@@ -97,30 +128,26 @@ function AnimatedHero() {
             </div>
           </div>
 
-          {/* Right Column: Demo Video */}
-          <div className="relative w-full aspect-video rounded-xl bg-surface-solid border border-border-light shadow-2xl overflow-hidden group">
-            {/* Video */}
-            <video
-              autoPlay
-              loop
-              muted
-              playsInline
-              className="w-full h-full object-cover"
-              poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 9'%3E%3Crect fill='%23f5f5f5' width='16' height='9'/%3E%3C/svg%3E"
-            >
-              <source
-                src="https://res.cloudinary.com/dggvt0gzu/video/upload/v1766546298/Screen_Recording_2025-12-23_at_10.11.45_PM_nxxtlj.mp4"
-                type="video/mp4"
-              />
-            </video>
-
-            {/* Subtle overlay for premium feel */}
-            <div className="absolute inset-0 bg-gradient-to-tr from-black/5 via-transparent to-white/5 pointer-events-none" />
-
-            {/* Optional: Subtle glow border on hover */}
-            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
-              <div className="absolute inset-0 rounded-xl shadow-[0_0_30px_rgba(99,102,241,0.3)]" />
+          {/* Right Column */}
+          <div className="relative w-full">
+            {/* Mobile: Video as separate component */}
+            <div className="lg:hidden relative w-full aspect-video rounded-xl bg-surface-solid border border-border-light shadow-xl overflow-hidden">
+              <video
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="w-full h-full object-cover"
+              >
+                <source
+                  src="https://res.cloudinary.com/dggvt0gzu/video/upload/v1766546298/Screen_Recording_2025-12-23_at_10.11.45_PM_nxxtlj.mp4"
+                  type="video/mp4"
+                />
+              </video>
             </div>
+
+            {/* Desktop: Spacer (video is in background) */}
+            <div className="hidden lg:block h-[550px]" />
           </div>
         </div>
       </div>
