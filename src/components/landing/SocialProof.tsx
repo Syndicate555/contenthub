@@ -1,5 +1,5 @@
-import React from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import React, { useRef } from "react";
+import { motion, useReducedMotion, useInView } from "framer-motion";
 import {
   Rocket,
   BookOpen,
@@ -11,6 +11,36 @@ import { socialProofItems } from "@/data/landing";
 
 const SocialProof = () => {
   const prefersReducedMotion = useReducedMotion();
+  const sectionRef = useRef(null);
+  const inView = useInView(sectionRef, { once: true, amount: 0.25 });
+
+  const listVariants = prefersReducedMotion
+    ? undefined
+    : {
+        hidden: { opacity: 0, y: 12 },
+        visible: {
+          opacity: 1,
+          y: 0,
+          transition: {
+            duration: 0.4,
+            ease: [0.4, 0, 0.2, 1] as const,
+            staggerChildren: 0.08,
+            delayChildren: 0.1,
+          },
+        },
+      };
+
+  const itemVariants = prefersReducedMotion
+    ? undefined
+    : {
+        hidden: { opacity: 0, y: 10, scale: 0.98 },
+        visible: {
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          transition: { duration: 0.45, ease: [0.4, 0, 0.2, 1] as const },
+        },
+      };
 
   const personaMeta: Record<
     string,
@@ -44,7 +74,11 @@ const SocialProof = () => {
   };
 
   return (
-    <section className="py-12 px-4 relative overflow-hidden" aria-label="Target audience">
+    <section
+      ref={sectionRef}
+      className="py-12 px-4 relative overflow-hidden"
+      aria-label="Target audience"
+    >
       {/* playful ambient blobs */}
       <div className="absolute inset-0 -z-10">
         <div className="absolute -left-10 top-0 h-48 w-48 rounded-full bg-brand-1/10 blur-3xl" />
@@ -57,27 +91,31 @@ const SocialProof = () => {
         <div className="flex flex-col items-center gap-6">
           <motion.div
             initial={prefersReducedMotion ? false : { opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
+            animate={
+              prefersReducedMotion
+                ? undefined
+                : inView
+                  ? { opacity: 1, y: 0 }
+                  : { opacity: 0, y: 16 }
+            }
+            transition={{ duration: 0.45, ease: [0.4, 0, 0.2, 1] as const }}
             className="inline-flex items-center gap-2 rounded-full border border-border-light/60 bg-white/70 px-3 py-1 text-xs font-semibold text-text-secondary shadow-sm backdrop-blur"
           >
             <span className="h-2 w-2 rounded-full bg-brand-1 animate-ping" />
             Built for the people who make the internet interesting
           </motion.div>
 
-          <div className="flex flex-wrap items-center justify-center gap-3" role="list">
+          <motion.div
+            role="list"
+            variants={listVariants}
+            initial="hidden"
+            animate={inView ? "visible" : "hidden"}
+            className="flex flex-wrap items-center justify-center gap-3"
+          >
             {socialProofItems.map((item, index) => (
               <motion.span
                 key={item}
-                initial={prefersReducedMotion ? {} : { opacity: 0, y: 10 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ 
-                  duration: 0.3, 
-                  delay: index * 0.05,
-                  ease: [0.4, 0, 0.2, 1]
-                }}
+                variants={itemVariants}
                 whileHover={
                   prefersReducedMotion
                     ? undefined
@@ -99,7 +137,7 @@ const SocialProof = () => {
                 </span>
               </motion.span>
             ))}
-          </div>
+          </motion.div>
         </div>
       </div>
     </section>

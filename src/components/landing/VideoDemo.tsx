@@ -7,7 +7,7 @@ import {
 } from "framer-motion";
 import { Play, Pause, Maximize2, X, Volume2, VolumeX } from "lucide-react";
 import { videoChapters, videoConfig } from "@/data/landing";
-import { Reveal, BackgroundOrbs } from "@/components/motion";
+import { CSSReveal, BackgroundOrbs } from "@/components/motion";
 
 type VideoChapter = (typeof videoChapters)[number];
 
@@ -19,26 +19,10 @@ const RecordingDot = ({ isPlaying }: RecordingDotProps) => {
   if (!isPlaying) return null;
 
   return (
-    <motion.div
-      className="flex items-center gap-1.5"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-    >
-      <motion.div
-        className="w-2 h-2 rounded-full bg-red-500"
-        animate={{
-          scale: [1, 1.2, 1],
-          opacity: [1, 0.7, 1],
-        }}
-        transition={{
-          duration: 1.5,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
-      />
+    <div className="flex items-center gap-1.5">
+      <div className="w-2 h-2 rounded-full bg-red-500 recording-dot" />
       <span className="text-xs text-red-500 font-medium">REC</span>
-    </motion.div>
+    </div>
   );
 };
 
@@ -264,19 +248,16 @@ const VideoDemo = () => {
   const prefersReducedMotion = useReducedMotion();
   const isInView = useInView(containerRef, { amount: 0.3 });
 
-  // Auto-play when in view (desktop only, muted)
+  // Load video when in view (user-initiated play)
   useEffect(() => {
     if (!videoRef.current) return;
 
-    if (isInView && !prefersReducedMotion) {
-      videoRef.current.play().catch(() => {});
-      setIsPlaying(true);
-      if (!hasRevealed) setHasRevealed(true);
-    } else {
-      videoRef.current.pause();
-      setIsPlaying(false);
+    if (isInView && !hasRevealed) {
+      // Load the video but don't autoplay
+      videoRef.current.load();
+      setHasRevealed(true);
     }
-  }, [isInView, prefersReducedMotion, hasRevealed]);
+  }, [isInView, hasRevealed]);
 
   // Update chapter based on video time
   useEffect(() => {
@@ -340,25 +321,25 @@ const VideoDemo = () => {
 
       {/* Section header */}
       <div className="max-w-6xl mx-auto text-center mb-12">
-        <Reveal>
+        <CSSReveal>
           <span className="inline-flex items-center gap-2 badge-brand mb-4">
             Product Preview
           </span>
-        </Reveal>
-        <Reveal delay={0.1}>
+        </CSSReveal>
+        <CSSReveal delay={0.1}>
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary tracking-tight mb-4">
             See Tavlo{" "}
             <span className="bg-gradient-to-r from-brand-2 to-brand-1 bg-clip-text text-transparent">
               in action
             </span>
           </h2>
-        </Reveal>
-        <Reveal delay={0.2}>
+        </CSSReveal>
+        <CSSReveal delay={0.2}>
           <p className="text-lg text-text-secondary max-w-2xl mx-auto">
             A calm, organized space for all your saved content—watch how it
             works.
           </p>
-        </Reveal>
+        </CSSReveal>
       </div>
 
       {/* Main content */}
@@ -396,8 +377,8 @@ const VideoDemo = () => {
                   muted={isMuted}
                   loop
                   playsInline
-                  autoPlay
-                  preload="auto"
+                  autoPlay={false}
+                  preload="none"
                   controls={false}
                   onLoadedData={() => setIsLoaded(true)}
                   onPlay={() => setIsPlaying(true)}

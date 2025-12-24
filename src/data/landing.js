@@ -143,9 +143,9 @@ export const videoChapters = [
 
 // Video configuration
 export const videoConfig = {
-  src: 'https://res.cloudinary.com/dggvt0gzu/video/upload/v1766549937/tavlo-demo_wmuhwg.mp4',
-  // Poster is optional; leave empty to avoid 404 since we don't ship a local poster file
-  poster: '',
+  src: 'https://res.cloudinary.com/dggvt0gzu/video/upload/f_auto,q_auto:good/v1766549937/tavlo-demo_wmuhwg.mp4',
+  // Poster frame from video (first frame, optimized)
+  poster: 'https://res.cloudinary.com/dggvt0gzu/video/upload/so_0,f_jpg,q_auto:good/v1766549937/tavlo-demo_wmuhwg.jpg',
   duration: 40, // approximate duration in seconds
 };
 

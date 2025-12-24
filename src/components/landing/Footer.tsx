@@ -1,7 +1,7 @@
-import React from 'react';
-import { Twitter, Linkedin, Mail } from 'lucide-react';
-import Link from 'next/link';
-import { navLinks } from '@/data/landing';
+import React from "react";
+import { Twitter, Linkedin, Mail } from "lucide-react";
+import Link from "next/link";
+import { navLinks } from "@/data/landing";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -9,7 +9,7 @@ const Footer = () => {
   const scrollToSection = (href: string) => {
     const element = document.querySelector(href);
     if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
+      element.scrollIntoView({ behavior: "smooth" });
     }
   };
 
@@ -19,8 +19,8 @@ const Footer = () => {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8">
           {/* Brand */}
           <div className="flex flex-col gap-4">
-            <Link 
-              href="/" 
+            <Link
+              href="/"
               className="flex items-center gap-2.5 font-bold text-xl text-text-primary"
             >
               <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-1 to-brand-2 flex items-center justify-center text-white text-sm font-bold shadow-lg shadow-brand-1/20">
@@ -28,9 +28,6 @@ const Footer = () => {
               </span>
               Tavlo
             </Link>
-            <p className="text-sm text-text-secondary max-w-xs">
-              Turn saved posts into knowledge you actually reuse.
-            </p>
           </div>
 
           {/* Nav Links */}
@@ -44,14 +41,14 @@ const Footer = () => {
                 {link.label}
               </button>
             ))}
-            <a 
-              href="#" 
+            <a
+              href="#"
               className="text-sm text-text-secondary hover:text-brand-1 transition-colors"
             >
               Privacy
             </a>
-            <a 
-              href="#" 
+            <a
+              href="#"
               className="text-sm text-text-secondary hover:text-brand-1 transition-colors"
             >
               Terms
@@ -59,29 +56,6 @@ const Footer = () => {
           </div>
 
           {/* Socials */}
-          <div className="flex items-center gap-3">
-            <a 
-              href="#" 
-              className="w-10 h-10 rounded-full border border-border-light bg-surface-solid flex items-center justify-center text-text-secondary hover:text-brand-1 hover:border-brand-1/30 hover:shadow-lg hover:shadow-brand-1/10 transition-all"
-              aria-label="Twitter"
-            >
-              <Twitter className="w-4 h-4" />
-            </a>
-            <a 
-              href="#" 
-              className="w-10 h-10 rounded-full border border-border-light bg-surface-solid flex items-center justify-center text-text-secondary hover:text-brand-1 hover:border-brand-1/30 hover:shadow-lg hover:shadow-brand-1/10 transition-all"
-              aria-label="LinkedIn"
-            >
-              <Linkedin className="w-4 h-4" />
-            </a>
-            <a 
-              href="#" 
-              className="w-10 h-10 rounded-full border border-border-light bg-surface-solid flex items-center justify-center text-text-secondary hover:text-brand-1 hover:border-brand-1/30 hover:shadow-lg hover:shadow-brand-1/10 transition-all"
-              aria-label="Email"
-            >
-              <Mail className="w-4 h-4" />
-            </a>
-          </div>
         </div>
 
         {/* Bottom */}

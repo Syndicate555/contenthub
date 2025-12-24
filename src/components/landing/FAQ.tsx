@@ -1,7 +1,12 @@
-import React from 'react';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { faqs } from '@/data/landing';
-import { Reveal } from '@/components/motion';
+import React from "react";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { faqs } from "@/data/landing";
+import { CSSReveal } from "@/components/motion";
 
 const FAQ = () => {
   return (
@@ -9,28 +14,28 @@ const FAQ = () => {
       <div className="max-w-3xl mx-auto">
         {/* Section Header */}
         <div className="text-center mb-12">
-          <Reveal>
+          <CSSReveal>
             <span className="inline-flex items-center gap-2 badge-brand mb-4">
               FAQ
             </span>
-          </Reveal>
-          <Reveal delay={0.1}>
+          </CSSReveal>
+          <CSSReveal delay={0.1}>
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary tracking-tight mb-4">
-              Questions?{' '}
+              Questions?{" "}
               <span className="bg-gradient-to-r from-brand-1 to-brand-2 bg-clip-text text-transparent">
                 Answers.
               </span>
             </h2>
-          </Reveal>
-          <Reveal delay={0.2}>
+          </CSSReveal>
+          <CSSReveal delay={0.2}>
             <p className="text-lg text-text-secondary max-w-2xl mx-auto">
               Everything you need to know about Tavlo.
             </p>
-          </Reveal>
+          </CSSReveal>
         </div>
 
         {/* FAQ Accordion */}
-        <Reveal delay={0.3}>
+        <CSSReveal delay={0.3}>
           <Accordion type="single" collapsible className="w-full space-y-3">
             {faqs.map((faq, index) => (
               <AccordionItem
@@ -47,7 +52,7 @@ const FAQ = () => {
               </AccordionItem>
             ))}
           </Accordion>
-        </Reveal>
+        </CSSReveal>
       </div>
     </section>
   );

@@ -31,7 +31,7 @@ function AnimatedHero() {
 
   return (
     <div className="w-full relative z-10">
-      {/* Desktop Only: Video Background - Right Side */}
+      {/* Video Background - Right Side (responsive, single video) */}
       <div className="hidden lg:block absolute inset-0 overflow-hidden">
         <div className="container mx-auto px-4 h-full">
           <div className="grid grid-cols-2 gap-8 lg:gap-12 h-full">
@@ -45,10 +45,12 @@ function AnimatedHero() {
                   loop
                   muted
                   playsInline
+                  preload="metadata"
                   className="w-full h-full object-cover"
+                  poster="https://res.cloudinary.com/dggvt0gzu/video/upload/so_0,f_jpg,q_auto:low/v1766546298/Screen_Recording_2025-12-23_at_10.11.45_PM_nxxtlj.jpg"
                 >
                   <source
-                    src="https://res.cloudinary.com/dggvt0gzu/video/upload/v1766546298/Screen_Recording_2025-12-23_at_10.11.45_PM_nxxtlj.mp4"
+                    src="https://res.cloudinary.com/dggvt0gzu/video/upload/f_auto,q_auto:eco/v1766546298/Screen_Recording_2025-12-23_at_10.11.45_PM_nxxtlj.mp4"
                     type="video/mp4"
                   />
                 </video>
@@ -130,20 +132,14 @@ function AnimatedHero() {
 
           {/* Right Column */}
           <div className="relative w-full">
-            {/* Mobile: Video as separate component */}
+            {/* Mobile: Show poster image as fallback */}
             <div className="lg:hidden relative w-full aspect-video rounded-xl bg-surface-solid border border-border-light shadow-xl overflow-hidden">
-              <video
-                autoPlay
-                loop
-                muted
-                playsInline
+              <img
+                src="https://res.cloudinary.com/dggvt0gzu/video/upload/so_0,f_jpg,q_auto:good,w_800/v1766546298/Screen_Recording_2025-12-23_at_10.11.45_PM_nxxtlj.jpg"
+                alt="Tavlo Demo"
                 className="w-full h-full object-cover"
-              >
-                <source
-                  src="https://res.cloudinary.com/dggvt0gzu/video/upload/v1766546298/Screen_Recording_2025-12-23_at_10.11.45_PM_nxxtlj.mp4"
-                  type="video/mp4"
-                />
-              </video>
+                loading="eager"
+              />
             </div>
 
             {/* Desktop: Spacer (video is in background) */}
