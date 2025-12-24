@@ -68,7 +68,7 @@ const TavloLoop = () => {
     if (!scrollContainer) return;
 
     let scrollPosition = 0;
-    const scrollSpeed = 1.2; // Adjust speed as needed
+    const scrollSpeed = 1.0;
 
     const scroll = () => {
       scrollPosition += scrollSpeed;
@@ -123,12 +123,6 @@ const TavloLoop = () => {
                   className="w-full h-full object-cover"
                   poster={item.thumbnail}
                 />
-                {/* Overlay on hover */}
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                  <div className="text-white text-sm font-medium">
-                    Sample Content
-                  </div>
-                </div>
               </div>
             ) : (
               <div className="relative w-full h-full rounded-2xl overflow-hidden bg-surface-secondary shadow-lg">
