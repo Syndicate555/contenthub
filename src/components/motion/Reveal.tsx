@@ -1,24 +1,32 @@
-import React from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
-import { useInView } from 'framer-motion';
-import { useRef } from 'react';
-import { revealVariants, staggerContainer, staggerItem, DURATION, EASING } from '@/lib/motion';
+"use client";
+
+import React from "react";
+import { motion, useReducedMotion } from "framer-motion";
+import { useInView } from "framer-motion";
+import { useRef } from "react";
+import {
+  revealVariants,
+  staggerContainer,
+  staggerItem,
+  DURATION,
+  EASING,
+} from "@/lib/motion";
 
 interface RevealProps {
   children: React.ReactNode;
   className?: string;
   delay?: number;
-  direction?: 'up' | 'down' | 'left' | 'right';
+  direction?: "up" | "down" | "left" | "right";
   once?: boolean;
   amount?: number;
 }
 
 // Single element reveal on scroll
-export const Reveal = ({ 
-  children, 
-  className = '', 
+export const Reveal = ({
+  children,
+  className = "",
   delay = 0,
-  direction = 'up', // 'up', 'down', 'left', 'right'
+  direction = "up", // 'up', 'down', 'left', 'right'
   once = true,
   amount = 0.3,
 }: RevealProps) => {
@@ -41,15 +49,19 @@ export const Reveal = ({
     <motion.div
       ref={ref}
       className={className}
-      initial={{ 
-        opacity: 0, 
-        ...directions[direction]
+      initial={{
+        opacity: 0,
+        ...directions[direction],
       }}
-      animate={isInView ? { 
-        opacity: 1, 
-        x: 0, 
-        y: 0 
-      } : {}}
+      animate={
+        isInView
+          ? {
+              opacity: 1,
+              x: 0,
+              y: 0,
+            }
+          : {}
+      }
       transition={{
         duration: DURATION.slow,
         ease: EASING.smooth as any,
@@ -70,9 +82,9 @@ interface StaggerContainerProps {
 }
 
 // Container for staggered children
-export const StaggerContainer = ({ 
-  children, 
-  className = '',
+export const StaggerContainer = ({
+  children,
+  className = "",
   staggerDelay = 0.1,
   once = true,
   amount = 0.2,
@@ -90,7 +102,7 @@ export const StaggerContainer = ({
       ref={ref}
       className={className}
       initial="hidden"
-      animate={isInView ? 'visible' : 'hidden'}
+      animate={isInView ? "visible" : "hidden"}
       variants={{
         hidden: { opacity: 0 },
         visible: {
@@ -110,14 +122,14 @@ export const StaggerContainer = ({
 interface StaggerItemProps {
   children: React.ReactNode;
   className?: string;
-  direction?: 'up' | 'down' | 'left' | 'right';
+  direction?: "up" | "down" | "left" | "right";
 }
 
 // Child item for staggered animation
-export const StaggerItem = ({ 
-  children, 
-  className = '',
-  direction = 'up',
+export const StaggerItem = ({
+  children,
+  className = "",
+  direction = "up",
 }: StaggerItemProps) => {
   const prefersReducedMotion = useReducedMotion();
 
@@ -136,9 +148,9 @@ export const StaggerItem = ({
     <motion.div
       className={className}
       variants={{
-        hidden: { 
-          opacity: 0, 
-          ...directions[direction]
+        hidden: {
+          opacity: 0,
+          ...directions[direction],
         },
         visible: {
           opacity: 1,

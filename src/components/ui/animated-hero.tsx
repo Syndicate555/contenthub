@@ -1,3 +1,4 @@
+"use client";
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowRight, ArrowDown } from "lucide-react";
@@ -8,7 +9,7 @@ function AnimatedHero() {
   const [titleNumber, setTitleNumber] = useState(0);
   const titles = useMemo(
     () => ["knowledge", "insights", "action", "results"],
-    [],
+    []
   );
 
   useEffect(() => {
@@ -54,9 +55,7 @@ function AnimatedHero() {
                     type="video/mp4"
                   />
                 </video>
-                {/* Seamless integration overlay */}
-                <div className="absolute inset-0 bg-gradient-to-l from-transparent via-transparent to-bg-page/40" />
-                <div className="absolute inset-0 bg-gradient-to-b from-bg-page/20 via-transparent to-bg-page/20" />
+                {/* Remove overlays to eliminate visible edge/border */}
               </div>
             </div>
           </div>
@@ -143,7 +142,7 @@ function AnimatedHero() {
             </div>
 
             {/* Desktop: Spacer (video is in background) */}
-            <div className="hidden lg:block h-[550px]" />
+            <div className="hidden lg:block h-[660px]" />
           </div>
         </div>
       </div>

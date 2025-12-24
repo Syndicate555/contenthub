@@ -1,7 +1,5 @@
-import React from "react";
 import { BackgroundOrbs } from "@/components/motion";
 import { AnimatedHero } from "@/components/ui/animated-hero";
-import { PlatformTrustRow } from "./PlatformIcons";
 
 const Hero = () => {
   return (

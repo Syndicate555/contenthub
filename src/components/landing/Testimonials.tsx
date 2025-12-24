@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useRef } from "react";
 import { Quote } from "lucide-react";
 import { motion, useReducedMotion, useInView } from "framer-motion";

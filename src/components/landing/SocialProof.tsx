@@ -1,12 +1,8 @@
+"use client";
+
 import React, { useRef } from "react";
 import { motion, useReducedMotion, useInView } from "framer-motion";
-import {
-  Rocket,
-  BookOpen,
-  Palette,
-  FlaskConical,
-  Cpu,
-} from "lucide-react";
+import { Rocket, BookOpen, Palette, FlaskConical, Cpu } from "lucide-react";
 import { socialProofItems } from "@/data/landing";
 
 const SocialProof = () => {
@@ -117,17 +113,14 @@ const SocialProof = () => {
                 key={item}
                 variants={itemVariants}
                 whileHover={
-                  prefersReducedMotion
-                    ? undefined
-                    : { scale: 1.05, rotate: 1 }
+                  prefersReducedMotion ? undefined : { scale: 1.05, rotate: 1 }
                 }
                 className="group relative px-4 py-2 rounded-full text-sm font-semibold text-gray-900 border border-transparent shadow-sm transition-all cursor-default"
                 role="listitem"
               >
                 <span
                   className={`absolute inset-0 rounded-full opacity-90 bg-gradient-to-r ${
-                    personaMeta[item]?.gradient ||
-                    "from-gray-200 to-gray-100"
+                    personaMeta[item]?.gradient || "from-gray-200 to-gray-100"
                   } ${personaMeta[item]?.glow || ""}`}
                   aria-hidden
                 />

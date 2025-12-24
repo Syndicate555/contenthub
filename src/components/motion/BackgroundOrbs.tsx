@@ -1,5 +1,12 @@
-import React from 'react';
-import { motion, useScroll, useTransform, useReducedMotion } from 'framer-motion';
+"use client";
+
+import React from "react";
+import {
+  motion,
+  useScroll,
+  useTransform,
+  useReducedMotion,
+} from "framer-motion";
 
 interface OrbProps {
   className?: string;
@@ -13,9 +20,9 @@ interface OrbProps {
   blur?: number;
 }
 
-const Orb = ({ 
-  className = '',
-  color = 'from-brand-1/30 to-brand-2/20',
+const Orb = ({
+  className = "",
+  color = "from-brand-1/30 to-brand-2/20",
   size = 400,
   top,
   left,
@@ -26,7 +33,7 @@ const Orb = ({
 }: OrbProps) => {
   const { scrollYProgress } = useScroll();
   const prefersReducedMotion = useReducedMotion();
-  
+
   const y = useTransform(scrollYProgress, [0, 1], [0, 200 * parallaxSpeed]);
 
   const style = {
@@ -56,8 +63,12 @@ const Orb = ({
   );
 };
 
-export const BackgroundOrbs = ({ variant = 'hero' }: { variant?: 'hero' | 'demo' }) => {
-  if (variant === 'hero') {
+export const BackgroundOrbs = ({
+  variant = "hero",
+}: {
+  variant?: "hero" | "demo";
+}) => {
+  if (variant === "hero") {
     return (
       <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10">
         {/* Main indigo orb */}
@@ -91,7 +102,7 @@ export const BackgroundOrbs = ({ variant = 'hero' }: { variant?: 'hero' | 'demo'
     );
   }
 
-  if (variant === 'demo') {
+  if (variant === "demo") {
     return (
       <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10">
         <Orb
