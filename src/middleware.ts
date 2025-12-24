@@ -8,6 +8,8 @@ const isPublicRoute = createRouteMatcher([
   "/api/webhooks(.*)",
   "/api/quick-add", // Uses bearer token auth instead
   "/api/domains", // Public - domains are global, not user-specific
+  "/video(.*)", // Serve static demo video without auth
+  "/animations(.*)", // Serve lottie assets without auth
 ]);
 
 export default clerkMiddleware(async (auth, request) => {
@@ -19,8 +21,8 @@ export default clerkMiddleware(async (auth, request) => {
 export const config = {
   matcher: [
     // Skip Next.js internals and all static files
-    // Added .lottie so animation assets bypass auth middleware
-    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest|lottie)).*)",
+    // Added .lottie and video formats so static assets bypass auth middleware
+    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest|lottie|mp4|mov|m4v|webm)).*)",
     // Always run for API routes
     "/(api|trpc)(.*)",
   ],

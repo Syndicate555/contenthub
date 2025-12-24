@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect, ReactNode } from "react";
+import React, { useRef, useState, useEffect, ReactNode } from "react";
 import {
   motion,
   AnimatePresence,
@@ -392,11 +392,17 @@ const VideoDemo = () => {
                 <video
                   ref={videoRef}
                   src={videoConfig.src}
-                  poster={videoConfig.poster}
+                  poster={videoConfig.poster || undefined}
                   muted={isMuted}
                   loop
                   playsInline
+                  autoPlay
+                  preload="auto"
+                  controls={false}
                   onLoadedData={() => setIsLoaded(true)}
+                  onPlay={() => setIsPlaying(true)}
+                  onPause={() => setIsPlaying(false)}
+                  onError={() => setIsLoaded(true)}
                   className="w-full h-full object-contain"
                 />
                 {/* Video controls overlay */}
