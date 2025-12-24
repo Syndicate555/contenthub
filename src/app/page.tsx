@@ -5,6 +5,7 @@ import { trackPageView } from "@/lib/analytics";
 import {
   Header,
   Hero,
+  TavloLoop,
   SocialProof,
   Features,
   VideoDemo,
@@ -30,6 +31,12 @@ export default function HomePage() {
       <Header />
       <main>
         <Hero />
+        <br></br>
+        <br></br>
+        <br></br>
+        <br></br>
+        <br></br>
+        <TavloLoop />
         <SocialProof />
         <Features />
         <VideoDemo />
