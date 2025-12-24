@@ -17,7 +17,7 @@ const optimizeCloudinaryUrl = (url: string): string => {
 
 const TavloLoop = () => {
   const [loadedVideos, setLoadedVideos] = useState<Set<number>>(
-    new Set([0, 1, 2, 3]),
+    new Set([0, 1, 2, 3])
   );
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const innerContainerRef = useRef<HTMLDivElement>(null);
@@ -73,7 +73,7 @@ const TavloLoop = () => {
     if (!scrollContainer || !innerContainer) return;
 
     let scrollPosition = 0;
-    const scrollSpeed = 0.5; // pixels per frame
+    const scrollSpeed = 0.9; // pixels per frame
     let animationFrameId: number;
 
     const scroll = () => {
@@ -107,13 +107,13 @@ const TavloLoop = () => {
           if (entry.isIntersecting) {
             const index = parseInt(
               entry.target.getAttribute("data-index") || "0",
-              10,
+              10
             );
             setLoadedVideos((prev) => new Set([...prev, index]));
           }
         });
       },
-      { rootMargin: "200px" },
+      { rootMargin: "200px" }
     );
 
     // Observe all video containers
