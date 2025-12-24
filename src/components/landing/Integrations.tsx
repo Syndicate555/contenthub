@@ -1,9 +1,7 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { Mail } from 'lucide-react';
-import { DotLottieReact } from '@lottiefiles/dotlottie-react';
-import { XIcon, YouTubeIcon, LinkedInIcon, RedditIcon, TikTokIcon } from './PlatformIcons';
-import { Reveal } from '@/components/motion';
+import React, { useMemo } from "react";
+import { motion, useReducedMotion } from "framer-motion";
+import { DotLottieReact } from "@lottiefiles/dotlottie-react";
+import { Reveal } from "@/components/motion";
 
 const InstagramLottie = ({ className }: { className?: string }) => (
   <div className="w-full h-full flex items-center justify-center scale-[1.7]">
@@ -112,50 +110,71 @@ const IntegrationCard = ({
   const Icon = item.icon;
   
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05, duration: 0.4 }}
-      viewport={{ once: true }}
-      className="group flex flex-col items-center justify-center p-6 bg-surface-solid rounded-2xl border border-border-light hover:border-brand-1/20 hover:shadow-lg hover:shadow-brand-1/5 transition-shadow transition-colors duration-300"
-    >
-      <div className={`w-12 h-12 rounded-xl bg-surface flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300`}>
+    <div className="group flex flex-col items-center justify-center px-4 py-3 bg-surface-solid rounded-xl border border-border-light/70 hover:border-brand-1/30 hover:shadow-md hover:shadow-brand-1/10 transition duration-300 min-w-[150px]">
+      <div className="w-11 h-11 rounded-lg bg-surface flex items-center justify-center mb-2 group-hover:scale-110 transition-transform duration-300">
         <Icon className={`w-6 h-6 text-text-secondary transition-colors duration-300 ${item.color}`} />
       </div>
-      <span className="text-sm font-medium text-text-primary">{item.name}</span>
-    </motion.div>
+      <span className="text-xs font-semibold text-text-primary whitespace-nowrap">
+        {item.name}
+      </span>
+    </div>
   );
 };
 
 const Integrations = () => {
-  return (
-    <section className="py-20 md:py-28 px-4 relative overflow-hidden">
-      <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-16">
-          <Reveal>
-            <span className="inline-flex items-center gap-2 badge-brand mb-4">
-              Integrations
-            </span>
-          </Reveal>
-          <Reveal delay={0.1}>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary tracking-tight mb-4">
-              Connect your favorite{' '}
-              <span className="bg-gradient-to-r from-brand-1 to-brand-2 bg-clip-text text-transparent">
-                platforms
-              </span>
-            </h2>
-          </Reveal>
-          <Reveal delay={0.2}>
-            <p className="text-lg text-text-secondary max-w-2xl mx-auto">
-              Tavlo brings all your saved content together in one unified library.
-            </p>
-          </Reveal>
-        </div>
+  const prefersReducedMotion = useReducedMotion();
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-          {integrations.map((item, index) => (
-            <IntegrationCard key={item.name} item={item} index={index} />
-          ))}
+  // Duplicate items for seamless marquee loop
+  const scrollingItems = useMemo(
+    () => [...integrations, ...integrations],
+    [],
+  );
+
+  const marqueeAnimation = prefersReducedMotion
+    ? {}
+    : {
+        initial: { x: "-50%" },
+        animate: { x: "0%" },
+        transition: {
+          duration: 28,
+          repeat: Infinity,
+          ease: "linear",
+        },
+      };
+
+  return (
+    <section className="py-12 md:py-14 px-4 relative overflow-hidden">
+      <div className="max-w-5xl mx-auto text-center mb-6">
+        <Reveal>
+          <span className="inline-flex items-center gap-2 badge-brand mb-3">
+            Integrations
+          </span>
+        </Reveal>
+        <Reveal delay={0.1}>
+          <p className="text-lg md:text-xl font-semibold text-text-primary">
+            Connect your favorite{" "}
+            <span className="bg-gradient-to-r from-brand-1 to-brand-2 bg-clip-text text-transparent">
+              platforms
+            </span>
+          </p>
+        </Reveal>
+      </div>
+
+      {/* Full-width marquee rail */}
+      <div className="relative w-screen left-1/2 -translate-x-1/2 px-4 md:px-8">
+        {/* Edge fades */}
+        <div className="pointer-events-none absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-bg-page via-bg-page/80 to-transparent z-10" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-bg-page via-bg-page/80 to-transparent z-10" />
+
+        <div className="overflow-hidden rounded-2xl border border-border-light/60 bg-surface-solid/80 backdrop-blur-sm shadow-[0_10px_40px_-18px_rgba(0,0,0,0.18)]">
+          <motion.div
+            className="flex items-center gap-3 py-4 px-2"
+            {...marqueeAnimation}
+          >
+            {scrollingItems.map((item, index) => (
+              <IntegrationCard key={`${item.name}-${index}`} item={item} index={index} />
+            ))}
+          </motion.div>
         </div>
       </div>
     </section>
