@@ -1,25 +1,46 @@
-import { Sora } from "next/font/google";
-import { Hero } from "@/components/landing/Hero";
-import { FeatureGrid } from "@/components/landing/FeatureGrid";
-import { FlowStrip } from "@/components/landing/FlowStrip";
-import { GamificationTeaser } from "@/components/landing/GamificationTeaser";
-import { Integrations } from "@/components/landing/Integrations";
-import { CTASection } from "@/components/landing/CTASection";
+"use client";
 
-const sora = Sora({
-  subsets: ["latin"],
-  weight: ["600", "700", "800"],
-});
+import React, { useEffect } from "react";
+import { trackPageView } from "@/lib/analytics";
+import {
+  Header,
+  Hero,
+  SocialProof,
+  Features,
+  VideoDemo,
+  WhyTavlo,
+  Testimonials,
+  Integrations,
+  Pricing,
+  FAQ,
+  FinalCTA,
+  Footer,
+} from "@/components/landing";
 
 export default function HomePage() {
+  useEffect(() => {
+    trackPageView("landing");
+  }, []);
+
   return (
-    <main className="bg-white text-gray-900">
-      <Hero displayFontClass={sora.className} />
-      <FlowStrip />
-      <FeatureGrid />
-      <GamificationTeaser />
-      <Integrations />
-      <CTASection />
-    </main>
+    <div className="min-h-screen bg-bg-page text-text-body font-sans selection:bg-brand-1/20 selection:text-text-primary">
+      {/* Noise overlay for premium texture */}
+      <div className="noise-overlay" />
+
+      <Header />
+      <main>
+        <Hero />
+        <SocialProof />
+        <Features />
+        <VideoDemo />
+        {/* <WhyTavlo /> */}
+        {/* <Testimonials /> */}
+        <Integrations />
+        <Pricing />
+        <FAQ />
+        <FinalCTA />
+      </main>
+      <Footer />
+    </div>
   );
 }
