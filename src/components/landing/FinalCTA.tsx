@@ -43,11 +43,13 @@ const FinalCTA = () => {
         {/* CTA Button */}
         <CSSReveal delay={0.3}>
           <div className="flex justify-center mb-6">
-            <Link href="/sign-in">
-              <button className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-brand-1 to-brand-2 text-white font-semibold rounded-full hover:shadow-lg hover:shadow-brand-1/30 hover:-translate-y-0.5 active:translate-y-0 transition-all text-lg">
-                Try it today for free
-                <ArrowRight className="w-5 h-5" />
-              </button>
+            <Link
+              href="/sign-in"
+              className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-brand-1 to-brand-2 text-white font-semibold rounded-full hover:shadow-lg hover:shadow-brand-1/30 hover:-translate-y-0.5 active:translate-y-0 transition-all text-lg"
+              aria-label="Try Tavlo for free - Sign up now"
+            >
+              Try it today for free
+              <ArrowRight className="w-5 h-5" />
             </Link>
           </div>
         </CSSReveal>

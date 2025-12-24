@@ -1,5 +1,6 @@
 import React from "react";
 import dynamic from "next/dynamic";
+import type { Metadata } from "next";
 import {
   Header,
   Hero,
@@ -11,6 +12,64 @@ import {
 } from "@/components/landing";
 import { ComponentSkeleton } from "@/components/landing/ComponentSkeleton";
 import { AnalyticsTracker } from "@/components/AnalyticsTracker";
+
+const title = "Tavlo - Your Personal Second Brain for Social Media Content";
+const description =
+  "Transform how you capture, organize, and repurpose content from across the web. Tavlo helps creators and professionals build their second brain for social media, newsletters, and more.";
+
+export const metadata: Metadata = {
+  title,
+  description,
+  keywords: [
+    "content management",
+    "second brain",
+    "social media",
+    "content curation",
+    "knowledge management",
+    "creator tools",
+    "content organization",
+  ],
+  authors: [{ name: "Tavlo" }],
+  creator: "Tavlo",
+  publisher: "Tavlo",
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://tavlo.app",
+    siteName: "Tavlo",
+    title,
+    description,
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Tavlo - Your Personal Second Brain",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title,
+    description,
+    images: ["/og-image.png"],
+    creator: "@tavloapp",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  verification: {
+    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
+  },
+};
 
 // Lazy load below-fold components for better initial bundle size
 const VideoDemo = dynamic(() => import("@/components/landing/VideoDemo"), {

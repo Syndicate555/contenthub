@@ -81,11 +81,13 @@ const Pricing = () => {
                   ))}
                 </div>
 
-                <Link href="/sign-in" className="block">
-                  <button className="w-full py-4 bg-gradient-to-r from-brand-1 to-brand-2 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-brand-1/25 hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center gap-2 group">
-                    Join the beta
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-                  </button>
+                <Link
+                  href="/sign-in"
+                  className="block w-full py-4 bg-gradient-to-r from-brand-1 to-brand-2 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-brand-1/25 hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center gap-2 group"
+                  aria-label="Join the beta program - Sign up now"
+                >
+                  Join the beta
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
                 </Link>
                 <p className="text-xs text-center text-text-muted mt-4">
                   Limited spots available for this batch.

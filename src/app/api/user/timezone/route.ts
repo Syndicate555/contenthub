@@ -59,7 +59,6 @@ export async function POST(request: NextRequest) {
       {
         ok: false,
         error: "Failed to update timezone",
-        details: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 },
     );

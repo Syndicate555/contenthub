@@ -6,6 +6,7 @@ import { Analytics } from "@vercel/analytics/react";
 import { Toaster } from "@/components/ui/sonner";
 import { SWRProvider } from "@/components/providers/swr-provider";
 import { WebVitals } from "@/components/web-vitals";
+import { ConsoleSuppressor } from "@/components/ConsoleSuppressor";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -37,6 +38,7 @@ export default function RootLayout({
         <body
           className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50 min-h-screen`}
         >
+          <ConsoleSuppressor />
           <WebVitals />
           <SpeedInsights />
           <Analytics />

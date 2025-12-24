@@ -24,6 +24,7 @@ const Footer = () => {
             <Link
               href="/"
               className="flex items-center gap-2.5 font-bold text-xl text-text-primary"
+              aria-label="Tavlo - Return to homepage"
             >
               <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-1 to-brand-2 flex items-center justify-center text-white text-sm font-bold shadow-lg shadow-brand-1/20">
                 T
@@ -35,23 +36,30 @@ const Footer = () => {
           {/* Nav Links */}
           <div className="flex flex-wrap gap-6">
             {navLinks.map((link) => (
-              <button
+              <a
                 key={link.href}
-                onClick={() => scrollToSection(link.href)}
-                className="text-sm text-text-secondary hover:text-brand-1 transition-colors"
+                href={link.href}
+                onClick={(e) => {
+                  e.preventDefault();
+                  scrollToSection(link.href);
+                }}
+                className="text-sm text-text-secondary hover:text-brand-1 transition-colors min-h-[44px] flex items-center"
+                aria-label={`Navigate to ${link.label} section`}
               >
                 {link.label}
-              </button>
+              </a>
             ))}
             <Link
               href="/privacy"
-              className="text-sm text-text-secondary hover:text-brand-1 transition-colors"
+              className="text-sm text-text-secondary hover:text-brand-1 transition-colors min-h-[44px] flex items-center"
+              aria-label="Read our Privacy Policy"
             >
               Privacy Policy
             </Link>
             <Link
               href="/terms"
-              className="text-sm text-text-secondary hover:text-brand-1 transition-colors"
+              className="text-sm text-text-secondary hover:text-brand-1 transition-colors min-h-[44px] flex items-center"
+              aria-label="Read our Terms of Service"
             >
               Terms of Service
             </Link>

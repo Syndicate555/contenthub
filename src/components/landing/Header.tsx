@@ -117,12 +117,16 @@ const DesktopNav = ({ navItems, visible }: NavbarProps) => {
       <Logo />
       <motion.div className="lg:flex flex-row flex-1 hidden items-center justify-center space-x-2 lg:space-x-2 text-sm text-zinc-600 font-medium hover:text-zinc-800 transition duration-200">
         {navItems.map((navItem, idx: number) => (
-          <button
+          <a
             key={`link=${idx}`}
-            onClick={() => scrollToSection(navItem.href)}
+            href={navItem.href}
+            onClick={(e) => {
+              e.preventDefault();
+              scrollToSection(navItem.href);
+            }}
             onMouseEnter={() => setHovered(idx)}
-            className="text-neutral-600 relative px-4 py-2 min-h-[48px] min-w-[48px]"
-            aria-label={`Navigate to ${navItem.label}`}
+            className="text-neutral-600 relative px-4 py-2 min-h-[48px] min-w-[48px] flex items-center justify-center"
+            aria-label={`Navigate to ${navItem.label} section`}
           >
             {hovered === idx && (
               <motion.div
@@ -131,7 +135,7 @@ const DesktopNav = ({ navItems, visible }: NavbarProps) => {
               />
             )}
             <span className="relative z-20">{navItem.label}</span>
-          </button>
+          </a>
         ))}
       </motion.div>
       <div className="flex items-center gap-4">
@@ -235,14 +239,18 @@ const MobileNav = ({ navItems, visible }: NavbarProps) => {
               className="flex bg-white inset-x-0 z-50 flex-col items-start justify-start gap-4 w-full px-4 py-8 shadow-xl rounded-b-2xl overflow-hidden"
             >
               {navItems.map((navItem, idx: number) => (
-                <button
+                <a
                   key={`link=${idx}`}
-                  onClick={() => scrollToSection(navItem.href)}
-                  className="relative text-neutral-600 w-full text-left py-2 font-medium min-h-[48px]"
-                  aria-label={`Navigate to ${navItem.label}`}
+                  href={navItem.href}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    scrollToSection(navItem.href);
+                  }}
+                  className="relative text-neutral-600 w-full text-left py-2 font-medium min-h-[48px] flex items-center"
+                  aria-label={`Navigate to ${navItem.label} section`}
                 >
                   <motion.span className="block">{navItem.label}</motion.span>
-                </button>
+                </a>
               ))}
               <Link href="/sign-in" className="w-full">
                 <Button variant="outline" className="block md:hidden w-full">
