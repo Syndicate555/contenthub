@@ -9,6 +9,7 @@ const isPublicRoute = createRouteMatcher([
   "/api/domains", // Public - domains are global, not user-specific
   "/video(.*)", // Serve static demo video without auth
   "/animations(.*)", // Serve lottie assets without auth
+  "/wasm(.*)", // Serve wasm assets without auth
 ]);
 
 // Proxy replaces the deprecated middleware convention in Next.js 16+
@@ -23,7 +24,7 @@ export default proxy;
 export const config = {
   matcher: [
     // Skip Next.js internals and all static files (including .lottie and common video formats)
-    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest|lottie|mp4|mov|m4v|webm)).*)",
+    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest|lottie|wasm|mp4|mov|m4v|webm)).*)",
     // Always run for API routes
     "/(api|trpc)(.*)",
   ],

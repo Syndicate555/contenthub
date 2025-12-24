@@ -10,7 +10,9 @@ import {
   Globe,
 } from "lucide-react";
 import { CSSReveal } from "@/components/motion";
-import { DotLottieReact } from "@lottiefiles/dotlottie-react";
+import { DotLottieReact, setWasmUrl } from "@lottiefiles/dotlottie-react";
+
+setWasmUrl("/wasm/dotlottie-player.wasm");
 
 // Custom TikTok icon
 const TikTokIcon: React.FC<{ className?: string }> = ({ className }) => (
