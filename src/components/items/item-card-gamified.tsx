@@ -582,10 +582,15 @@ export function ItemCardGamified({
 
   return (
     <>
-      <motion.div variants={fadeInUp} initial="initial" animate="animate">
+      <motion.div
+        variants={fadeInUp}
+        initial="initial"
+        animate="animate"
+        className="w-full min-w-0"
+      >
         <Card
           className={cn(
-            "overflow-hidden transition-all duration-200",
+            "w-full min-w-0 overflow-hidden transition-all duration-200",
             "hover:shadow-2xl",
             "border-l-8 relative",
             item.isInFocusArea && item.domain
@@ -653,7 +658,7 @@ export function ItemCardGamified({
               (item.source?.toLowerCase().includes("instagram") ||
                 item.url.toLowerCase().includes("instagram.com")) ? (
                 <div
-                  className="w-full"
+                  className="w-full overflow-hidden [&_iframe]:w-full [&_iframe]:min-w-0 [&_iframe]:max-w-full [&_blockquote]:w-full [&_blockquote]:min-w-0 [&_blockquote]:max-w-full"
                   dangerouslySetInnerHTML={{ __html: item.embedHtml }}
                 />
               ) : (
@@ -688,7 +693,7 @@ export function ItemCardGamified({
             <div className="w-full flex justify-center bg-gray-50 py-4">
               <iframe
                 src={tiktokEmbedUrl}
-                className="w-full max-w-[325px] h-[730px] border-0"
+                className="w-full max-w-full sm:max-w-[325px] h-[730px] border-0"
                 allowFullScreen
                 scrolling="no"
                 allow="encrypted-media;"
@@ -701,8 +706,8 @@ export function ItemCardGamified({
           {showLinkedInEmbed ? (
             <div className="w-full bg-gray-50 py-4">
               {/* Hint to scroll for video/document/content */}
-              <div className="flex justify-center mb-2 gap-3">
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+              <div className="flex flex-wrap justify-center items-center mb-2 gap-3 px-3">
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-100 text-blue-700 rounded-full text-xs font-medium text-center">
                   <svg
                     className="w-4 h-4"
                     fill="none"
@@ -726,7 +731,7 @@ export function ItemCardGamified({
                 {item.imageUrl && (
                   <button
                     onClick={() => setIsImageModalOpen(true)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-300 text-gray-700 rounded-full text-xs font-medium hover:bg-gray-50 hover:border-gray-400 transition-colors"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-300 text-gray-700 rounded-full text-xs font-medium hover:bg-gray-50 hover:border-gray-400 transition-colors max-w-full whitespace-normal text-center"
                   >
                     <svg
                       className="w-3.5 h-3.5"
@@ -748,7 +753,7 @@ export function ItemCardGamified({
               <div className="flex justify-center">
                 <iframe
                   src={linkedInEmbedUrl!}
-                  className="w-full max-w-[504px] h-[700px] border-0"
+                  className="w-full max-w-full sm:max-w-[504px] h-[700px] border-0"
                   allowFullScreen
                   scrolling="yes"
                   title="LinkedIn post"
@@ -785,7 +790,7 @@ export function ItemCardGamified({
                 {item.videoUrl && (
                   <button
                     onClick={() => setIsVideoModalOpen(true)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-blue-300 text-blue-700 rounded-full text-xs font-medium hover:bg-blue-50 hover:border-blue-400 transition-colors"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-blue-300 text-blue-700 rounded-full text-xs font-medium hover:bg-blue-50 hover:border-blue-400 transition-colors max-w-full whitespace-normal text-center"
                   >
                     <svg
                       className="w-3.5 h-3.5"
@@ -807,7 +812,7 @@ export function ItemCardGamified({
                 {item.imageUrl && (
                   <button
                     onClick={() => setIsImageModalOpen(true)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-300 text-gray-700 rounded-full text-xs font-medium hover:bg-gray-50 hover:border-gray-400 transition-colors"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-300 text-gray-700 rounded-full text-xs font-medium hover:bg-gray-50 hover:border-gray-400 transition-colors max-w-full whitespace-normal text-center"
                   >
                     <svg
                       className="w-3.5 h-3.5"
@@ -829,7 +834,7 @@ export function ItemCardGamified({
               <div className="flex justify-center">
                 <iframe
                   src={facebookEmbedUrl!}
-                  className="w-full max-w-[500px] h-[600px] border-0"
+                  className="w-full max-w-full sm:max-w-[500px] h-[600px] border-0"
                   allowFullScreen
                   scrolling="no"
                   title="Facebook post"
@@ -1140,7 +1145,7 @@ export function ItemCardGamified({
                 {summaryBullets.slice(0, 5).map((bullet: string, i: number) => (
                   <li key={i} className="flex items-start gap-2">
                     <span className="text-gray-300 mt-0.5">•</span>
-                    <span className="leading-relaxed">{bullet}</span>
+                    <span className="leading-relaxed break-words">{bullet}</span>
                   </li>
                 ))}
               </ul>
@@ -1169,7 +1174,9 @@ export function ItemCardGamified({
             {item.note && (
               <div className="flex items-start gap-2 p-2 bg-amber-50 border border-amber-100 rounded-lg mb-3">
                 <MessageSquare className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
-                <p className="text-xs text-amber-800">{item.note}</p>
+                <p className="text-xs text-amber-800 break-words">
+                  {item.note}
+                </p>
               </div>
             )}
 
