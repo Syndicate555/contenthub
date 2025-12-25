@@ -850,19 +850,6 @@ async function extractTwitterContent(url: string): Promise<ExtractedContent> {
 }
 
 /**
- * Instagram oEmbed API response type
- */
-interface InstagramOEmbedResponse {
-  title?: string;
-  author_name?: string;
-  author_url?: string;
-  thumbnail_url?: string;
-  thumbnail_width?: number;
-  thumbnail_height?: number;
-  html?: string;
-}
-
-/**
  * Microlink API response type
  */
 interface MicrolinkResponse {
@@ -969,64 +956,87 @@ async function extractInstagramContent(url: string): Promise<ExtractedContent> {
           }
         }
 
-        // Extract author from embed
+        // Extract author from embed - try multiple patterns
+        // Pattern 1: @username in HTML
         const authorMatch = html.match(/@([a-zA-Z0-9_.]+)/);
         if (authorMatch) {
           author = authorMatch[1];
         }
 
-        // Extract caption - try multiple patterns
-        // Pattern 1: Caption div
-        let captionMatch = html.match(
-          /<div[^>]*class="[^ vital]*Caption[^ vital]*"[^>]*>([^<]+)</i,
-        );
-        if (captionMatch) {
-          caption = captionMatch[1].trim();
+        // Pattern 2: Look for username in JSON data
+        if (!author) {
+          const usernameJsonMatch = html.match(
+            /"username"\s*:\s*"([a-zA-Z0-9_.]+)"/i,
+          );
+          if (usernameJsonMatch) {
+            author = usernameJsonMatch[1];
+          }
         }
 
-        // Pattern 2: Look for caption in meta description (but filter engagement stats)
+        // Extract caption - try multiple patterns
+        // Pattern 1: Caption in JSON (most reliable for embed pages)
+        const captionJsonMatch = html.match(
+          /"caption"\s*:\s*"((?:[^"\\]|\\.)*)"/i,
+        );
+        if (captionJsonMatch) {
+          caption = captionJsonMatch[1]
+            .replace(/\\n/g, " ")
+            .replace(/\\r/g, "")
+            .replace(/\\"/g, '"')
+            .replace(/\\\\/g, "\\")
+            .trim();
+          console.log(
+            `[Instagram] Found caption in JSON (length: ${caption.length})`,
+          );
+        }
+
+        // Pattern 2: Caption div
+        if (!caption) {
+          const captionMatch = html.match(
+            /<div[^>]*class="[^"]*Caption[^"]*"[^>]*>([^<]+)</i,
+          );
+          if (captionMatch) {
+            caption = captionMatch[1].trim();
+            console.log(
+              `[Instagram] Found caption in div (length: ${caption.length})`,
+            );
+          }
+        }
+
+        // Pattern 3: Look for caption in meta description (but filter engagement stats)
         if (!caption) {
           const metaDescMatch = html.match(
             /<meta\s+property="og:description"\s+content="([^"]+)"/i,
           );
           if (metaDescMatch) {
             const desc = metaDescMatch[1].trim();
-            // Reject if it looks like engagement stats (e.g., "6,946 likes, 459 comments - username")
+            // Reject if it looks like engagement stats
             const isEngagementStats =
               /^\d[\d,]*\s+(likes?|followers?|comments?)/i.test(desc) ||
               /^\d[\d,]*\s+\w+,\s*\d[\d,]*\s+\w+\s*-\s*/i.test(desc);
             if (!isEngagementStats && desc.length > 20) {
               caption = desc;
+              console.log(
+                `[Instagram] Found caption in og:description (length: ${caption.length})`,
+              );
             }
           }
         }
 
-        // Pattern 3: Look for text content in the embed that might be the caption
-        if (!caption) {
-          const textMatch = html.match(/"caption"\s*:\s*"([^"]{20,}[^"]*)"/i);
-          if (textMatch) {
-            caption = textMatch[1]
-              .replace(/\\n/g, " ")
-              .replace(/\\"/g, '"')
-              .trim();
-          }
-        }
+        console.log(
+          `[Instagram] Embed page extraction results: author=${author || "NOT FOUND"}, caption=${caption ? `${caption.length} chars` : "NOT FOUND"}`,
+        );
 
         author = author || urlAuthor;
 
-        // Accept extraction if we have media (caption is optional)
-        // Instagram carousel posts and reels often don't expose captions in accessible meta tags
+        // For Method 1 (embed page), require BOTH media AND caption
+        // If we can't get caption here, fall through to other methods which scrape the actual page
         const hasMediaData = videoUrl || imageUrl;
         const hasGoodContent = caption && caption.length > 20;
 
-        if (hasMediaData) {
-          // Use caption if available, otherwise provide fallback
-          const finalCaption = hasGoodContent
-            ? caption
-            : "Instagram post content. Caption not available.";
-
+        if (hasMediaData && hasGoodContent) {
           console.log(
-            `[Instagram] ✓ Embed page SUCCESS: author=${author}, imageUrl=${!!imageUrl}, videoUrl=${!!videoUrl}, hasCaption=${hasGoodContent}`,
+            `[Instagram] ✓ Embed page SUCCESS: author=${author || "unknown"}, imageUrl=${!!imageUrl}, videoUrl=${!!videoUrl}, captionLength=${caption!.length}`,
           );
 
           // Generate embedHtml for Instagram posts/reels to enable video playback
@@ -1035,7 +1045,7 @@ async function extractInstagramContent(url: string): Promise<ExtractedContent> {
 
           return {
             title: author ? `Instagram post by @${author}` : "Instagram Post",
-            content: finalCaption,
+            content: caption!, // hasGoodContent ensures caption is defined
             source,
             author,
             imageUrl,
@@ -1045,7 +1055,7 @@ async function extractInstagramContent(url: string): Promise<ExtractedContent> {
           };
         } else {
           console.log(
-            `[Instagram] ✗ Embed page: No media data found (imageUrl=${!!imageUrl}, videoUrl=${!!videoUrl})`,
+            `[Instagram] ✗ Embed page: Incomplete data - hasMedia=${hasMediaData}, hasCaption=${hasGoodContent}, captionLength=${caption?.length || 0}`,
           );
           console.log("[Instagram] Will try other extraction methods...");
         }
@@ -1092,8 +1102,8 @@ async function extractInstagramContent(url: string): Promise<ExtractedContent> {
         const hasContent = data.title && data.title.length > 20;
 
         // Use title if available, otherwise provide fallback
-        const finalContent = hasContent
-          ? data.title
+        const finalContent: string = hasContent
+          ? data.title!
           : "Instagram post content. Caption not available.";
 
         console.log(
@@ -1205,8 +1215,8 @@ async function extractInstagramContent(url: string): Promise<ExtractedContent> {
 
       if (hasMediaData) {
         // Use description if available, otherwise provide fallback
-        const finalDescription = hasGoodContent
-          ? ogDesc
+        const finalDescription: string = hasGoodContent
+          ? ogDesc!
           : "Instagram post content. Caption not available.";
 
         console.log(
@@ -1325,8 +1335,8 @@ async function extractInstagramContent(url: string): Promise<ExtractedContent> {
 
     if (hasMediaData) {
       // Use description if available, otherwise provide fallback
-      const finalDescription = hasGoodContent
-        ? description
+      const finalDescription: string = hasGoodContent
+        ? description!
         : "Instagram post content. Caption not available.";
 
       console.log(
@@ -1940,7 +1950,6 @@ async function extractLinkedInContent(url: string): Promise<ExtractedContent> {
       title: rawTitle,
       description,
       author: rawAuthor,
-      publisher,
       image,
     } = data.data;
 
