@@ -846,33 +846,51 @@ export function ItemCardGamified({
             !showFacebookEmbed &&
             !isYoutube &&
             !liHasDoc &&
-            item.imageUrl && (
+            (item.imageUrl || (isTikTok && item.videoUrl) || (isInsta && (hasInstaVideo || showInstagramEmbed))) && (
               <button
                 onClick={() => setIsImageModalOpen(true)}
                 className="block w-full relative bg-gray-50 overflow-hidden cursor-zoom-in group min-h-[200px] max-h-80"
               >
-                <Image
-                  src={item.imageUrl}
-                  alt={item.title || "Content preview"}
-                  width={800}
-                  height={600}
-                  className="w-full h-auto max-h-80 object-contain"
-                  loading="lazy"
-                  quality={85}
-                  unoptimized={
-                    (item.imageUrl || "").toLowerCase().endsWith(".gif") ||
-                    item.imageUrl.includes("tiktokcdn") ||
-                    item.imageUrl.includes("fbcdn.net") ||
-                    item.imageUrl.includes("cdninstagram.com") ||
-                    item.source?.includes("linkedin") ||
-                    item.source?.includes("reddit")
-                  }
-                  onError={(e) => {
-                    (
-                      e.target as HTMLImageElement
-                    ).parentElement!.style.display = "none";
-                  }}
-                />
+                {isTikTok && item.videoUrl ? (
+                  // Custom TikTok placeholder with play button
+                  <div className="flex h-full w-full items-center justify-center bg-black relative">
+                    {/* Background image or just black screen */}
+                    <div className="absolute inset-0 bg-black" />
+                    <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/50" />
+                    <Play className="w-16 h-16 text-white opacity-80 group-hover:opacity-100 transition-opacity z-10 fill-white" />
+                    <span className="absolute bottom-4 text-white text-sm font-semibold z-10">Play TikTok</span>
+                  </div>
+                ) : isInsta && (hasInstaVideo || showInstagramEmbed) ? (
+                  // Custom Instagram placeholder with play button
+                  <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-purple-500 via-pink-500 to-orange-500 relative">
+                    <Play className="w-16 h-16 text-white opacity-80 group-hover:opacity-100 transition-opacity z-10 fill-white" />
+                    <span className="absolute bottom-4 text-white text-sm font-semibold z-10">View Instagram</span>
+                  </div>
+                ) : (
+                  // Existing image rendering (fallback for other platforms or reliable Instagram images)
+                  <Image
+                    src={item.imageUrl}
+                    alt={item.title || "Content preview"}
+                    width={800}
+                    height={600}
+                    className="w-full h-auto max-h-80 object-contain"
+                    loading="lazy"
+                    quality={85}
+                    unoptimized={
+                      (item.imageUrl || "").toLowerCase().endsWith(".gif") ||
+                      item.imageUrl.includes("tiktokcdn") ||
+                      item.imageUrl.includes("fbcdn.net") ||
+                      item.imageUrl.includes("cdninstagram.com") ||
+                      item.source?.includes("linkedin") ||
+                      item.source?.includes("reddit")
+                    }
+                    onError={(e) => {
+                      (
+                        e.target as HTMLImageElement
+                      ).parentElement!.style.display = "none";
+                    }}
+                  />
+                )}
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors" />
               </button>
             )}
