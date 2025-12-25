@@ -1389,11 +1389,16 @@ function extractLinkedInUrn(url: string): string | null {
     return `urn:li:activity:${urnMatch[1]}`;
   }
 
-  // Pattern 2: Activity ID in posts URL - Look for "activity-" followed by digits
-  // Works for: linkedin.com/posts/username_slug-activity-1234567890-hash
-  const postsMatch = url.match(/activity-(\d+)/i);
+  // Pattern 2: Activity ID in posts URL - Look for "activity-" or "ugcPost-" followed by digits
+  // Works for:
+  // - linkedin.com/posts/username_slug-activity-1234567890-hash
+  // - linkedin.com/posts/username_slug-ugcPost-1234567890-hash
+  const postsMatch = url.match(/(activity|ugcPost)-(\d+)/i);
   if (postsMatch) {
-    return `urn:li:activity:${postsMatch[1]}`;
+    const type = postsMatch[1].toLowerCase();
+    const id = postsMatch[2];
+    // Use the correct URN type: ugcPost or activity
+    return type === "ugcpost" ? `urn:li:ugcPost:${id}` : `urn:li:activity:${id}`;
   }
 
   // Pattern 3: Feed update URL with activity ID
