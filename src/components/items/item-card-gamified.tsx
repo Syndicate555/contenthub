@@ -866,7 +866,7 @@ export function ItemCardGamified({
                     <Play className="w-16 h-16 text-white opacity-80 group-hover:opacity-100 transition-opacity z-10 fill-white" />
                     <span className="absolute bottom-4 text-white text-sm font-semibold z-10">View Instagram</span>
                   </div>
-                ) : (
+                ) : item.imageUrl ? (
                   // Existing image rendering (fallback for other platforms or reliable Instagram images)
                   <Image
                     src={item.imageUrl}
@@ -877,7 +877,7 @@ export function ItemCardGamified({
                     loading="lazy"
                     quality={85}
                     unoptimized={
-                      (item.imageUrl || "").toLowerCase().endsWith(".gif") ||
+                      item.imageUrl.toLowerCase().endsWith(".gif") ||
                       item.imageUrl.includes("tiktokcdn") ||
                       item.imageUrl.includes("fbcdn.net") ||
                       item.imageUrl.includes("cdninstagram.com") ||
@@ -890,7 +890,7 @@ export function ItemCardGamified({
                       ).parentElement!.style.display = "none";
                     }}
                   />
-                )}
+                ) : null}
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors" />
               </button>
             )}
