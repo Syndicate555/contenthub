@@ -87,6 +87,18 @@ function getInstagramEmbedSizing(url: string) {
   };
 }
 
+// Check if it's an Instagram post with video
+function isInstagramWithVideo(
+  source?: string | null,
+  url?: string,
+  videoUrl?: string | null,
+): boolean {
+  const isInstagram =
+    source?.toLowerCase().includes("instagram") ||
+    url?.toLowerCase().includes("instagram.com");
+  return !!(isInstagram && videoUrl);
+}
+
 // Extract TikTok video ID from embedHtml
 function extractTikTokVideoId(embedHtml: string): string | null {
   const videoIdMatch = embedHtml.match(/data-video-id="(\d+)"/);
@@ -295,6 +307,7 @@ export function ItemCardGamified({
   const [showXpBreakdown, setShowXpBreakdown] = useState(false);
   const [embedFailed, setEmbedFailed] = useState(false);
   const [playYoutube, setPlayYoutube] = useState(false);
+  const [playInstagramVideo, setPlayInstagramVideo] = useState(false);
 
   const TypeIcon = item.type
     ? typeIcons[item.type as keyof typeof typeIcons]
@@ -349,6 +362,12 @@ export function ItemCardGamified({
   const youtubeEmbedUrl = useMemo(
     () => (isYoutube ? getYoutubeEmbedUrl(item.url) : null),
     [isYoutube, item.url],
+  );
+
+  const hasInstagramVideo = isInstagramWithVideo(
+    item.source,
+    item.url,
+    item.videoUrl,
   );
 
   const hasLinkedInDocument = useMemo(() => {
@@ -582,19 +601,75 @@ export function ItemCardGamified({
               : undefined
           }
         >
-          {/* Instagram embed for reels/posts (uses hosted source) */}
-          {showInstagramEmbed ? (
+          {/* Instagram Video Direct Playback */}
+          {hasInstagramVideo && !embedFailed ? (
+            <div className="w-full aspect-video bg-gray-900 relative group">
+              {playInstagramVideo ? (
+                <div className="absolute inset-0 w-full h-full">
+                  <video
+                    className="w-full h-full"
+                    src={item.videoUrl!}
+                    controls
+                    autoPlay
+                    onError={() => setEmbedFailed(true)}
+                  >
+                    Your browser does not support the video tag.
+                  </video>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setPlayInstagramVideo(true)}
+                  className="w-full h-full relative block cursor-pointer group"
+                >
+                  {item.imageUrl ? (
+                    <Image
+                      src={item.imageUrl}
+                      alt="Video thumbnail"
+                      fill
+                      className="object-cover"
+                      unoptimized={item.imageUrl.includes("cdninstagram.com")}
+                      onError={() => setEmbedFailed(true)}
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gray-800 flex items-center justify-center">
+                      <Play className="w-16 h-16 text-gray-400" />
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                    <div className="w-16 h-16 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                      <Play className="w-8 h-8 text-white fill-white ml-1" />
+                    </div>
+                  </div>
+                </button>
+              )}
+            </div>
+          ) : null}
+
+          {/* Instagram embed for reels/posts (fallback when no video URL) */}
+          {!hasInstagramVideo && showInstagramEmbed ? (
             <div className="w-full bg-black overflow-hidden relative rounded-b-none">
-              <div className={`relative w-full ${instagramSizing.aspectClass}`}>
-                <iframe
-                  src={instagramEmbedUrl!}
-                  className={`absolute inset-0 w-full h-full border-0 ${instagramSizing.transformClass} origin-top`}
-                  allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
-                  allowFullScreen
-                  loading="lazy"
-                  onError={() => setEmbedFailed(true)}
+              {/* Use embedHtml from noembed if available (better video playback support) */}
+              {item.embedHtml &&
+              (item.source?.toLowerCase().includes("instagram") ||
+                item.url.toLowerCase().includes("instagram.com")) ? (
+                <div
+                  className="w-full"
+                  dangerouslySetInnerHTML={{ __html: item.embedHtml }}
                 />
-              </div>
+              ) : (
+                <div
+                  className={`relative w-full ${instagramSizing.aspectClass}`}
+                >
+                  <iframe
+                    src={instagramEmbedUrl!}
+                    className={`absolute inset-0 w-full h-full border-0 ${instagramSizing.transformClass} origin-top`}
+                    allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+                    allowFullScreen
+                    loading="lazy"
+                    onError={() => setEmbedFailed(true)}
+                  />
+                </div>
+              )}
               <div className="absolute top-3 right-3 flex gap-2">
                 <Button
                   size="sm"

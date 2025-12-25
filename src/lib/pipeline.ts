@@ -167,35 +167,40 @@ export async function processItem(
     console.log(
       `Pipeline: Saving item with imageUrl=${extracted.imageUrl ? "YES" : "NO"}, videoUrl=${extracted.videoUrl ? "YES" : "NO"}, documentUrl=${extracted.documentUrl ? "YES" : "NO"}, domainId=${domainId || "none"}`,
     );
-    const item = await db.$transaction(async (tx) => {
-      // Create the item
-      const newItem = await tx.item.create({
-        data: {
-          url,
-          note,
-          userId,
-          source: extracted.source,
-          status: "new",
-          title: summarized.title,
-          summary: summarized.summary.join("\n"),
-          tags: summarized.tags, // Keep for backward compatibility during migration
-          author: extracted.author || null,
-          type: summarized.type,
-          category: summarized.category,
-          rawContent: truncatedContent,
-          imageUrl: extracted.imageUrl,
-          videoUrl: extracted.videoUrl,
-          documentUrl: extracted.documentUrl,
-          embedHtml: extracted.embedHtml,
-          domainId: domainId || undefined,
-        },
-      });
+    const item = await db.$transaction(
+      async (tx) => {
+        // Create the item
+        const newItem = await tx.item.create({
+          data: {
+            url,
+            note,
+            userId,
+            source: extracted.source,
+            status: "new",
+            title: summarized.title,
+            summary: summarized.summary.join("\n"),
+            tags: summarized.tags, // Keep for backward compatibility during migration
+            author: extracted.author || null,
+            type: summarized.type,
+            category: summarized.category,
+            rawContent: truncatedContent,
+            imageUrl: extracted.imageUrl,
+            videoUrl: extracted.videoUrl,
+            documentUrl: extracted.documentUrl,
+            embedHtml: extracted.embedHtml,
+            domainId: domainId || undefined,
+          },
+        });
 
-      // Assign tags using the tag service (creates Tag + ItemTag records)
-      await assignTagsToItem(tx, newItem.id, summarized.tags);
+        // Assign tags using the tag service (creates Tag + ItemTag records)
+        await assignTagsToItem(tx, newItem.id, summarized.tags);
 
-      return newItem;
-    });
+        return newItem;
+      },
+      {
+        timeout: 15000, // Increase timeout from default 5000ms to 15000ms for tag upsert operations
+      },
+    );
 
     // Step 6: Award XP for saving the item
     try {

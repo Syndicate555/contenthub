@@ -117,9 +117,7 @@ export default function ItemsPage() {
               .filter((t: string | undefined): t is string => Boolean(t))
           : [];
 
-      tagList.forEach((tag) =>
-        counts.set(tag, (counts.get(tag) || 0) + 1),
-      );
+      tagList.forEach((tag) => counts.set(tag, (counts.get(tag) || 0) + 1));
     });
     return Array.from(counts.entries())
       .map(([tag, count]) => ({ tag, count }))
@@ -271,7 +269,8 @@ export default function ItemsPage() {
             if (type === "platform")
               updater(platformFilter, setPlatformFilter, "platform");
             if (type === "tag") updater(tagFilter, setTagFilter, "tag");
-            if (type === "author") updater(authorFilter, setAuthorFilter, "author");
+            if (type === "author")
+              updater(authorFilter, setAuthorFilter, "author");
           }}
         />
       </StickyTopBar>
@@ -367,9 +366,7 @@ export default function ItemsPage() {
       >
         <DialogContent className="max-w-5xl w-[94vw] sm:w-[90vw] lg:w-[80vw] max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl">
           <DialogHeader>
-            <DialogTitle>
-              {selectedItem?.title || "Item details"}
-            </DialogTitle>
+            <DialogTitle>{selectedItem?.title || "Item details"}</DialogTitle>
             <DialogDescription>
               {selectedItem?.source || "Content"}
             </DialogDescription>
@@ -431,7 +428,9 @@ export default function ItemsPage() {
 }
 
 function toggleValue(list: string[], value: string) {
-  return list.includes(value) ? list.filter((v) => v !== value) : [...list, value];
+  return list.includes(value)
+    ? list.filter((v) => v !== value)
+    : [...list, value];
 }
 
 function StickyTopBar({
@@ -552,7 +551,10 @@ function ActiveFiltersRow({
   platformFilter: string[];
   tagFilter: string[];
   authorFilter: string[];
-  onRemoveFilter: (type: "category" | "platform" | "tag" | "author", value: string) => void;
+  onRemoveFilter: (
+    type: "category" | "platform" | "tag" | "author",
+    value: string,
+  ) => void;
 }) {
   const tokens = [
     ...categoryFilter.map((c) => ({ type: "category" as const, label: c })),
@@ -646,9 +648,7 @@ function FiltersSidebar({
     getIcon?: (opt: FacetOption) => ReactNode,
     selectionMode: "multi" | "single" = "multi",
   ) => {
-    const cleaned = (options || []).filter(
-      (opt) => opt.value && opt.label,
-    );
+    const cleaned = (options || []).filter((opt) => opt.value && opt.label);
     const top = cleaned.slice(0, 10);
     const selectedNormalized =
       selectionMode === "single" && selected.length > 0
@@ -762,11 +762,13 @@ function FiltersSidebar({
   );
 }
 
-function FiltersDrawer(props: Parameters<typeof FiltersSidebar>[0] & {
-  open: boolean;
-  onOpenChange: (v: boolean) => void;
-  onClearAll: () => void;
-}) {
+function FiltersDrawer(
+  props: Parameters<typeof FiltersSidebar>[0] & {
+    open: boolean;
+    onOpenChange: (v: boolean) => void;
+    onClearAll: () => void;
+  },
+) {
   const { open, onOpenChange, onClearAll, ...rest } = props;
 
   return (
@@ -824,6 +826,12 @@ function ItemThumbnailCard({
             fill
             className="object-cover transition-transform duration-300 group-hover:scale-105"
             sizes="(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 50vw"
+            unoptimized={
+              image.includes("tiktokcdn") ||
+              image.includes("fbcdn.net") ||
+              image.includes("cdninstagram.com") ||
+              image.toLowerCase().endsWith(".gif")
+            }
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-gray-200 to-gray-300 text-gray-600 text-sm font-medium">

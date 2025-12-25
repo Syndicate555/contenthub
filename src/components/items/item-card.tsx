@@ -146,6 +146,18 @@ function isLinkedInWithVideo(
   return !!(isLinkedIn && videoUrl);
 }
 
+// Check if it's an Instagram post with video
+function isInstagramWithVideo(
+  source?: string | null,
+  url?: string,
+  videoUrl?: string | null,
+): boolean {
+  const isInstagram =
+    source?.toLowerCase().includes("instagram") ||
+    url?.toLowerCase().includes("instagram.com");
+  return !!(isInstagram && videoUrl);
+}
+
 // Check if it's a LinkedIn post with document
 function isLinkedInWithDocument(
   source?: string | null,
@@ -194,6 +206,7 @@ export function ItemCard({
   const [embedFailed, setEmbedFailed] = useState(false);
   const [playYoutube, setPlayYoutube] = useState(false);
   const [playLinkedInVideo, setPlayLinkedInVideo] = useState(false);
+  const [playInstagramVideo, setPlayInstagramVideo] = useState(false);
 
   const TypeIcon = item.type
     ? typeIcons[item.type as keyof typeof typeIcons]
@@ -255,6 +268,11 @@ export function ItemCard({
     item.source,
     item.url,
     item.documentUrl,
+  );
+  const hasInstagramVideo = isInstagramWithVideo(
+    item.source,
+    item.url,
+    item.videoUrl,
   );
 
   const handleStatusChange = async (status: string) => {
@@ -339,19 +357,73 @@ export function ItemCard({
           platformInfo.borderColor,
         )}
       >
-        {/* Instagram embed for reels/posts (uses hosted source) */}
-        {showInstagramEmbed ? (
+        {/* Instagram Video Direct Playback */}
+        {hasInstagramVideo && !embedFailed ? (
+          <div className="w-full aspect-video bg-gray-900 relative group">
+            {playInstagramVideo ? (
+              <div className="absolute inset-0 w-full h-full">
+                <video
+                  className="w-full h-full"
+                  src={item.videoUrl!}
+                  controls
+                  autoPlay
+                  onError={() => setEmbedFailed(true)}
+                >
+                  Your browser does not support the video tag.
+                </video>
+              </div>
+            ) : (
+              <button
+                onClick={() => setPlayInstagramVideo(true)}
+                className="w-full h-full relative block cursor-pointer group"
+              >
+                {item.imageUrl ? (
+                  <Image
+                    src={item.imageUrl}
+                    alt="Video thumbnail"
+                    fill
+                    className="object-cover"
+                    unoptimized={item.imageUrl.includes("cdninstagram.com")}
+                    onError={() => setEmbedFailed(true)}
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gray-800 flex items-center justify-center">
+                    <Play className="w-16 h-16 text-gray-400" />
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                  <div className="w-16 h-16 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                    <Play className="w-8 h-8 text-white fill-white ml-1" />
+                  </div>
+                </div>
+              </button>
+            )}
+          </div>
+        ) : null}
+
+        {/* Instagram embed for reels/posts (fallback when no video URL) */}
+        {!hasInstagramVideo && showInstagramEmbed ? (
           <div className="w-full bg-black overflow-hidden relative rounded-b-none">
-            <div className={`relative w-full ${instagramSizing.aspectClass}`}>
-              <iframe
-                src={instagramEmbedUrl!}
-                className={`absolute inset-0 w-full h-full border-0 ${instagramSizing.transformClass} origin-top`}
-                allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
-                allowFullScreen
-                loading="lazy"
-                onError={() => setEmbedFailed(true)}
+            {/* Use embedHtml from noembed if available (better video playback support) */}
+            {item.embedHtml &&
+            (item.source?.toLowerCase().includes("instagram") ||
+              item.url.toLowerCase().includes("instagram.com")) ? (
+              <div
+                className="w-full"
+                dangerouslySetInnerHTML={{ __html: item.embedHtml }}
               />
-            </div>
+            ) : (
+              <div className={`relative w-full ${instagramSizing.aspectClass}`}>
+                <iframe
+                  src={instagramEmbedUrl!}
+                  className={`absolute inset-0 w-full h-full border-0 ${instagramSizing.transformClass} origin-top`}
+                  allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+                  allowFullScreen
+                  loading="lazy"
+                  onError={() => setEmbedFailed(true)}
+                />
+              </div>
+            )}
             <div className="absolute top-3 right-3 flex gap-2">
               <Button
                 size="sm"
@@ -524,6 +596,7 @@ export function ItemCard({
           !showTikTokEmbed &&
           !isYoutube &&
           !hasLinkedInVideo &&
+          !hasInstagramVideo &&
           item.imageUrl && (
             <button
               onClick={() => setIsImageModalOpen(true)}
@@ -540,7 +613,10 @@ export function ItemCard({
                 unoptimized={
                   (item.imageUrl || "").toLowerCase().endsWith(".gif") ||
                   item.source?.includes("linkedin") ||
-                  item.source?.includes("reddit")
+                  item.source?.includes("reddit") ||
+                  (item.imageUrl || "").includes("tiktokcdn") ||
+                  (item.imageUrl || "").includes("fbcdn.net") ||
+                  (item.imageUrl || "").includes("cdninstagram.com")
                 }
                 onError={(e) => {
                   (e.target as HTMLImageElement).parentElement!.style.display =
@@ -572,6 +648,11 @@ export function ItemCard({
               <h3 className="text-base font-semibold text-gray-900 line-clamp-2 mb-1">
                 {item.title || item.url}
               </h3>
+
+              {/* Author subtitle */}
+              {item.author && (
+                <p className="text-sm text-gray-500 mt-0.5">by {item.author}</p>
+              )}
             </div>
 
             {/* Date with tooltip */}

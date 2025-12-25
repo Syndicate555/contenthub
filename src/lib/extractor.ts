@@ -894,6 +894,9 @@ async function extractInstagramContent(url: string): Promise<ExtractedContent> {
   let urlAuthor: string | undefined;
   let postId: string | undefined;
 
+  // Detect if this is a reel (video) vs regular post
+  const isReel = url.includes("/reel/");
+
   const postMatch = url.match(/instagram.com\/(?:p|reel)\/([^\/\?]+)/i);
   if (postMatch) {
     postId = postMatch[1];
@@ -904,10 +907,17 @@ async function extractInstagramContent(url: string): Promise<ExtractedContent> {
     urlAuthor = profileMatch[1];
   }
 
+  console.log(
+    `[Instagram] Extracting ${isReel ? "REEL (video)" : "POST (image)"}, postId=${postId}, urlAuthor=${urlAuthor}`,
+  );
+
   // Method 1: Try Instagram embed page (more consistent for og tags)
   if (postId) {
     try {
-      console.log("Instagram extraction - trying embed page");
+      console.log(
+        "[Instagram] Method 1: Trying embed page for postId:",
+        postId,
+      );
 
       // Instagram's embed endpoint returns a page with og:image
       const embedUrl = `https://www.instagram.com/p/${postId}/embed/`;
@@ -923,6 +933,8 @@ async function extractInstagramContent(url: string): Promise<ExtractedContent> {
         },
         5000,
       );
+
+      console.log("[Instagram] Embed page response status:", response.status);
 
       if (response.ok) {
         const html = await response.text();
@@ -963,39 +975,92 @@ async function extractInstagramContent(url: string): Promise<ExtractedContent> {
           author = authorMatch[1];
         }
 
-        // Extract caption
-        const captionMatch = html.match(
+        // Extract caption - try multiple patterns
+        // Pattern 1: Caption div
+        let captionMatch = html.match(
           /<div[^>]*class="[^ vital]*Caption[^ vital]*"[^>]*>([^<]+)</i,
         );
         if (captionMatch) {
           caption = captionMatch[1].trim();
         }
 
+        // Pattern 2: Look for caption in meta description (but filter engagement stats)
+        if (!caption) {
+          const metaDescMatch = html.match(
+            /<meta\s+property="og:description"\s+content="([^"]+)"/i,
+          );
+          if (metaDescMatch) {
+            const desc = metaDescMatch[1].trim();
+            // Reject if it looks like engagement stats (e.g., "6,946 likes, 459 comments - username")
+            const isEngagementStats =
+              /^\d[\d,]*\s+(likes?|followers?|comments?)/i.test(desc) ||
+              /^\d[\d,]*\s+\w+,\s*\d[\d,]*\s+\w+\s*-\s*/i.test(desc);
+            if (!isEngagementStats && desc.length > 20) {
+              caption = desc;
+            }
+          }
+        }
+
+        // Pattern 3: Look for text content in the embed that might be the caption
+        if (!caption) {
+          const textMatch = html.match(/"caption"\s*:\s*"([^"]{20,}[^"]*)"/i);
+          if (textMatch) {
+            caption = textMatch[1]
+              .replace(/\\n/g, " ")
+              .replace(/\\"/g, '"')
+              .trim();
+          }
+        }
+
         author = author || urlAuthor;
 
-        if (imageUrl || videoUrl) {
+        // Accept extraction if we have media (caption is optional)
+        // Instagram carousel posts and reels often don't expose captions in accessible meta tags
+        const hasMediaData = videoUrl || imageUrl;
+        const hasGoodContent = caption && caption.length > 20;
+
+        if (hasMediaData) {
+          // Use caption if available, otherwise provide fallback
+          const finalCaption = hasGoodContent
+            ? caption
+            : "Instagram post content. Caption not available.";
+
           console.log(
-            `Instagram embed success: author=${author}, has image=${!!imageUrl}, has video=${!!videoUrl}`,
+            `[Instagram] ✓ Embed page SUCCESS: author=${author}, imageUrl=${!!imageUrl}, videoUrl=${!!videoUrl}, hasCaption=${hasGoodContent}`,
           );
+
+          // Generate embedHtml for Instagram posts/reels to enable video playback
+          const embedHtml = `<iframe src="https://www.instagram.com/p/${postId}/embed/" width="540" height="760" frameborder="0" scrolling="no" allowtransparency="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>`;
+          console.log(`[Instagram] Generated embedHtml for postId=${postId}`);
+
           return {
             title: author ? `Instagram post by @${author}` : "Instagram Post",
-            content: caption || "Instagram post content.",
+            content: finalCaption,
             source,
             author,
             imageUrl,
             videoUrl,
+            embedHtml,
             imageSource: "scrape",
           };
+        } else {
+          console.log(
+            `[Instagram] ✗ Embed page: No media data found (imageUrl=${!!imageUrl}, videoUrl=${!!videoUrl})`,
+          );
+          console.log("[Instagram] Will try other extraction methods...");
         }
       }
     } catch (error) {
-      console.log("Instagram embed page failed:", error);
+      console.error(
+        "[Instagram] ✗ Embed page FAILED:",
+        error instanceof Error ? error.message : error,
+      );
     }
   }
 
   // Method 2: Try noembed.com (free oEmbed proxy)
   try {
-    console.log("Instagram extraction - trying noembed.com");
+    console.log("[Instagram] Method 2: Trying noembed.com");
 
     const noembedUrl = `https://noembed.com/embed?url=${encodeURIComponent(url)}`;
 
@@ -1007,6 +1072,8 @@ async function extractInstagramContent(url: string): Promise<ExtractedContent> {
       5000,
     );
 
+    console.log("[Instagram] Noembed response status:", response.status);
+
     if (response.ok) {
       const data = (await response.json()) as {
         author_name?: string;
@@ -1015,28 +1082,49 @@ async function extractInstagramContent(url: string): Promise<ExtractedContent> {
         html?: string;
       };
 
-      if (data.thumbnail_url) {
+      console.log(
+        `[Instagram] Noembed response data: thumbnail=${!!data.thumbnail_url}, html=${!!data.html}, title=${!!data.title}`,
+      );
+
+      // Accept response if we have either thumbnail OR embedHtml
+      if (data.thumbnail_url || data.html) {
         const author = data.author_name || urlAuthor;
+        const hasContent = data.title && data.title.length > 20;
+
+        // Use title if available, otherwise provide fallback
+        const finalContent = hasContent
+          ? data.title
+          : "Instagram post content. Caption not available.";
+
         console.log(
-          `Instagram noembed success: author=${author}, has thumbnail=true`,
+          `[Instagram] ✓ Noembed SUCCESS: author=${author}, thumbnail=${!!data.thumbnail_url}, embedHtml=${!!data.html}, hasContent=${hasContent}`,
         );
+
         return {
           title: author ? `Instagram post by @${author}` : "Instagram Post",
-          content: data.title || "Instagram post content.",
+          content: finalContent,
           source,
           author,
           imageUrl: data.thumbnail_url,
+          embedHtml: data.html, // Include embed HTML for video playback
           imageSource: "oembed",
         };
+      } else {
+        console.log(
+          "[Instagram] ✗ Noembed: No thumbnail_url or html in response",
+        );
       }
     }
   } catch (error) {
-    console.log("Instagram noembed failed:", error);
+    console.error(
+      "[Instagram] ✗ Noembed FAILED:",
+      error instanceof Error ? error.message : error,
+    );
   }
 
   // Method 3: Direct page scraping
   try {
-    console.log("Instagram extraction - trying direct page scraping");
+    console.log("[Instagram] Method 3: Trying direct page scraping");
 
     const response = await fetch(url, {
       headers: {
@@ -1045,6 +1133,8 @@ async function extractInstagramContent(url: string): Promise<ExtractedContent> {
         Accept: "text/html",
       },
     });
+
+    console.log("[Instagram] Direct scrape response status:", response.status);
 
     if (response.ok) {
       const html = await response.text();
@@ -1066,40 +1156,96 @@ async function extractInstagramContent(url: string): Promise<ExtractedContent> {
       const ogTitle = document
         .querySelector('meta[property="og:title"]')
         ?.getAttribute("content");
-      const ogDesc = document
+      let ogDesc = document
         .querySelector('meta[property="og:description"]')
         ?.getAttribute("content");
 
       let author = urlAuthor;
-      if (ogTitle) {
+
+      // Try to extract author from og:title (e.g., "@username on Instagram")
+      if (!author && ogTitle) {
         const authorMatch = ogTitle.match(/^@?(\w+)\s+on\s+Instagram/i);
         if (authorMatch) {
           author = authorMatch[1];
         }
       }
 
-      if (ogImage || ogVideo) {
-        console.log(
-          `Instagram scrape success: author=${author}, has image=${!!ogImage}, has video=${!!ogVideo}`,
+      // Try to extract author from engagement stats before filtering them out
+      // Pattern: "6,946 likes, 459 comments - username"
+      if (!author && ogDesc) {
+        const engagementAuthorMatch = ogDesc.match(
+          /\d[\d,]*\s+\w+,\s*\d[\d,]*\s+\w+\s*-\s*([a-zA-Z0-9_.]+)/i,
         );
+        if (engagementAuthorMatch) {
+          author = engagementAuthorMatch[1];
+          console.log(
+            `[Instagram] Extracted author from engagement stats: ${author}`,
+          );
+        }
+      }
+
+      // Filter out engagement stats from description
+      // Reject if it looks like "6,946 likes, 459 comments - username"
+      if (ogDesc) {
+        const isEngagementStats =
+          /^\d[\d,]*\s+(likes?|followers?|comments?)/i.test(ogDesc) ||
+          /^\d[\d,]*\s+\w+,\s*\d[\d,]*\s+\w+\s*-\s*/i.test(ogDesc);
+        if (isEngagementStats) {
+          console.log(
+            `[Instagram] ⚠ Filtering out engagement stats from og:description: "${ogDesc.substring(0, 50)}"`,
+          );
+          ogDesc = undefined;
+        }
+      }
+
+      // Accept extraction if we have media (description is optional)
+      // Instagram carousel posts often don't expose captions in accessible meta tags
+      const hasMediaData = ogVideo || ogImage;
+      const hasGoodContent = ogDesc && ogDesc.length > 20;
+
+      if (hasMediaData) {
+        // Use description if available, otherwise provide fallback
+        const finalDescription = hasGoodContent
+          ? ogDesc
+          : "Instagram post content. Caption not available.";
+
+        console.log(
+          `[Instagram] ✓ Direct scrape SUCCESS: author=${author}, imageUrl=${!!ogImage}, videoUrl=${!!ogVideo}, hasDescription=${hasGoodContent}`,
+        );
+
+        // Generate embedHtml for Instagram posts/reels to enable video playback
+        let embedHtml: string | undefined;
+        if (postId) {
+          embedHtml = `<iframe src="https://www.instagram.com/p/${postId}/embed/" width="540" height="760" frameborder="0" scrolling="no" allowtransparency="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>`;
+          console.log(`[Instagram] Generated embedHtml for postId=${postId}`);
+        }
+
         return {
           title: author ? `Instagram post by @${author}` : "Instagram Post",
-          content: ogDesc || "Instagram post content.",
+          content: finalDescription,
           source,
           author,
           imageUrl: ogImage || undefined,
           videoUrl: ogVideo || undefined,
+          embedHtml,
           imageSource: "scrape",
         };
+      } else {
+        console.log(
+          `[Instagram] ✗ Direct scrape: No media data found (imageUrl=${!!ogImage}, videoUrl=${!!ogVideo})`,
+        );
       }
     }
   } catch (error) {
-    console.log("Instagram direct scraping failed:", error);
+    console.error(
+      "[Instagram] ✗ Direct scrape FAILED:",
+      error instanceof Error ? error.message : error,
+    );
   }
 
   // Method 4: Fallback to Microlink API
   try {
-    console.log("Instagram extraction - falling back to Microlink API");
+    console.log("[Instagram] Method 4: Falling back to Microlink API");
 
     const microlinkUrl = `https://api.microlink.io?url=${encodeURIComponent(url)}`;
 
@@ -1111,7 +1257,9 @@ async function extractInstagramContent(url: string): Promise<ExtractedContent> {
       8000,
     );
 
-    if (response.ok) {
+    console.log("[Instagram] Microlink response status:", response.status);
+
+    if (!response.ok) {
       throw new Error(`Microlink API failed: ${response.status}`);
     }
 
@@ -1123,7 +1271,7 @@ async function extractInstagramContent(url: string): Promise<ExtractedContent> {
 
     const {
       title: rawTitle,
-      description,
+      description: rawDescription,
       author: rawAuthor,
       image,
     } = data.data;
@@ -1131,6 +1279,7 @@ async function extractInstagramContent(url: string): Promise<ExtractedContent> {
 
     let author = rawAuthor?.replace(/^@/, "") || urlAuthor || undefined;
 
+    // Try to extract author from title (e.g., "(@username)")
     if (!author && rawTitle) {
       const authorMatch = rawTitle.match(/\(@([^)]+)\)/);
       if (authorMatch) {
@@ -1138,29 +1287,78 @@ async function extractInstagramContent(url: string): Promise<ExtractedContent> {
       }
     }
 
+    // Try to extract author from engagement stats before filtering them out
+    // Pattern: "6,946 likes, 459 comments - username"
+    if (!author && rawDescription) {
+      const engagementAuthorMatch = rawDescription.match(
+        /\d[\d,]*\s+\w+,\s*\d[\d,]*\s+\w+\s*-\s*([a-zA-Z0-9_.]+)/i,
+      );
+      if (engagementAuthorMatch) {
+        author = engagementAuthorMatch[1];
+        console.log(
+          `[Instagram] Extracted author from Microlink engagement stats: ${author}`,
+        );
+      }
+    }
+
+    // Filter out engagement stats from description
+    let description = rawDescription;
+    if (description) {
+      const isEngagementStats =
+        /^\d[\d,]*\s+(likes?|followers?|comments?)/i.test(description) ||
+        /^\d[\d,]*\s+\w+,\s*\d[\d,]*\s+\w+\s*-\s*/i.test(description);
+      if (isEngagementStats) {
+        console.log(
+          `[Instagram] ⚠ Filtering out engagement stats from Microlink description: "${description.substring(0, 50)}"`,
+        );
+        description = undefined;
+      }
+    }
+
     const imageUrl = image?.url;
     const videoUrl: string | undefined = video?.url || undefined;
 
-    console.log(
-      `Instagram Microlink success: author=${author}, has image=${!!imageUrl}, has video=${!!videoUrl}`,
+    // Accept extraction if we have media (description is optional)
+    // Instagram carousel posts often don't expose captions in accessible meta tags
+    const hasMediaData = videoUrl || imageUrl;
+    const hasGoodContent = description && description.length > 20;
+
+    if (hasMediaData) {
+      // Use description if available, otherwise provide fallback
+      const finalDescription = hasGoodContent
+        ? description
+        : "Instagram post content. Caption not available.";
+
+      console.log(
+        `[Instagram] ✓ Microlink SUCCESS: author=${author}, imageUrl=${!!imageUrl}, videoUrl=${!!videoUrl}, hasDescription=${hasGoodContent}`,
+      );
+
+      return {
+        title: author ? `Instagram post by @${author}` : "Instagram Post",
+        content: finalDescription,
+        source,
+        author,
+        imageUrl,
+        videoUrl,
+        imageSource: "microlink",
+      };
+    } else {
+      throw new Error(
+        `No media data found: imageUrl=${!!imageUrl}, videoUrl=${!!videoUrl}`,
+      );
+    }
+  } catch (error) {
+    console.error(
+      "[Instagram] ✗ Microlink FAILED:",
+      error instanceof Error ? error.message : error,
     );
 
-    return {
-      title: author ? `Instagram post by @${author}` : "Instagram Post",
-      content: description || "Instagram post content.",
-      source,
-      author,
-      imageUrl,
-      videoUrl,
-      imageSource: "microlink",
-    };
-  } catch (error) {
-    console.error("Instagram Microlink extraction failed:", error);
-
+    console.error(
+      "[Instagram] ✗✗✗ ALL EXTRACTION METHODS FAILED - Returning fallback data",
+    );
     return {
       title: urlAuthor ? `Instagram post by @${urlAuthor}` : "Instagram Post",
-      content:
-        "Instagram content could not be extracted. Please view the original post.",
+      content: "Content could not be extracted from this URL.",
       source,
       author: urlAuthor,
     };
