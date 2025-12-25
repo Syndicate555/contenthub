@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { ImageModal } from "@/components/ui/image-modal";
 import { PlatformIcon, getPlatformInfo } from "./platform-icon";
 import { TagBadge } from "./tag-badge";
+import type { PlatformData } from "@/lib/platform-detector";
 import {
   ExternalLink,
   Pin,
@@ -91,7 +92,7 @@ function getInstagramEmbedSizing(url: string) {
 function isInstagramWithVideo(
   source?: string | null,
   url?: string,
-  videoUrl?: string | null,
+  videoUrl?: string | null
 ): boolean {
   const isInstagram =
     source?.toLowerCase().includes("instagram") ||
@@ -109,7 +110,7 @@ function extractTikTokVideoId(embedHtml: string): string | null {
 function getTikTokEmbedUrl(
   url: string,
   source?: string,
-  embedHtml?: string | null,
+  embedHtml?: string | null
 ): string | null {
   const isTikTok =
     source?.toLowerCase().includes("tiktok") ||
@@ -156,7 +157,7 @@ function getYoutubeEmbedUrl(url: string): string | null {
 function isLinkedInWithDocument(
   source?: string | null,
   url?: string,
-  documentUrl?: string | null,
+  documentUrl?: string | null
 ): boolean {
   const isLinkedIn =
     source?.toLowerCase().includes("linkedin") ||
@@ -170,7 +171,7 @@ function linkedInLikelyHasDocument(
   url?: string,
   title?: string | null,
   summary?: string | null,
-  embedHtml?: string | null,
+  embedHtml?: string | null
 ): boolean {
   const isLinkedIn =
     source?.toLowerCase().includes("linkedin") ||
@@ -235,7 +236,7 @@ function linkedInLikelyHasDocument(
 function isLinkedInWithEmbed(
   source?: string | null,
   url?: string,
-  embedHtml?: string | null,
+  embedHtml?: string | null
 ): boolean {
   const isLinkedIn =
     source?.toLowerCase().includes("linkedin") ||
@@ -253,7 +254,7 @@ function getLinkedInEmbedUrl(embedHtml: string): string | null {
 function isFacebookWithEmbed(
   source?: string | null,
   url?: string | null,
-  embedHtml?: string | null,
+  embedHtml?: string | null
 ): boolean {
   const isFacebook =
     source?.toLowerCase().includes("facebook") ||
@@ -309,29 +310,51 @@ export function ItemCardGamified({
   const [playYoutube, setPlayYoutube] = useState(false);
   const [playInstagramVideo, setPlayInstagramVideo] = useState(false);
 
+  // Use pre-computed platformData from database if available, otherwise compute it
   const platformData = useMemo(() => {
+    // If platformData exists in the item (new items), use it directly for performance
+    if (item.platformData) {
+      return item.platformData as unknown as PlatformData;
+    }
+
+    // Fallback: Compute platformData for legacy items that don't have it yet
     const url = item.url || "";
     const source = (item.source || "").toLowerCase();
     const urlLower = url.toLowerCase();
-    
+
     // Helper checks
-    const isInsta = source.includes("instagram") || urlLower.includes("instagram.com");
+    const isInsta =
+      source.includes("instagram") || urlLower.includes("instagram.com");
     const isTikTok = source.includes("tiktok") || urlLower.includes("tiktok");
     const isYoutube = source.includes("youtube") || urlLower.includes("youtu");
-    const isLinkedIn = source.includes("linkedin") || urlLower.includes("linkedin.com");
-    const isFb = source.includes("facebook") || urlLower.includes("facebook.com") || urlLower.includes("fb.com") || urlLower.includes("fb.watch");
+    const isLinkedIn =
+      source.includes("linkedin") || urlLower.includes("linkedin.com");
+    const isFb =
+      source.includes("facebook") ||
+      urlLower.includes("facebook.com") ||
+      urlLower.includes("fb.com") ||
+      urlLower.includes("fb.watch");
 
     // Instagram Logic
     let instaEmbedUrl = null;
-    let instaSizing = { aspectClass: "aspect-square", transformClass: "scale-110 translate-y-[-2%]" };
+    let instaSizing = {
+      aspectClass: "aspect-square",
+      transformClass: "scale-110 translate-y-[-2%]",
+    };
     if (isInsta) {
       try {
         const parts = new URL(url).pathname.split("/").filter(Boolean);
-        if (parts[1] && (parts[0] === "reel" || parts[0] === "p" || parts[0] === "tv")) {
+        if (
+          parts[1] &&
+          (parts[0] === "reel" || parts[0] === "p" || parts[0] === "tv")
+        ) {
           instaEmbedUrl = `https://www.instagram.com/${parts[0]}/${parts[1]}/embed`;
         }
         if (parts[0] === "reel" || parts[0] === "tv") {
-          instaSizing = { aspectClass: "aspect-[9/16]", transformClass: "scale-100" };
+          instaSizing = {
+            aspectClass: "aspect-[9/16]",
+            transformClass: "scale-100",
+          };
         }
       } catch {}
     }
@@ -340,7 +363,8 @@ export function ItemCardGamified({
     let tiktokEmbedUrl = null;
     if (isTikTok && item.embedHtml) {
       const match = item.embedHtml.match(/data-video-id="(\d+)"/);
-      if (match?.[1]) tiktokEmbedUrl = `https://www.tiktok.com/embed/v2/${match[1]}`;
+      if (match?.[1])
+        tiktokEmbedUrl = `https://www.tiktok.com/embed/v2/${match[1]}`;
     }
 
     // YouTube Logic
@@ -348,7 +372,8 @@ export function ItemCardGamified({
     let ytVideoId = null;
     if (isYoutube) {
       ytVideoId = getYoutubeVideoId(url);
-      if (ytVideoId) ytEmbedUrl = `https://www.youtube.com/embed/${ytVideoId}?autoplay=1`;
+      if (ytVideoId)
+        ytEmbedUrl = `https://www.youtube.com/embed/${ytVideoId}?autoplay=1`;
     }
 
     // LinkedIn Logic
@@ -360,17 +385,32 @@ export function ItemCardGamified({
       liHasDoc = !!item.documentUrl;
       if (!liHasDoc) {
         // Fallback heuristics
-        const content = `${item.title || ""} ${item.summary || ""}`.toLowerCase();
-        const indicators = ["pdf", "guide", "report", "download", "document", "whitepaper"];
-        const hasIndicator = indicators.some(i => content.includes(i));
-        const hasUrlSignal = urlLower.includes("/document/") || urlLower.includes("documentid=");
-        const hasEmbedSignal = item.embedHtml?.toLowerCase().includes("document");
+        const content = `${item.title || ""} ${
+          item.summary || ""
+        }`.toLowerCase();
+        const indicators = [
+          "pdf",
+          "guide",
+          "report",
+          "download",
+          "document",
+          "whitepaper",
+        ];
+        const hasIndicator = indicators.some((i) => content.includes(i));
+        const hasUrlSignal =
+          urlLower.includes("/document/") || urlLower.includes("documentid=");
+        const hasEmbedSignal = item.embedHtml
+          ?.toLowerCase()
+          .includes("document");
         liHasDoc = hasIndicator || hasUrlSignal || !!hasEmbedSignal;
       }
 
       // Video detection
-      liHasVideo = !!item.videoUrl || urlLower.includes("/video/") || urlLower.includes("activity:");
-      
+      liHasVideo =
+        !!item.videoUrl ||
+        urlLower.includes("/video/") ||
+        urlLower.includes("activity:");
+
       // Embed URL
       if (item.embedHtml) {
         const match = item.embedHtml.match(/src="([^"]+)"/);
@@ -402,12 +442,33 @@ export function ItemCardGamified({
       fbEmbedUrl,
       hasInstaVideo: isInsta && !!item.videoUrl,
     };
-  }, [item.url, item.source, item.embedHtml, item.documentUrl, item.videoUrl, item.title, item.summary]);
+  }, [
+    item.platformData,
+    item.url,
+    item.source,
+    item.embedHtml,
+    item.documentUrl,
+    item.videoUrl,
+    item.title,
+    item.summary,
+  ]);
 
   const {
-    isInsta, isTikTok, isYoutube, isLinkedIn, isFb,
-    instaEmbedUrl, instaSizing, tiktokEmbedUrl, ytEmbedUrl, ytVideoId,
-    liEmbedUrl, liHasDoc, liHasVideo, fbEmbedUrl, hasInstaVideo
+    isInsta,
+    isTikTok,
+    isYoutube,
+    isLinkedIn,
+    isFb,
+    instaEmbedUrl,
+    instaSizing,
+    tiktokEmbedUrl,
+    ytEmbedUrl,
+    ytVideoId,
+    liEmbedUrl,
+    liHasDoc,
+    liHasVideo,
+    fbEmbedUrl,
+    hasInstaVideo,
   } = platformData;
 
   const showInstagramEmbed = !!instaEmbedUrl && !embedFailed;
@@ -425,7 +486,6 @@ export function ItemCardGamified({
   const categoryColor = item.category
     ? categoryColors[item.category] || categoryColors.other
     : categoryColors.other;
-
 
   const handleStatusChange = async (status: string) => {
     setIsUpdating(true);
@@ -445,7 +505,7 @@ export function ItemCardGamified({
       };
 
       toast.success(
-        statusMessages[status as keyof typeof statusMessages] || "Updated",
+        statusMessages[status as keyof typeof statusMessages] || "Updated"
       );
       onStatusChange?.(item.id, status);
     } catch {
@@ -513,7 +573,7 @@ export function ItemCardGamified({
             "border-l-8 relative",
             item.isInFocusArea && item.domain
               ? `shadow-lg`
-              : platformInfo.borderColor,
+              : platformInfo.borderColor
           )}
           style={
             item.isInFocusArea && item.domain
@@ -580,9 +640,7 @@ export function ItemCardGamified({
                   dangerouslySetInnerHTML={{ __html: item.embedHtml }}
                 />
               ) : (
-                <div
-                  className={`relative w-full ${instaSizing.aspectClass}`}
-                >
+                <div className={`relative w-full ${instaSizing.aspectClass}`}>
                   <iframe
                     src={instaEmbedUrl!}
                     className={`absolute inset-0 w-full h-full border-0 ${instaSizing.transformClass} origin-top`}
@@ -642,8 +700,8 @@ export function ItemCardGamified({
                   {liHasDoc
                     ? "Scroll to view document"
                     : liHasVideo
-                      ? "Scroll to play video"
-                      : "Scroll to view full content"}
+                    ? "Scroll to play video"
+                    : "Scroll to view full content"}
                 </div>
                 {/* View Image Fullscreen button (if post has an image) */}
                 {item.imageUrl && (
@@ -809,23 +867,21 @@ export function ItemCardGamified({
           )}
 
           {/* LinkedIn Document - with fallback for detected documents */}
-          {(liHasDoc ||
-            (liHasDoc && showLinkedInEmbed)) &&
-            !embedFailed && (
-              <div className="w-full bg-gradient-to-br from-blue-50 to-blue-100 border-y border-blue-200 p-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-red-600 rounded-lg flex items-center justify-center shadow-md">
-                      <svg
-                        className="w-6 h-6 text-white"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="font-semibold text-gray-900">
+          {/* {(liHasDoc || (liHasDoc && showLinkedInEmbed)) && !embedFailed && (
+            <div className="w-full bg-gradient-to-br from-blue-50 to-blue-100 border-y border-blue-200 p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-red-600 rounded-lg flex items-center justify-center shadow-md">
+                    <svg
+                      className="w-6 h-6 text-white"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-900">
                         📄 PDF Document Detected
                       </p>
                       <p className="text-sm text-gray-600">
@@ -833,11 +889,11 @@ export function ItemCardGamified({
                           ? "Click to download or view the PDF"
                           : ""}
                       </p>
-                    </div>
                   </div>
                 </div>
               </div>
-            )}
+            </div>
+          )} */}
 
           {/* Thumbnail Image (shows for regular images, including LinkedIn image-only posts) */}
           {!showInstagramEmbed &&
@@ -846,7 +902,9 @@ export function ItemCardGamified({
             !showFacebookEmbed &&
             !isYoutube &&
             !liHasDoc &&
-            (item.imageUrl || (isTikTok && item.videoUrl) || (isInsta && (hasInstaVideo || showInstagramEmbed))) && (
+            (item.imageUrl ||
+              (isTikTok && item.videoUrl) ||
+              (isInsta && (hasInstaVideo || showInstagramEmbed))) && (
               <button
                 onClick={() => setIsImageModalOpen(true)}
                 className="block w-full relative bg-gray-50 overflow-hidden cursor-zoom-in group min-h-[200px] max-h-80"
@@ -858,13 +916,17 @@ export function ItemCardGamified({
                     <div className="absolute inset-0 bg-black" />
                     <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/50" />
                     <Play className="w-16 h-16 text-white opacity-80 group-hover:opacity-100 transition-opacity z-10 fill-white" />
-                    <span className="absolute bottom-4 text-white text-sm font-semibold z-10">Play TikTok</span>
+                    <span className="absolute bottom-4 text-white text-sm font-semibold z-10">
+                      Play TikTok
+                    </span>
                   </div>
                 ) : isInsta && (hasInstaVideo || showInstagramEmbed) ? (
                   // Custom Instagram placeholder with play button
                   <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-purple-500 via-pink-500 to-orange-500 relative">
                     <Play className="w-16 h-16 text-white opacity-80 group-hover:opacity-100 transition-opacity z-10 fill-white" />
-                    <span className="absolute bottom-4 text-white text-sm font-semibold z-10">View Instagram</span>
+                    <span className="absolute bottom-4 text-white text-sm font-semibold z-10">
+                      View Instagram
+                    </span>
                   </div>
                 ) : item.imageUrl ? (
                   // Existing image rendering (fallback for other platforms or reliable Instagram images)
@@ -916,7 +978,7 @@ export function ItemCardGamified({
                           item.type === "do" &&
                             "bg-gradient-to-r from-green-500 to-emerald-600 text-white",
                           item.type === "reference" &&
-                            "bg-gradient-to-r from-purple-500 to-pink-600 text-white",
+                            "bg-gradient-to-r from-purple-500 to-pink-600 text-white"
                         )}
                       >
                         <TypeIcon className="w-3 h-3 mr-1" />
@@ -1027,7 +1089,7 @@ export function ItemCardGamified({
                                 >
                                   {action.replace("_", " ")}: +{xp}
                                 </motion.span>
-                              ),
+                              )
                             )}
                           </div>
                         )}
@@ -1084,7 +1146,9 @@ export function ItemCardGamified({
                 {summaryBullets.slice(0, 5).map((bullet: string, i: number) => (
                   <li key={i} className="flex items-start gap-2">
                     <span className="text-gray-300 mt-0.5">•</span>
-                    <span className="leading-relaxed break-words">{bullet}</span>
+                    <span className="leading-relaxed break-words">
+                      {bullet}
+                    </span>
                   </li>
                 ))}
               </ul>

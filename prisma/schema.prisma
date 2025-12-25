@@ -282,6 +282,9 @@ model Item {
   documentUrl String? // document/PDF URL for LinkedIn documents, reports, etc.
   embedHtml   String?  @db.Text // embed HTML for video platforms (TikTok, etc.)
 
+  // Platform metadata (pre-computed for performance)
+  platformData Json? // Stores pre-computed platform detection metadata (platform, embedUrls, flags, etc.)
+
   // Domain classification (for gamification)
   domainId String?
   domain   Domain? @relation(fields: [domainId], references: [id])

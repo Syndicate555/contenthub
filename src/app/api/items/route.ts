@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 
 // Ensure Node.js runtime (jsdom/parse5 are not edge-compatible)
 export const runtime = "nodejs";
+
+// Increase function timeout to 60s to handle cold starts
+export const maxDuration = 60;
+
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { processItem } from "@/lib/pipeline";
@@ -10,11 +14,18 @@ import type { Prisma } from "@/generated/prisma";
 import { getPlatformDomains, normalizePlatformSlug } from "@/lib/platforms";
 import { normalizeDomain } from "@/lib/platform-normalizer";
 
+// Log successful module initialization
+console.log("[API /items] Route module initialized successfully");
+
 // GET /api/items - List items with search and filters
 export async function GET(request: NextRequest) {
+  const startTime = Date.now();
+  console.log("[API /items GET] Request received");
+
   try {
     // Get or create user (handles first-time sign-in)
     const user = await getCurrentUser();
+    console.log(`[API /items GET] User auth completed in ${Date.now() - startTime}ms`);
 
     if (!user) {
       return NextResponse.json(
@@ -304,12 +315,19 @@ export async function GET(request: NextRequest) {
 
     return response;
   } catch (error) {
-    console.error("GET /api/items error:", error);
+    console.error("[API /items GET] Error occurred:", error);
+    console.error("[API /items GET] Error stack:", error instanceof Error ? error.stack : "No stack trace");
+    console.error("[API /items GET] Error details:", {
+      name: error instanceof Error ? error.name : "Unknown",
+      message: error instanceof Error ? error.message : String(error),
+      cause: error instanceof Error ? error.cause : undefined,
+    });
 
     return NextResponse.json(
       {
         ok: false,
         error: "Failed to fetch items",
+        details: process.env.NODE_ENV === "development" ? String(error) : undefined,
       },
       { status: 500 },
     );

@@ -11,6 +11,7 @@ import { trackActivity, STREAK_ACTIVITIES } from "./activity";
 import { checkAllBadges } from "./badges";
 import { validateItemData } from "./content-validator";
 import { assignTagsToItem } from "./tags/service";
+import { detectPlatform } from "./platform-detector";
 import type { Item } from "@/generated/prisma";
 
 export interface ProcessItemInput {
@@ -163,9 +164,20 @@ export async function processItem(
       summarized.tags,
     );
 
-    // Step 5: Create item in database with all processed data (with transaction for atomicity)
+    // Step 5: Compute platform metadata for performance optimization
+    const platformData = detectPlatform({
+      url,
+      source: extracted.source,
+      embedHtml: extracted.embedHtml || null,
+      documentUrl: extracted.documentUrl || null,
+      videoUrl: extracted.videoUrl || null,
+      title: summarized.title,
+      summary: summarized.summary.join("\n"),
+    });
+
+    // Step 6: Create item in database with all processed data (with transaction for atomicity)
     console.log(
-      `Pipeline: Saving item with imageUrl=${extracted.imageUrl ? "YES" : "NO"}, videoUrl=${extracted.videoUrl ? "YES" : "NO"}, documentUrl=${extracted.documentUrl ? "YES" : "NO"}, domainId=${domainId || "none"}`,
+      `Pipeline: Saving item with imageUrl=${extracted.imageUrl ? "YES" : "NO"}, videoUrl=${extracted.videoUrl ? "YES" : "NO"}, documentUrl=${extracted.documentUrl ? "YES" : "NO"}, domainId=${domainId || "none"}, platformData=${platformData ? "YES" : "NO"}`,
     );
     const item = await db.$transaction(
       async (tx) => {
@@ -188,6 +200,7 @@ export async function processItem(
             videoUrl: extracted.videoUrl,
             documentUrl: extracted.documentUrl,
             embedHtml: extracted.embedHtml,
+            platformData: platformData as any, // Store pre-computed platform metadata
             domainId: domainId || undefined,
           },
         });
