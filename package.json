@@ -14,7 +14,9 @@
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
-    "db:seed": "npx tsx prisma/seed.ts"
+    "db:seed": "npx tsx prisma/seed.ts",
+    "db:backfill-platform": "npx tsx scripts/backfill-platform-data.ts",
+    "warmup": "npx tsx scripts/warmup-deployment.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.36.5",

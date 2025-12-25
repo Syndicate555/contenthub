@@ -24,6 +24,11 @@ if (process.env.NODE_ENV === "development") {
   );
 }
 
+// Create Prisma client optimized for serverless
+// Connection pooling is handled by:
+// 1. PgBouncer (transaction pooler on port 6543) in DATABASE_URL
+// 2. DIRECT_URL (direct connection on port 5432) for dev to avoid pooler issues
+// 3. Singleton pattern (globalForPrisma) to reuse client across invocations
 export const db =
   globalForPrisma.prisma ??
   new PrismaClient({
@@ -34,6 +39,24 @@ export const db =
       },
     },
   });
+
+// Graceful shutdown handler for serverless
+if (process.env.NODE_ENV === "production") {
+  // Ensure connections are cleaned up on function termination
+  const cleanup = async () => {
+    try {
+      await db.$disconnect();
+      console.log("[DB] Prisma disconnected gracefully");
+    } catch (error) {
+      console.error("[DB] Error during Prisma disconnect:", error);
+    }
+  };
+
+  // Handle various termination signals
+  process.on("SIGTERM", cleanup);
+  process.on("SIGINT", cleanup);
+  process.on("beforeExit", cleanup);
+}
 
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = db;
 

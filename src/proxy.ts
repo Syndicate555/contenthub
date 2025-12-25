@@ -7,6 +7,7 @@ const isPublicRoute = createRouteMatcher([
   "/api/webhooks(.*)",
   "/api/quick-add", // Uses bearer token auth instead
   "/api/domains", // Public - domains are global, not user-specific
+  "/api/health(.*)", // Health check for function warming and monitoring
   "/video(.*)", // Serve static demo video without auth
   "/animations(.*)", // Serve lottie assets without auth
   "/wasm(.*)", // Serve wasm assets without auth
