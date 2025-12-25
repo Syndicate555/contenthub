@@ -309,6 +309,112 @@ export function ItemCardGamified({
   const [playYoutube, setPlayYoutube] = useState(false);
   const [playInstagramVideo, setPlayInstagramVideo] = useState(false);
 
+  const platformData = useMemo(() => {
+    const url = item.url || "";
+    const source = (item.source || "").toLowerCase();
+    const urlLower = url.toLowerCase();
+    
+    // Helper checks
+    const isInsta = source.includes("instagram") || urlLower.includes("instagram.com");
+    const isTikTok = source.includes("tiktok") || urlLower.includes("tiktok");
+    const isYoutube = source.includes("youtube") || urlLower.includes("youtu");
+    const isLinkedIn = source.includes("linkedin") || urlLower.includes("linkedin.com");
+    const isFb = source.includes("facebook") || urlLower.includes("facebook.com") || urlLower.includes("fb.com") || urlLower.includes("fb.watch");
+
+    // Instagram Logic
+    let instaEmbedUrl = null;
+    let instaSizing = { aspectClass: "aspect-square", transformClass: "scale-110 translate-y-[-2%]" };
+    if (isInsta) {
+      try {
+        const parts = new URL(url).pathname.split("/").filter(Boolean);
+        if (parts[1] && (parts[0] === "reel" || parts[0] === "p" || parts[0] === "tv")) {
+          instaEmbedUrl = `https://www.instagram.com/${parts[0]}/${parts[1]}/embed`;
+        }
+        if (parts[0] === "reel" || parts[0] === "tv") {
+          instaSizing = { aspectClass: "aspect-[9/16]", transformClass: "scale-100" };
+        }
+      } catch {}
+    }
+
+    // TikTok Logic
+    let tiktokEmbedUrl = null;
+    if (isTikTok && item.embedHtml) {
+      const match = item.embedHtml.match(/data-video-id="(\d+)"/);
+      if (match?.[1]) tiktokEmbedUrl = `https://www.tiktok.com/embed/v2/${match[1]}`;
+    }
+
+    // YouTube Logic
+    let ytEmbedUrl = null;
+    let ytVideoId = null;
+    if (isYoutube) {
+      ytVideoId = getYoutubeVideoId(url);
+      if (ytVideoId) ytEmbedUrl = `https://www.youtube.com/embed/${ytVideoId}?autoplay=1`;
+    }
+
+    // LinkedIn Logic
+    let liEmbedUrl = null;
+    let liHasDoc = false;
+    let liHasVideo = false;
+    if (isLinkedIn) {
+      // Document detection
+      liHasDoc = !!item.documentUrl;
+      if (!liHasDoc) {
+        // Fallback heuristics
+        const content = `${item.title || ""} ${item.summary || ""}`.toLowerCase();
+        const indicators = ["pdf", "guide", "report", "download", "document", "whitepaper"];
+        const hasIndicator = indicators.some(i => content.includes(i));
+        const hasUrlSignal = urlLower.includes("/document/") || urlLower.includes("documentid=");
+        const hasEmbedSignal = item.embedHtml?.toLowerCase().includes("document");
+        liHasDoc = hasIndicator || hasUrlSignal || !!hasEmbedSignal;
+      }
+
+      // Video detection
+      liHasVideo = !!item.videoUrl || urlLower.includes("/video/") || urlLower.includes("activity:");
+      
+      // Embed URL
+      if (item.embedHtml) {
+        const match = item.embedHtml.match(/src="([^"]+)"/);
+        if (match) liEmbedUrl = match[1];
+      }
+    }
+
+    // Facebook Logic
+    let fbEmbedUrl = null;
+    if (isFb && item.embedHtml) {
+      const match = item.embedHtml.match(/src="([^"]+)"/);
+      if (match) fbEmbedUrl = match[1];
+    }
+
+    return {
+      isInsta,
+      isTikTok,
+      isYoutube,
+      isLinkedIn,
+      isFb,
+      instaEmbedUrl,
+      instaSizing,
+      tiktokEmbedUrl,
+      ytEmbedUrl,
+      ytVideoId,
+      liEmbedUrl,
+      liHasDoc,
+      liHasVideo,
+      fbEmbedUrl,
+      hasInstaVideo: isInsta && !!item.videoUrl,
+    };
+  }, [item.url, item.source, item.embedHtml, item.documentUrl, item.videoUrl, item.title, item.summary]);
+
+  const {
+    isInsta, isTikTok, isYoutube, isLinkedIn, isFb,
+    instaEmbedUrl, instaSizing, tiktokEmbedUrl, ytEmbedUrl, ytVideoId,
+    liEmbedUrl, liHasDoc, liHasVideo, fbEmbedUrl, hasInstaVideo
+  } = platformData;
+
+  const showInstagramEmbed = !!instaEmbedUrl && !embedFailed;
+  const showTikTokEmbed = !!tiktokEmbedUrl && !embedFailed;
+  const showLinkedInEmbed = !!liEmbedUrl && !embedFailed;
+  const showFacebookEmbed = !!fbEmbedUrl && !embedFailed;
+
   const TypeIcon = item.type
     ? typeIcons[item.type as keyof typeof typeIcons]
     : Bookmark;
@@ -319,195 +425,7 @@ export function ItemCardGamified({
   const categoryColor = item.category
     ? categoryColors[item.category] || categoryColors.other
     : categoryColors.other;
-  const instagramEmbedUrl = useMemo(
-    () => getInstagramEmbedUrl(item.url, item.source || undefined),
-    [item.url, item.source],
-  );
-  const instagramSizing = useMemo(
-    () => getInstagramEmbedSizing(item.url),
-    [item.url],
-  );
-  const showInstagramEmbed = !!instagramEmbedUrl && !embedFailed;
-  const tiktokEmbedUrl = useMemo(() => {
-    const isTikTok =
-      item.source?.toLowerCase().includes("tiktok") ||
-      item.url.toLowerCase().includes("tiktok");
-    const url = getTikTokEmbedUrl(
-      item.url,
-      item.source || undefined,
-      item.embedHtml,
-    );
 
-    if (isTikTok) {
-      console.log("[TikTok ItemCardGamified]", {
-        itemId: item.id,
-        title: item.title?.substring(0, 50),
-        hasEmbedHtml: !!item.embedHtml,
-        embedHtmlLength: item.embedHtml?.length,
-        generatedUrl: url,
-        willShow: !!url && !embedFailed,
-      });
-    }
-
-    return url;
-  }, [item.url, item.source, item.embedHtml, item.id, item.title, embedFailed]);
-  const showTikTokEmbed = !!tiktokEmbedUrl && !embedFailed;
-
-  const isYoutube =
-    item.source?.includes("youtube") || item.url.includes("youtu");
-  const youtubeVideoId = useMemo(
-    () => (isYoutube ? getYoutubeVideoId(item.url) : null),
-    [isYoutube, item.url],
-  );
-  const youtubeEmbedUrl = useMemo(
-    () => (isYoutube ? getYoutubeEmbedUrl(item.url) : null),
-    [isYoutube, item.url],
-  );
-
-  const hasInstagramVideo = isInstagramWithVideo(
-    item.source,
-    item.url,
-    item.videoUrl,
-  );
-
-  const hasLinkedInDocument = useMemo(() => {
-    const result = isLinkedInWithDocument(
-      item.source,
-      item.url,
-      item.documentUrl,
-    );
-    if (
-      item.source?.toLowerCase().includes("linkedin") ||
-      item.url.toLowerCase().includes("linkedin")
-    ) {
-      console.log("[LinkedIn Debug]", {
-        itemId: item.id,
-        title: item.title?.substring(0, 50),
-        hasDocumentUrl: !!item.documentUrl,
-        documentUrl: item.documentUrl,
-        hasLinkedInDocument: result,
-      });
-    }
-    return result;
-  }, [item.source, item.url, item.documentUrl, item.id, item.title]);
-
-  const linkedInEmbedUrl = useMemo(() => {
-    if (!isLinkedInWithEmbed(item.source, item.url, item.embedHtml)) {
-      return null;
-    }
-    const url = getLinkedInEmbedUrl(item.embedHtml!);
-    console.log("[LinkedIn Embed Debug]", {
-      itemId: item.id,
-      title: item.title?.substring(0, 50),
-      hasEmbedHtml: !!item.embedHtml,
-      embedUrl: url,
-    });
-    return url;
-  }, [item.source, item.url, item.embedHtml, item.id, item.title]);
-
-  const linkedInHasDocument = useMemo(
-    () =>
-      linkedInLikelyHasDocument(
-        item.source,
-        item.url,
-        item.title,
-        item.summary,
-        item.embedHtml,
-      ),
-    [item.source, item.url, item.title, item.summary, item.embedHtml],
-  );
-
-  // Detect if LinkedIn post has a video
-  const linkedInHasVideo = useMemo(() => {
-    const isLinkedIn =
-      item.source?.toLowerCase().includes("linkedin") ||
-      item.url?.toLowerCase().includes("linkedin.com");
-    if (!isLinkedIn) return false;
-
-    // Primary indicator: check if videoUrl field is populated (most reliable)
-    if (item.videoUrl) {
-      return true;
-    }
-
-    // Secondary: Check URL for video patterns
-    if (
-      item.url.includes("/video/") ||
-      item.url.includes("activity:") ||
-      item.url.includes("ugcPost:")
-    ) {
-      return true;
-    }
-
-    // Tertiary: Check title/summary for strong video keywords
-    const content = `${item.title} ${item.summary}`.toLowerCase();
-    const videoKeywords = [
-      "播放", // "play" in Chinese
-      "視頻", // "video" in Chinese
-    ];
-
-    return videoKeywords.some((keyword) => content.includes(keyword));
-  }, [item.source, item.url, item.videoUrl, item.title, item.summary]);
-
-  // Show LinkedIn embed for ALL LinkedIn posts that have embedHtml
-  // No complex detection - just show the embed for everything
-  const showLinkedInEmbed = !!linkedInEmbedUrl && !embedFailed;
-
-  // Facebook embed URL extraction and state
-  const facebookEmbedUrl = useMemo(() => {
-    if (!isFacebookWithEmbed(item.source, item.url, item.embedHtml)) {
-      return null;
-    }
-    const url = getFacebookEmbedUrl(item.embedHtml!);
-    console.log("[Facebook Embed Debug]", {
-      itemId: item.id,
-      title: item.title?.substring(0, 50),
-      hasEmbedHtml: !!item.embedHtml,
-      embedUrl: url,
-    });
-    return url;
-  }, [item.source, item.url, item.embedHtml, item.id, item.title]);
-
-  const showFacebookEmbed = !!facebookEmbedUrl && !embedFailed;
-
-  // Debug logging for Facebook posts
-  if (
-    item.source?.toLowerCase().includes("facebook") ||
-    item.url?.toLowerCase().includes("facebook.com") ||
-    item.url?.toLowerCase().includes("fb.com") ||
-    item.url?.toLowerCase().includes("fb.watch")
-  ) {
-    console.log("[Facebook Post Debug]", {
-      itemId: item.id,
-      title: item.title?.substring(0, 50),
-      url: item.url?.substring(0, 80),
-      hasImageUrl: !!item.imageUrl,
-      hasVideoUrl: !!item.videoUrl,
-      hasEmbedHtml: !!item.embedHtml,
-      embedHtmlLength: item.embedHtml?.length || 0,
-      embedHtmlPreview: item.embedHtml?.substring(0, 150),
-      facebookEmbedUrl,
-      showFacebookEmbed,
-      embedFailed,
-    });
-  }
-
-  // Debug logging for LinkedIn posts
-  if (
-    item.source?.toLowerCase().includes("linkedin") ||
-    item.url?.toLowerCase().includes("linkedin.com")
-  ) {
-    console.log("[LinkedIn Post Debug]", {
-      itemId: item.id,
-      title: item.title?.substring(0, 50),
-      url: item.url?.substring(0, 80),
-      hasImageUrl: !!item.imageUrl,
-      hasVideoUrl: !!item.videoUrl,
-      hasDocumentUrl: !!item.documentUrl,
-      hasEmbedHtml: !!item.embedHtml,
-      linkedInEmbedUrl,
-      showLinkedInEmbed,
-    });
-  }
 
   const handleStatusChange = async (status: string) => {
     setIsUpdating(true);
@@ -607,7 +525,7 @@ export function ItemCardGamified({
           }
         >
           {/* Instagram Video Direct Playback */}
-          {hasInstagramVideo && !embedFailed ? (
+          {hasInstaVideo && !embedFailed ? (
             <div className="w-full aspect-video bg-gray-900 relative group">
               {playInstagramVideo ? (
                 <div className="absolute inset-0 w-full h-full">
@@ -651,7 +569,7 @@ export function ItemCardGamified({
           ) : null}
 
           {/* Instagram embed for reels/posts (fallback when no video URL) */}
-          {!hasInstagramVideo && showInstagramEmbed ? (
+          {!hasInstaVideo && showInstagramEmbed ? (
             <div className="w-full bg-black overflow-hidden relative rounded-b-none">
               {/* Use embedHtml from noembed if available (better video playback support) */}
               {item.embedHtml &&
@@ -663,11 +581,11 @@ export function ItemCardGamified({
                 />
               ) : (
                 <div
-                  className={`relative w-full ${instagramSizing.aspectClass}`}
+                  className={`relative w-full ${instaSizing.aspectClass}`}
                 >
                   <iframe
-                    src={instagramEmbedUrl!}
-                    className={`absolute inset-0 w-full h-full border-0 ${instagramSizing.transformClass} origin-top`}
+                    src={instaEmbedUrl!}
+                    className={`absolute inset-0 w-full h-full border-0 ${instaSizing.transformClass} origin-top`}
                     allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
                     allowFullScreen
                     loading="lazy"
@@ -692,7 +610,7 @@ export function ItemCardGamified({
           {showTikTokEmbed ? (
             <div className="w-full flex justify-center bg-gray-50 py-4">
               <iframe
-                src={tiktokEmbedUrl}
+                src={tiktokEmbedUrl!}
                 className="w-full max-w-full sm:max-w-[325px] h-[730px] border-0"
                 allowFullScreen
                 scrolling="no"
@@ -721,9 +639,9 @@ export function ItemCardGamified({
                       d="M19 9l-7 7-7-7"
                     />
                   </svg>
-                  {linkedInHasDocument
+                  {liHasDoc
                     ? "Scroll to view document"
-                    : linkedInHasVideo
+                    : liHasVideo
                       ? "Scroll to play video"
                       : "Scroll to view full content"}
                 </div>
@@ -752,7 +670,7 @@ export function ItemCardGamified({
               </div>
               <div className="flex justify-center">
                 <iframe
-                  src={linkedInEmbedUrl!}
+                  src={liEmbedUrl!}
                   className="w-full max-w-full sm:max-w-[504px] h-[700px] border-0"
                   allowFullScreen
                   scrolling="yes"
@@ -833,7 +751,7 @@ export function ItemCardGamified({
               </div>
               <div className="flex justify-center">
                 <iframe
-                  src={facebookEmbedUrl!}
+                  src={fbEmbedUrl!}
                   className="w-full max-w-full sm:max-w-[500px] h-[600px] border-0"
                   allowFullScreen
                   scrolling="no"
@@ -846,13 +764,13 @@ export function ItemCardGamified({
           ) : null}
 
           {/* YouTube Embed / Facade */}
-          {isYoutube && youtubeVideoId && !embedFailed && (
+          {isYoutube && ytVideoId && !embedFailed && (
             <div className="w-full aspect-video bg-black relative group">
               {playYoutube ? (
                 <div className="absolute inset-0 w-full h-full">
                   <iframe
                     className="w-full h-full"
-                    src={youtubeEmbedUrl!}
+                    src={ytEmbedUrl!}
                     title={item.title || "YouTube video"}
                     frameBorder="0"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -866,7 +784,7 @@ export function ItemCardGamified({
                   className="w-full h-full relative block cursor-pointer group"
                 >
                   <Image
-                    src={`https://img.youtube.com/vi/${youtubeVideoId}/maxresdefault.jpg`}
+                    src={`https://img.youtube.com/vi/${ytVideoId}/maxresdefault.jpg`}
                     alt="Video thumbnail"
                     fill
                     className="object-cover"
@@ -891,8 +809,8 @@ export function ItemCardGamified({
           )}
 
           {/* LinkedIn Document - with fallback for detected documents */}
-          {(hasLinkedInDocument ||
-            (linkedInHasDocument && showLinkedInEmbed)) &&
+          {(liHasDoc ||
+            (liHasDoc && showLinkedInEmbed)) &&
             !embedFailed && (
               <div className="w-full bg-gradient-to-br from-blue-50 to-blue-100 border-y border-blue-200 p-6">
                 <div className="flex items-center justify-between">
@@ -911,7 +829,7 @@ export function ItemCardGamified({
                         📄 PDF Document Detected
                       </p>
                       <p className="text-sm text-gray-600">
-                        {hasLinkedInDocument
+                        {liHasDoc
                           ? "Click to download or view the PDF"
                           : ""}
                       </p>
@@ -927,7 +845,7 @@ export function ItemCardGamified({
             !showLinkedInEmbed &&
             !showFacebookEmbed &&
             !isYoutube &&
-            !hasLinkedInDocument &&
+            !liHasDoc &&
             item.imageUrl && (
               <button
                 onClick={() => setIsImageModalOpen(true)}
@@ -943,6 +861,9 @@ export function ItemCardGamified({
                   quality={85}
                   unoptimized={
                     (item.imageUrl || "").toLowerCase().endsWith(".gif") ||
+                    item.imageUrl.includes("tiktokcdn") ||
+                    item.imageUrl.includes("fbcdn.net") ||
+                    item.imageUrl.includes("cdninstagram.com") ||
                     item.source?.includes("linkedin") ||
                     item.source?.includes("reddit")
                   }
@@ -1262,7 +1183,7 @@ export function ItemCardGamified({
             onClick={(e) => e.stopPropagation()}
           >
             <iframe
-              src={instagramEmbedUrl!}
+              src={instaEmbedUrl!}
               className="absolute inset-0 w-full h-full border-0"
               allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
               allowFullScreen
@@ -1311,7 +1232,7 @@ export function ItemCardGamified({
             </div>
             <div className="flex-1 flex items-center justify-center overflow-hidden">
               <iframe
-                src={facebookEmbedUrl!}
+                src={fbEmbedUrl!}
                 className="w-full h-full border-0 rounded-lg bg-gray-900"
                 allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
                 allowFullScreen

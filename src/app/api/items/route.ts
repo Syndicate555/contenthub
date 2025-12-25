@@ -109,13 +109,26 @@ export async function GET(request: NextRequest) {
           const domains = getPlatformDomains(platformSlug);
 
           if (platformSlug === "newsletter") {
-            platformFilters.push({ importSource: "email" });
-          }
-
-          if (domains.length > 0) {
+            const newsletterDomains = getPlatformDomains("newsletter");
+            platformFilters.push({
+              OR: [
+                { importSource: "email" },
+                {
+                  source: {
+                    in: newsletterDomains,
+                    mode: "insensitive",
+                  },
+                },
+                // Also match partial domains for consistency with sidebar
+                ...newsletterDomains.map((d) => ({
+                  source: { contains: d, mode: "insensitive" as const },
+                })),
+              ],
+            });
+          } else if (domains.length > 0) {
             platformFilters.push({
               OR: domains.map((domain) => ({
-                source: { contains: domain, mode: "insensitive" },
+                source: { contains: domain, mode: "insensitive" as const },
               })),
             });
           }

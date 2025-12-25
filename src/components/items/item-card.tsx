@@ -382,11 +382,9 @@ export function ItemCard({
                     src={item.imageUrl}
                     alt="Video thumbnail"
                     fill
-                    className="object-cover"
-                    unoptimized={item.imageUrl.includes("cdninstagram.com")}
-                    onError={() => setEmbedFailed(true)}
-                  />
-                ) : (
+                                          className="object-cover"
+                                          onError={() => setEmbedFailed(true)}
+                                        />                ) : (
                   <div className="w-full h-full bg-gray-800 flex items-center justify-center">
                     <Play className="w-16 h-16 text-gray-400" />
                   </div>
@@ -521,10 +519,10 @@ export function ItemCard({
                     src={item.imageUrl}
                     alt="Video thumbnail"
                     fill
-                    className="object-cover"
-                    onError={() => setEmbedFailed(true)}
-                  />
-                ) : (
+                                          className="object-cover"
+                                          unoptimized={item.imageUrl.includes("cdninstagram.com")}
+                                          onError={() => setEmbedFailed(true)}
+                                        />                ) : (
                   <div className="w-full h-full bg-gray-800 flex items-center justify-center">
                     <Play className="w-16 h-16 text-gray-400" />
                   </div>
@@ -609,20 +607,21 @@ export function ItemCard({
                 height={600}
                 className="w-full h-auto max-h-80 object-contain group-hover:scale-[1.02] transition-transform duration-300"
                 loading="lazy"
-                quality={85}
-                unoptimized={
-                  (item.imageUrl || "").toLowerCase().endsWith(".gif") ||
-                  item.source?.includes("linkedin") ||
-                  item.source?.includes("reddit") ||
-                  (item.imageUrl || "").includes("tiktokcdn") ||
-                  (item.imageUrl || "").includes("fbcdn.net") ||
-                  (item.imageUrl || "").includes("cdninstagram.com")
-                }
-                onError={(e) => {
-                  (e.target as HTMLImageElement).parentElement!.style.display =
-                    "none";
-                }}
-              />
+                  quality={85}
+                  unoptimized={
+                    (item.imageUrl || "").toLowerCase().endsWith(".gif") ||
+                    item.source?.includes("linkedin") ||
+                    item.source?.includes("reddit") ||
+                    item.imageUrl?.includes("tiktokcdn") ||
+                    item.imageUrl?.includes("fbcdn.net") ||
+                    item.imageUrl?.includes("cdninstagram.com")
+                  }
+                  onError={(e) => {
+                    (
+                      e.target as HTMLImageElement
+                    ).parentElement!.style.display = "none";
+                  }}
+                />
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors" />
             </button>
           )}

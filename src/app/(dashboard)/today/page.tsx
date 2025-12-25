@@ -388,7 +388,7 @@ export default function TodayPage() {
                 <span className="font-semibold">All</span>
                 <span
                   className={cn(
-                    "text-xs px-2 py-0.5 rounded-full font-semibold",
+                    "text-xs px-2 py-0.5 rounded-full font-semibold min-w-[1.5rem] text-center",
                     selectedPlatform === null
                       ? "bg-white/20 text-white"
                       : "bg-gray-200 text-gray-600",
@@ -434,7 +434,7 @@ export default function TodayPage() {
                     </span>
                     <span
                       className={cn(
-                        "text-xs px-2 py-0.5 rounded-full font-semibold",
+                        "text-xs px-2 py-0.5 rounded-full font-semibold min-w-[1.5rem] text-center",
                         isActive
                           ? "bg-white/20 text-white"
                           : "bg-gray-200 text-gray-600",
