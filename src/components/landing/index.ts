@@ -11,3 +11,5 @@ export { default as Pricing } from "./Pricing";
 export { default as FAQ } from "./FAQ";
 export { default as FinalCTA } from "./FinalCTA";
 export { default as Footer } from "./Footer";
+export { default as ScrollingFeatures } from "./ScrollingFeatures";
+export { default as UnifiedLibrary } from "./UnifiedLibrary";
