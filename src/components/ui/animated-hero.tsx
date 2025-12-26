@@ -9,7 +9,7 @@ function AnimatedHero() {
   const [titleNumber, setTitleNumber] = useState(0);
   const titles = useMemo(
     () => ["knowledge", "insights", "action", "results"],
-    [],
+    []
   );
 
   useEffect(() => {
@@ -48,11 +48,11 @@ function AnimatedHero() {
                   playsInline
                   preload="metadata"
                   className="w-full h-full object-cover"
-                  poster="https://res.cloudinary.com/dggvt0gzu/video/upload/so_0,f_jpg,q_auto:low/v1766546298/Screen_Recording_2025-12-23_at_10.11.45_PM_nxxtlj.jpg"
+                  poster="https://res.cloudinary.com/dggvt0gzu/video/upload/v1766757137/Screen_Recording_2025-12-26_at_8.46.33_AM_i5xmum.jpg"
                   aria-label="Product demonstration"
                 >
                   <source
-                    src="https://res.cloudinary.com/dggvt0gzu/video/upload/f_auto,q_auto:eco/v1766546298/Screen_Recording_2025-12-23_at_10.11.45_PM_nxxtlj.mp4"
+                    src="https://res.cloudinary.com/dggvt0gzu/video/upload/v1766757137/Screen_Recording_2025-12-26_at_8.46.33_AM_i5xmum.mp4"
                     type="video/mp4"
                   />
                   <track

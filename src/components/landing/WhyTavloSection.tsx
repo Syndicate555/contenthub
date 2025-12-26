@@ -28,7 +28,7 @@ const WhyTavloSection = () => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.3 }}
             transition={{ duration: 0.6 }}
-            className="order-1 md:order-2"
+            className="order-2 md:order-2"
           >
             <div className="relative max-w-md lg:max-w-lg mx-auto rounded-3xl bg-surface-solid/80 border border-border-light shadow-2xl shadow-black/10 overflow-hidden">
               <Image
@@ -46,7 +46,7 @@ const WhyTavloSection = () => {
             </figcaption>
           </motion.figure>
 
-          <div className="order-2 md:order-1">
+          <div className="order-1 md:order-1">
             <motion.div
               initial={fadeInUp}
               whileInView={{ opacity: 1, y: 0 }}

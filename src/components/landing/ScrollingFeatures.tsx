@@ -2,26 +2,53 @@
 
 import React, { useRef } from "react";
 import { motion } from "framer-motion";
-import { cn } from "@/lib/utils";
 import { BrainCircuit } from "lucide-react";
+import Image from "next/image";
+import { cn } from "@/lib/utils";
 
 type Step = {
   id: string;
   image: string;
+  alt: string;
+  aspectClass?: string;
+  minHeightClass?: string;
+  fit?: "cover" | "contain";
+  frameClass?: string;
+  unoptimized?: boolean;
+  wrapperClass?: string;
 };
 
 const STEPS: Step[] = [
   {
     id: "step-1",
-    image: "/how-it-works/step-1.png",
+    image:
+      "https://res.cloudinary.com/dggvt0gzu/image/upload/v1766752242/plus_d9xheg.gif",
+    alt: "Animated preview of saving content into Tavlo.",
+    aspectClass: "aspect-[16/9]",
+    minHeightClass: "min-h-[240px] md:min-h-[320px]",
+    fit: "contain",
+    frameClass: "p-4 md:p-6 bg-white",
+    unoptimized: true,
+    wrapperClass: "lg:mt-20 xl:mt-48",
   },
   {
     id: "step-2",
-    image: "/how-it-works/step-2.png",
+    image:
+      "https://res.cloudinary.com/dggvt0gzu/image/upload/v1766752297/step_2_bitli9.gif",
+    alt: "Saved content organized in Tavlo with filters and tags.",
+    aspectClass: "aspect-[3/4] md:aspect-[4/5]",
+    minHeightClass: "min-h-[400px] md:min-h-[600px]",
+    fit: "cover",
   },
   {
     id: "step-3",
-    image: "/how-it-works/step-3.png",
+    image:
+      "https://res.cloudinary.com/dggvt0gzu/image/upload/v1766748131/Screenshot_2025-12-26_at_6.21.43_AM_bpul29.png",
+    alt: "Tavlo summary view showing curated saves and highlights.",
+    aspectClass: "aspect-[3/4] md:aspect-[4/5]",
+    minHeightClass: "min-h-[400px] md:min-h-[600px]",
+    fit: "contain",
+    frameClass: "p-4 md:p-6 bg-white",
   },
 ];
 
@@ -67,9 +94,10 @@ export const ScrollingFeatures = () => {
               transition={{ delay: 0.2 }}
               className="text-lg md:text-xl text-text-secondary leading-relaxed max-w-xl"
             >
-              Stop losing valuable content across dozens of tabs and bookmarks.
-              Tavlo transforms your scattered inspiration into an organized,
-              searchable knowledge base—without the manual effort.
+              Once logged in, click the `Add` button on the navigation menu.
+              Paste the link to your desired content and click `Save & process`.
+              Thats it! After the post is done processing, it will be available
+              for viewing in your inbox and library
             </motion.p>
           </div>
 
@@ -78,7 +106,11 @@ export const ScrollingFeatures = () => {
             {STEPS.map((step, index) => (
               <div
                 key={step.id}
-                className="relative w-full min-h-[400px] md:min-h-[600px]"
+                className={cn(
+                  "relative w-full",
+                  step.minHeightClass ?? "min-h-[400px] md:min-h-[600px]",
+                  step.wrapperClass
+                )}
               >
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95 }}
@@ -86,21 +118,25 @@ export const ScrollingFeatures = () => {
                   viewport={{ once: false, amount: 0.5 }}
                   transition={{ duration: 0.6, ease: "easeOut" }}
                   className={cn(
-                    "relative w-full h-full rounded-2xl overflow-hidden shadow-2xl bg-gradient-to-br from-gray-100 to-gray-200 border border-gray-200/50",
-                    "aspect-[3/4] md:aspect-[4/5]",
+                    "relative w-full h-full rounded-2xl overflow-hidden shadow-2xl border border-border-light bg-white",
+                    step.aspectClass ?? "aspect-[3/4] md:aspect-[4/5]",
+                    step.frameClass
                   )}
                 >
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="text-center p-8">
-                      <div className="text-6xl md:text-8xl font-bold text-gray-300 mb-4">
-                        {index + 1}
-                      </div>
-                      <div className="text-gray-400 text-sm md:text-base">
-                        Screenshot placeholder
-                        <br />
-                        {step.image}
-                      </div>
-                    </div>
+                  <div className="relative w-full h-full">
+                    <Image
+                      src={step.image}
+                      alt={step.alt || `Tavlo workflow step ${index + 1}`}
+                      fill
+                      sizes="(max-width: 1024px) 100vw, 520px"
+                      className={
+                        step.fit === "contain"
+                          ? "object-contain"
+                          : "object-cover"
+                      }
+                      quality={95}
+                      unoptimized={step.unoptimized}
+                    />
                   </div>
                 </motion.div>
               </div>
