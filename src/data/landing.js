@@ -148,7 +148,7 @@ export const videoConfig = {
   src: "https://res.cloudinary.com/dggvt0gzu/video/upload/v1766763250/tavlo_demo_xbvxgg.mp4",
   // Poster frame from video (first frame, optimized)
   poster:
-    "https://res.cloudinary.com/dggvt0gzu/video/upload/so_0,f_jpg,q_auto:good/v1766549937/tavlo-demo_wmuhwg.jpg",
+    "https://res.cloudinary.com/dggvt0gzu/video/upload/v1766763250/tavlo_demo_xbvxgg.jpg",
   duration: 120, // approximate duration in seconds
 };
 
