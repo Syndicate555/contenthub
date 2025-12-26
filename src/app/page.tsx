@@ -129,11 +129,8 @@ export default function HomePage() {
         <VideoDemo />
         <ScrollingFeatures />
         <WhyTavloSection />
-        {/* <WhyTavlo /> */}
-        {/* <Testimonials /> */}
         <Integrations />
         <Pricing />
-        <SocialProof />
         <FAQ />
         <FinalCTA />
       </main>
