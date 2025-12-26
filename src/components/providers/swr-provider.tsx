@@ -2,7 +2,7 @@
 
 import { SWRConfig } from "swr";
 import { useAuth } from "@clerk/nextjs";
-import { useMemo } from "react";
+import { useMemo, useRef, useEffect } from "react";
 import type { ReactNode } from "react";
 
 // Global fetcher with explicit no-store to avoid browser-level caching across users
@@ -36,13 +36,31 @@ interface SWRProviderProps {
 export function SWRProvider({ children }: SWRProviderProps) {
   const { userId } = useAuth();
 
-  // Create a dedicated cache map per user
-  const cache = useMemo(() => new Map(), [userId]);
-  const swrKey = userId ?? "guest";
+  // Track the previous userId to detect user switches (not initial load)
+  const previousUserIdRef = useRef<string | undefined | null>(null);
 
+  // Create a single cache that persists across renders
+  // We'll clear it manually when the user actually changes
+  const cache = useMemo(() => new Map(), []); // Only create once
+
+  // Clear cache when user switches (but not on initial load)
+  useEffect(() => {
+    const isUserSwitch =
+      previousUserIdRef.current !== null && // Not the first render
+      previousUserIdRef.current !== userId && // User actually changed
+      previousUserIdRef.current !== undefined && // Previous wasn't loading state
+      userId !== undefined; // Current isn't loading state
+
+    if (isUserSwitch) {
+      cache.clear();
+    }
+
+    previousUserIdRef.current = userId;
+  }, [userId, cache]);
+
+  // Don't use key prop to prevent remounting
   return (
     <SWRConfig
-      key={swrKey}
       value={{
         fetcher,
         provider: () => cache,

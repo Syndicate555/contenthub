@@ -5,6 +5,7 @@ const withBundleAnalyzer = require("@next/bundle-analyzer")({
 });
 
 const nextConfig: NextConfig = {
+  reactStrictMode: false, // Disable double rendering in development
   devIndicators: false,
   productionBrowserSourceMaps: true,
   images: {
@@ -76,6 +77,7 @@ const nextConfig: NextConfig = {
             value:
               "default-src 'self'; " +
               "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://clerk.tavlo.app https://*.clerk.accounts.dev https://vercel.live https://va.vercel-scripts.com https://challenges.cloudflare.com; " +
+              "worker-src 'self' blob: https://clerk.tavlo.app https://*.clerk.accounts.dev https://challenges.cloudflare.com; " +
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
               "img-src 'self' data: blob: https: http://localhost:*; " +
               "font-src 'self' data: https://fonts.gstatic.com; " +
