@@ -7,11 +7,11 @@ import {
   TavloLoop,
   SocialProof,
   Features,
-  WhyTavlo,
   Testimonials,
   ScrollingFeatures,
   UnifiedLibrary,
 } from "@/components/landing";
+import WhyTavloSection from "@/components/landing/WhyTavloSection";
 import { ComponentSkeleton } from "@/components/landing/ComponentSkeleton";
 import { AnalyticsTracker } from "@/components/AnalyticsTracker";
 
@@ -127,6 +127,7 @@ export default function HomePage() {
         <UnifiedLibrary />
         <VideoDemo />
         <ScrollingFeatures />
+        <WhyTavloSection />
         {/* <WhyTavlo /> */}
         {/* <Testimonials /> */}
         <Integrations />
