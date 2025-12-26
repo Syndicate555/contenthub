@@ -44,14 +44,17 @@ export const HowItWorks = () => {
   useEffect(() => {
     const handleScroll = () => {
       if (!containerRef.current) return;
-      
+
       const stepElements = containerRef.current.querySelectorAll(".step-item");
       const viewportCenter = window.innerHeight / 2;
 
       stepElements.forEach((step, index) => {
         const rect = step.getBoundingClientRect();
         // If the step is roughly in the middle of the screen
-        if (rect.top <= viewportCenter + 100 && rect.bottom >= viewportCenter - 100) {
+        if (
+          rect.top <= viewportCenter + 100 &&
+          rect.bottom >= viewportCenter - 100
+        ) {
           setActiveStep(index);
         }
       });
@@ -62,8 +65,8 @@ export const HowItWorks = () => {
   }, []);
 
   return (
-    <section 
-      className="relative w-full bg-white py-12 md:py-24" 
+    <section
+      className="relative w-full bg-white py-12 md:py-24"
       ref={containerRef}
     >
       <div className="container mx-auto px-4 md:px-6">
@@ -85,7 +88,10 @@ export const HowItWorks = () => {
             transition={{ delay: 0.1 }}
             className="text-3xl md:text-5xl font-bold tracking-tight text-text-primary mb-6"
           >
-            From chaos to clarity in <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-1 to-brand-2">three simple steps</span>
+            From chaos to clarity in{" "}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-1 to-brand-2">
+              three simple steps
+            </span>
           </motion.h2>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
@@ -94,12 +100,12 @@ export const HowItWorks = () => {
             transition={{ delay: 0.2 }}
             className="text-lg text-text-secondary md:text-xl leading-relaxed"
           >
-            Stop losing valuable content. Tavlo transforms your random bookmarks into a structured knowledge base without the manual effort.
+            Stop losing valuable content. Tavlo transforms your random bookmarks
+            into a structured knowledge base without the manual effort.
           </motion.p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24 relative items-start">
-          
           {/* LEFT COLUMN - STICKY VISUAL */}
           <div className="hidden lg:block sticky top-0 h-screen flex items-center justify-center">
             <div className="w-full max-w-lg">
@@ -109,30 +115,32 @@ export const HowItWorks = () => {
                     key={step.id}
                     className="absolute inset-0 w-full h-full"
                     initial={{ opacity: 0 }}
-                    animate={{ 
+                    animate={{
                       opacity: activeStep === index ? 1 : 0,
                       scale: activeStep === index ? 1 : 1.05,
-                      filter: activeStep === index ? "blur(0px)" : "blur(10px)"
+                      filter: activeStep === index ? "blur(0px)" : "blur(10px)",
                     }}
                     transition={{ duration: 0.5, ease: "easeInOut" }}
                   >
                     {/* Placeholder for the screenshot */}
-                    <div className={cn(
-                      "w-full h-full flex flex-col items-center justify-center p-8 bg-gradient-to-br",
-                      step.color
-                    )}>
+                    <div
+                      className={cn(
+                        "w-full h-full flex flex-col items-center justify-center p-8 bg-gradient-to-br",
+                        step.color
+                      )}
+                    >
                       <step.icon className="w-24 h-24 text-white mb-4 drop-shadow-md" />
                       <div className="text-white text-2xl font-bold text-center drop-shadow-md">
                         {step.title} Screenshot
                       </div>
-                      {/* 
+                      {/*
                         TODO: Replace the above div with your actual Image component:
                         <Image src={step.image} alt={step.title} fill className="object-cover" />
                       */}
                     </div>
                   </motion.div>
                 ))}
-                
+
                 {/* Device Frame / UI Chrome (Optional decoration) */}
                 <div className="absolute inset-0 border-[6px] border-white/20 rounded-3xl pointer-events-none" />
               </div>
@@ -146,9 +154,7 @@ export const HowItWorks = () => {
                 key={step.id}
                 className={cn(
                   "step-item flex flex-col justify-center py-8 lg:min-h-[60vh] transition-all duration-500",
-                  activeStep === index 
-                    ? "opacity-100" 
-                    : "lg:opacity-30",
+                  activeStep === index ? "opacity-100" : "lg:opacity-30",
                   index === 0 ? "lg:pt-[30vh]" : "", // Push first item down to align with centered sticky
                   index === STEPS.length - 1 ? "lg:pb-[30vh]" : "" // Push last item up to allow full scroll
                 )}
@@ -159,31 +165,38 @@ export const HowItWorks = () => {
               >
                 {/* Mobile-only visual */}
                 <div className="lg:hidden w-full aspect-video rounded-xl bg-gray-100 overflow-hidden mb-6 relative shadow-md">
-                   <div className={cn(
+                  <div
+                    className={cn(
                       "w-full h-full flex flex-col items-center justify-center bg-gradient-to-br",
                       step.color
-                    )}>
-                      <step.icon className="w-12 h-12 text-white" />
-                   </div>
+                    )}
+                  >
+                    <step.icon className="w-12 h-12 text-white" />
+                  </div>
                 </div>
 
                 <div className="flex items-center gap-4 mb-6">
-                  <div className={cn(
-                    "w-12 h-12 rounded-2xl flex items-center justify-center bg-gradient-to-br shadow-lg shrink-0",
-                    step.color
-                  )}>
-                    <span className="text-white font-bold text-xl">{index + 1}</span>
+                  <div
+                    className={cn(
+                      "w-12 h-12 rounded-2xl flex items-center justify-center bg-gradient-to-br shadow-lg shrink-0",
+                      step.color
+                    )}
+                  >
+                    <span className="text-white font-bold text-xl">
+                      {index + 1}
+                    </span>
                   </div>
-                  <h3 className="text-2xl md:text-3xl font-bold text-gray-900">{step.title}</h3>
+                  <h3 className="text-2xl md:text-3xl font-bold text-gray-900">
+                    {step.title}
+                  </h3>
                 </div>
-                
+
                 <p className="text-lg text-gray-600 leading-relaxed max-w-lg">
                   {step.description}
                 </p>
               </motion.div>
             ))}
           </div>
-
         </div>
       </div>
     </section>

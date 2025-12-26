@@ -44,28 +44,28 @@ const SocialProof = () => {
   > = {
     Founders: {
       icon: <Rocket className="w-4 h-4" />,
-      gradient: "from-brand-1 to-brand-2",
-      glow: "shadow-[0_10px_35px_-10px_rgba(91,91,255,0.45)]",
+      gradient: "from-[#3946D5] to-[#1F2BAA]",
+      glow: "shadow-[0_10px_35px_-10px_rgba(38,50,140,0.35)]",
     },
     Students: {
       icon: <BookOpen className="w-4 h-4" />,
-      gradient: "from-emerald-400 to-teal-300",
-      glow: "shadow-[0_10px_35px_-10px_rgba(52,211,153,0.45)]",
+      gradient: "from-[#0E8F6B] to-[#0B6B5E]",
+      glow: "shadow-[0_10px_35px_-10px_rgba(10,120,90,0.35)]",
     },
     Creators: {
       icon: <Palette className="w-4 h-4" />,
-      gradient: "from-pink-400 to-orange-300",
-      glow: "shadow-[0_10px_35px_-10px_rgba(249,115,22,0.45)]",
+      gradient: "from-[#C44A7A] to-[#B85A2B]",
+      glow: "shadow-[0_10px_35px_-10px_rgba(176,76,45,0.35)]",
     },
     Researchers: {
       icon: <FlaskConical className="w-4 h-4" />,
-      gradient: "from-indigo-400 to-sky-300",
-      glow: "shadow-[0_10px_35px_-10px_rgba(99,102,241,0.45)]",
+      gradient: "from-[#3F4FB4] to-[#2F6CA6]",
+      glow: "shadow-[0_10px_35px_-10px_rgba(55,90,165,0.35)]",
     },
     Engineers: {
       icon: <Cpu className="w-4 h-4" />,
-      gradient: "from-amber-400 to-yellow-300",
-      glow: "shadow-[0_10px_35px_-10px_rgba(251,191,36,0.45)]",
+      gradient: "from-[#C47A14] to-[#A65B10]",
+      glow: "shadow-[0_10px_35px_-10px_rgba(166,91,16,0.35)]",
     },
   };
 
@@ -119,7 +119,7 @@ const SocialProof = () => {
                 role="listitem"
               >
                 <span
-                  className={`absolute inset-0 rounded-full opacity-90 bg-gradient-to-r ${
+                  className={`absolute inset-0 rounded-full opacity-85 bg-gradient-to-r ${
                     personaMeta[item]?.gradient || "from-gray-200 to-gray-100"
                   } ${personaMeta[item]?.glow || ""}`}
                   aria-hidden

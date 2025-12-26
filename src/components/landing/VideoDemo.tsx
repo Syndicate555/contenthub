@@ -423,6 +423,7 @@ const VideoDemo = () => {
                         exit={{ opacity: 0, y: -10 }}
                         className="text-white text-sm font-medium"
                       >
+                        <br></br>
                         {videoChapters[activeChapter].description}
                       </motion.p>
                     </AnimatePresence>

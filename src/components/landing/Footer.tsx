@@ -49,20 +49,6 @@ const Footer = () => {
                 {link.label}
               </a>
             ))}
-            <Link
-              href="/privacy"
-              className="text-sm text-text-secondary hover:text-brand-1 transition-colors min-h-[44px] flex items-center"
-              aria-label="Read our Privacy Policy"
-            >
-              Privacy Policy
-            </Link>
-            <Link
-              href="/terms"
-              className="text-sm text-text-secondary hover:text-brand-1 transition-colors min-h-[44px] flex items-center"
-              aria-label="Read our Terms of Service"
-            >
-              Terms of Service
-            </Link>
           </div>
 
           {/* Socials */}

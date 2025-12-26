@@ -22,6 +22,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Tavlo",
   description: "Your personal second brain for social media content",
+  icons: {
+    icon: "/tavo_logo.png",
+    shortcut: "/tavo_logo.png",
+    apple: "/tavo_logo.png",
+  },
 };
 
 export default function RootLayout({

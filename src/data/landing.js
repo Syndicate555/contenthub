@@ -111,7 +111,7 @@ export const videoChapters = [
     subtitle: "Search + categories",
     description:
       "Find anything instantly with powerful search across all your saves.",
-    timestamp: 8,
+    timestamp: 35,
     stats: { items: 284, categories: 18 },
   },
   {
@@ -120,7 +120,7 @@ export const videoChapters = [
     subtitle: "Source, author, tags",
     description:
       "Filter by platform, creator, topic, or custom tags you create.",
-    timestamp: 16,
+    timestamp: 44,
     stats: { sources: 5, tags: 34 },
   },
   {
@@ -129,27 +129,27 @@ export const videoChapters = [
     subtitle: "Levels + streak",
     description:
       "Track your learning journey with streaks, levels, and insights.",
-    timestamp: 24,
+    timestamp: 88,
     stats: { streak: 14, level: 8 },
   },
   {
     id: "achievements",
     title: "Achievements",
-    subtitle: "Badges + milestones",
+    subtitle: "Badges",
     description:
       "Earn badges for consistency and unlock new features as you grow.",
-    timestamp: 32,
+    timestamp: 105,
     stats: { badges: 12, unlocked: 8 },
   },
 ];
 
 // Video configuration
 export const videoConfig = {
-  src: "https://res.cloudinary.com/dggvt0gzu/video/upload/f_auto,q_auto:good/v1766549937/tavlo-demo_wmuhwg.mp4",
+  src: "https://res.cloudinary.com/dggvt0gzu/video/upload/v1766763250/tavlo_demo_xbvxgg.mp4",
   // Poster frame from video (first frame, optimized)
   poster:
     "https://res.cloudinary.com/dggvt0gzu/video/upload/so_0,f_jpg,q_auto:good/v1766549937/tavlo-demo_wmuhwg.jpg",
-  duration: 40, // approximate duration in seconds
+  duration: 120, // approximate duration in seconds
 };
 
 // Tavlo Loop steps for signature animation
@@ -276,7 +276,7 @@ export const faqs = [
   {
     question: "Which platforms are supported?",
     answer:
-      "We currently support X/Twitter, YouTube, LinkedIn, and Instagram. Reddit, TikTok, podcasts, newsletters, and web articles are on the roadmap.",
+      "We currently support X/Twitter, YouTube, LinkedIn, Instagram, Reddit, TikTok, podcasts, newsletters, and web articles",
   },
   {
     question: "Is there a free plan?",
@@ -286,11 +286,6 @@ export const faqs = [
   {
     question: "How does Tavlo import my saved content?",
     answer:
-      "Depending on the platform, we use OAuth connections, official APIs, or manual import options. We guide you through the setup—it only takes a few minutes.",
-  },
-  {
-    question: "Can I export my data?",
-    answer:
-      "Absolutely. We believe in data portability. You can export your library, summaries, and collections to Notion, Markdown, or JSON at any time.",
+      "For the Beta we're only allowing manual adding posts using links but we're also working on OAuth connections and a browser extension to seamlessly capture links without any copy pasting",
   },
 ];

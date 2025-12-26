@@ -37,7 +37,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://tavlo.app",
+    url: "https://tavlo.ca",
     siteName: "Tavlo",
     title,
     description,
@@ -82,7 +82,7 @@ const Integrations = dynamic(
   () => import("@/components/landing/Integrations"),
   {
     loading: () => <ComponentSkeleton variant="section" minHeight="300px" />,
-  },
+  }
 );
 
 const Pricing = dynamic(() => import("@/components/landing/Pricing"), {
@@ -112,6 +112,8 @@ export default function HomePage() {
 
       <Header />
       <main>
+        <br></br>
+        <br></br>
         <Hero />
         <br></br>
         <br></br>
@@ -122,9 +124,8 @@ export default function HomePage() {
         <br></br>
         <br></br>
         <br></br>
-        <SocialProof />
-        <Features />
         <UnifiedLibrary />
+        <Features />
         <VideoDemo />
         <ScrollingFeatures />
         <WhyTavloSection />
@@ -132,6 +133,7 @@ export default function HomePage() {
         {/* <Testimonials /> */}
         <Integrations />
         <Pricing />
+        <SocialProof />
         <FAQ />
         <FinalCTA />
       </main>

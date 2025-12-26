@@ -3,7 +3,6 @@
 import React from "react";
 import Image from "next/image";
 import { motion, useReducedMotion } from "framer-motion";
- 
 
 const WhyTavloSection = () => {
   const prefersReducedMotion = useReducedMotion();
@@ -59,7 +58,7 @@ const WhyTavloSection = () => {
               >
                 Why{" "}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-1 to-brand-2">
-                  Tavlo
+                  Tavlo?
                 </span>
               </h2>
               <p className="mt-4 text-lg text-text-secondary">
@@ -81,19 +80,26 @@ const WhyTavloSection = () => {
                 process, and the best ideas still slip through the cracks. You
                 might like something, save it, even tell yourself you will come
                 back to it, then it disappears under a mountain of new content.
-                Over time, your saves turn into a messy archive you never open,
-                basically a graveyard of great ideas.
+                Over time, your saves turn into a messy archive you almost{" "}
+                <span className="font-semibold text-text-primary">Never</span>{" "}
+                open, basically a graveyard of great ideas.
               </p>
               <p>
                 A lot of the content you save is not meant to be consumed in
                 five seconds. Educational posts, breakdowns, frameworks, and
-                tutorials need focus, but doomscrolling mode gives you maybe 5-7
-                seconds before you move on. So you save it for later, except
-                later rarely comes because the next wave of content is already
+                tutorials need focus, but doomscrolling mode gives you maybe{" "}
+                <span className="font-semibold text-text-primary">
+                  5-7 seconds
+                </span>{" "}
+                before you move on. So you save it for later, except later
+                rarely comes because the next wave of content is already
                 waiting. Tavlo fixes that by giving your saved content a proper
-                home, a dedicated, distraction-free place designed for
-                revisiting, learning, and actually using what caught your
-                attention in the first place.
+                home, a dedicated,{" "}
+                <span className="font-semibold text-text-primary">
+                  distraction-free
+                </span>{" "}
+                place designed for revisiting, learning, and actually using what
+                caught your attention in the first place.
               </p>
               <p>
                 Tavlo also makes the process feel rewarding. It gamifies
@@ -110,7 +116,6 @@ const WhyTavloSection = () => {
                 next.
               </p>
             </motion.div>
-
           </div>
         </div>
       </div>

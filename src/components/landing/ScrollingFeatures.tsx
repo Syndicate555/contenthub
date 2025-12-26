@@ -1,6 +1,5 @@
 "use client";
-
-import React, { useRef } from "react";
+import { useRef } from "react";
 import { motion } from "framer-motion";
 import { BrainCircuit } from "lucide-react";
 import Image from "next/image";
@@ -57,6 +56,7 @@ export const ScrollingFeatures = () => {
 
   return (
     <section
+      id="how-it-works"
       className="relative w-full bg-white py-12 md:py-24"
       ref={containerRef}
     >
