@@ -8,7 +8,7 @@ import Link from "next/link";
 function AnimatedHero() {
   const [titleNumber, setTitleNumber] = useState(0);
   const titles = useMemo(
-    () => ["knowledge", "insights", "action", "results"],
+    () => ["personal", "customized", "unique", "special"],
     []
   );
 
@@ -24,7 +24,7 @@ function AnimatedHero() {
   }, [titleNumber, titles]);
 
   const scrollToFeatures = () => {
-    const element = document.getElementById("features");
+    const element = document.getElementById("demo");
     if (element) {
       element.scrollIntoView({ behavior: "smooth" });
     }
@@ -82,7 +82,7 @@ function AnimatedHero() {
 
             <div className="flex gap-3 flex-col w-full">
               <h1 className="text-4xl md:text-6xl lg:text-7xl tracking-tighter font-bold text-text-primary leading-[1.1]">
-                <span className="block">Turn saved posts into</span>
+                <span className="block">Create your</span>
                 <span className="relative flex w-full justify-center lg:justify-start overflow-hidden h-[1.2em]">
                   {titles.map((title, index) => (
                     <motion.span
@@ -106,7 +106,7 @@ function AnimatedHero() {
                     </motion.span>
                   ))}
                 </span>
-                <span className="block">you actually reuse</span>
+                <span className="block">social media feed</span>
               </h1>
 
               <p className="text-base md:text-lg leading-relaxed tracking-tight text-text-secondary max-w-xl mx-auto lg:mx-0">
