@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import type { RateLimitResult } from "./rate-limit";
 import { checkRateLimit } from "./rate-limit";
+import { db } from "./db";
 
 /**
  * Extract client IP address from request headers
@@ -67,7 +68,22 @@ export async function logRateLimitViolation(
   userAgent: string | null,
 ): Promise<void> {
   try {
-    // For now, use console.warn until AuditLog table is added
+    await db.auditLog.create({
+      data: {
+        userId,
+        action: "rate_limit_exceeded",
+        resource: endpoint,
+        metadata: {
+          ipAddress,
+          userAgent,
+          timestamp: new Date().toISOString(),
+        },
+        success: false,
+      },
+    });
+  } catch (error) {
+    console.error("Failed to log rate limit violation:", error);
+    // Fallback to console logging if database insert fails
     console.warn("[RATE_LIMIT_VIOLATION]", {
       userId: userId || "anonymous",
       ipAddress,
@@ -75,19 +91,6 @@ export async function logRateLimitViolation(
       userAgent,
       timestamp: new Date().toISOString(),
     });
-
-    // TODO: Replace with AuditLog creation when implemented in Step 7
-    // await db.auditLog.create({
-    //   data: {
-    //     userId,
-    //     action: 'rate_limit_exceeded',
-    //     resource: endpoint,
-    //     metadata: { ipAddress, userAgent },
-    //     success: false,
-    //   },
-    // });
-  } catch (error) {
-    console.error("Failed to log rate limit violation:", error);
   }
 }
 

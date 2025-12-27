@@ -27,6 +27,7 @@ model User {
   stats             UserStats?
   userBadges        UserBadge[]
   feedbacks         Feedback[]
+  auditLogs         AuditLog[]
 }
 
 // ============================================
@@ -123,38 +124,58 @@ model Feedback {
 
 // RateLimit tracks API request counts for rate limiting and DDOS protection
 model RateLimit {
-  id         String   @id @default(cuid())
+  id String @id @default(cuid())
 
   // Identifier (userId for auth, IP for public, token for API keys)
   identifier String
 
   // Endpoint pattern (e.g., "POST:/api/items", "GET:/api/auth/twitter")
-  endpoint   String
+  endpoint String
 
   // Time window type ("minute", "hour", "day")
-  window     String
+  window String
 
   // Window start timestamp (rounded down to window boundary)
   windowStart DateTime
 
   // Request count in this window
-  count      Int      @default(1)
+  count Int @default(1)
 
   // Metadata for logging
   lastRequestAt DateTime @default(now())
   lastIpAddress String?
   lastUserAgent String?
 
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Composite unique constraint: one record per identifier+endpoint+window+windowStart
   @@unique([identifier, endpoint, window, windowStart])
-
   // Indexes for cleanup and queries
   @@index([identifier, endpoint])
   @@index([windowStart]) // For cleanup of old records
   @@index([count]) // For finding abuse patterns
+}
+
+// AuditLog tracks security events and user actions for compliance and forensics
+model AuditLog {
+  id     String  @id @default(cuid())
+  userId String? // Nullable for anonymous events
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Event details
+  action   String // "rate_limit_exceeded", "login", "oauth_connect", "item_created", etc.
+  resource String // Endpoint or resource identifier (e.g., "POST:/api/items")
+  metadata Json? // Additional context: { ipAddress, userAgent, limit, count, etc. }
+
+  success   Boolean  @default(true) // Whether the action succeeded
+  createdAt DateTime @default(now())
+
+  // Indexes for efficient querying
+  @@index([userId, createdAt])
+  @@index([action, createdAt])
+  @@index([success, createdAt])
+  @@index([createdAt]) // For time-based queries and cleanup
 }
 
 // XPEvent tracks individual XP awards for audit trail and analytics
@@ -352,11 +373,11 @@ model Item {
 
 // Tag represents a normalized tag that can be assigned to items
 model Tag {
-  id             String   @id @default(cuid())
-  name           String   @unique // Normalized form (lowercase, trimmed, e.g., "machine learning")
+  id             String @id @default(cuid())
+  name           String @unique // Normalized form (lowercase, trimmed, e.g., "machine learning")
   displayName    String // Original casing for display (e.g., "Machine Learning")
-  normalizedName String   @unique // Fully normalized: lowercase, no special chars (same as name for now)
-  usageCount     Int      @default(0) // Denormalized count for performance
+  normalizedName String @unique // Fully normalized: lowercase, no special chars (same as name for now)
+  usageCount     Int    @default(0) // Denormalized count for performance
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
