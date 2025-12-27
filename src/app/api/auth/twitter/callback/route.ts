@@ -13,6 +13,12 @@ import {
   getTwitterUser,
   getTwitterRedirectUri,
 } from "@/lib/twitter-oauth";
+import { checkRateLimit } from "@/lib/rate-limit";
+import {
+  getClientIp,
+  logRateLimitViolation,
+  getEndpointId,
+} from "@/lib/rate-limit-helpers";
 
 export async function GET(request: NextRequest) {
   try {
@@ -21,6 +27,37 @@ export async function GET(request: NextRequest) {
     if (!clerkId) {
       return NextResponse.redirect(
         new URL("/sign-in", process.env.NEXT_PUBLIC_APP_URL),
+      );
+    }
+
+    const ipAddress = getClientIp(request);
+    const endpoint = getEndpointId(request);
+
+    // Check rate limit: 5/min per user
+    const rateLimitResult = await checkRateLimit({
+      identifier: clerkId,
+      endpoint,
+      limits: {
+        perMinute: 5,
+      },
+      metadata: {
+        ipAddress,
+        userAgent: request.headers.get("user-agent") || undefined,
+      },
+    });
+
+    if (!rateLimitResult.success) {
+      await logRateLimitViolation(
+        clerkId,
+        ipAddress,
+        endpoint,
+        request.headers.get("user-agent"),
+      );
+      return NextResponse.redirect(
+        new URL(
+          "/settings?error=rate_limit_exceeded",
+          process.env.NEXT_PUBLIC_APP_URL,
+        ),
       );
     }
 

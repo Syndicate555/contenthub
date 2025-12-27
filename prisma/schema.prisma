@@ -121,6 +121,42 @@ model Feedback {
   @@index([status])
 }
 
+// RateLimit tracks API request counts for rate limiting and DDOS protection
+model RateLimit {
+  id         String   @id @default(cuid())
+
+  // Identifier (userId for auth, IP for public, token for API keys)
+  identifier String
+
+  // Endpoint pattern (e.g., "POST:/api/items", "GET:/api/auth/twitter")
+  endpoint   String
+
+  // Time window type ("minute", "hour", "day")
+  window     String
+
+  // Window start timestamp (rounded down to window boundary)
+  windowStart DateTime
+
+  // Request count in this window
+  count      Int      @default(1)
+
+  // Metadata for logging
+  lastRequestAt DateTime @default(now())
+  lastIpAddress String?
+  lastUserAgent String?
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Composite unique constraint: one record per identifier+endpoint+window+windowStart
+  @@unique([identifier, endpoint, window, windowStart])
+
+  // Indexes for cleanup and queries
+  @@index([identifier, endpoint])
+  @@index([windowStart]) // For cleanup of old records
+  @@index([count]) // For finding abuse patterns
+}
+
 // XPEvent tracks individual XP awards for audit trail and analytics
 model XPEvent {
   id     String @id @default(cuid())

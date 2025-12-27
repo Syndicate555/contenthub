@@ -4,6 +4,7 @@
  */
 
 import { auth } from "@clerk/nextjs/server";
+import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import {
@@ -13,6 +14,13 @@ import {
   buildAuthorizationUrl,
   getTwitterRedirectUri,
 } from "@/lib/twitter-oauth";
+import { checkRateLimit } from "@/lib/rate-limit";
+import {
+  getClientIp,
+  createRateLimitResponse,
+  logRateLimitViolation,
+  getEndpointId,
+} from "@/lib/rate-limit-helpers";
 
 // Cookie settings for OAuth state
 const COOKIE_OPTIONS = {
@@ -23,7 +31,33 @@ const COOKIE_OPTIONS = {
   path: "/",
 };
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const ipAddress = getClientIp(request);
+  const endpoint = getEndpointId(request);
+
+  // Check rate limit: 10/min per IP
+  const rateLimitResult = await checkRateLimit({
+    identifier: ipAddress,
+    endpoint,
+    limits: {
+      perMinute: 10,
+    },
+    metadata: {
+      ipAddress,
+      userAgent: request.headers.get("user-agent") || undefined,
+    },
+  });
+
+  if (!rateLimitResult.success) {
+    await logRateLimitViolation(
+      null,
+      ipAddress,
+      endpoint,
+      request.headers.get("user-agent"),
+    );
+    return createRateLimitResponse(rateLimitResult);
+  }
+
   try {
     // Verify user is authenticated with Clerk
     const { userId } = await auth();

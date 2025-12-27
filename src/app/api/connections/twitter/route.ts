@@ -5,15 +5,27 @@
  */
 
 import { auth } from "@clerk/nextjs/server";
+import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { syncTwitterBookmarks } from "@/lib/twitter-sync";
 import { disconnectTwitter } from "@/lib/twitter-api";
+import { checkRateLimit } from "@/lib/rate-limit";
+import {
+  getClientIp,
+  createRateLimitResponse,
+  addRateLimitHeaders,
+  logRateLimitViolation,
+  getEndpointId,
+} from "@/lib/rate-limit-helpers";
 
 /**
  * POST - Trigger a sync of Twitter bookmarks
  */
-export async function POST() {
+export async function POST(request: NextRequest) {
+  const ipAddress = getClientIp(request);
+  const endpoint = getEndpointId(request);
+
   try {
     const { userId: clerkId } = await auth();
 
@@ -34,6 +46,29 @@ export async function POST() {
         { ok: false, error: "User not found" },
         { status: 404 },
       );
+    }
+
+    // Check rate limit: 3/hour per user
+    const rateLimitResult = await checkRateLimit({
+      identifier: user.id,
+      endpoint,
+      limits: {
+        perHour: 3,
+      },
+      metadata: {
+        ipAddress,
+        userAgent: request.headers.get("user-agent") || undefined,
+      },
+    });
+
+    if (!rateLimitResult.success) {
+      await logRateLimitViolation(
+        user.id,
+        ipAddress,
+        endpoint,
+        request.headers.get("user-agent"),
+      );
+      return createRateLimitResponse(rateLimitResult);
     }
 
     // Trigger sync
@@ -50,10 +85,12 @@ export async function POST() {
       );
     }
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       ok: true,
       data: result,
     });
+
+    return addRateLimitHeaders(response, rateLimitResult);
   } catch (error) {
     console.error("Error syncing Twitter:", error);
     return NextResponse.json(
@@ -66,7 +103,10 @@ export async function POST() {
 /**
  * DELETE - Disconnect Twitter account
  */
-export async function DELETE() {
+export async function DELETE(request: NextRequest) {
+  const ipAddress = getClientIp(request);
+  const endpoint = getEndpointId(request);
+
   try {
     const { userId: clerkId } = await auth();
 
@@ -89,13 +129,38 @@ export async function DELETE() {
       );
     }
 
+    // Check rate limit: 10/day per user
+    const rateLimitResult = await checkRateLimit({
+      identifier: user.id,
+      endpoint,
+      limits: {
+        perDay: 10,
+      },
+      metadata: {
+        ipAddress,
+        userAgent: request.headers.get("user-agent") || undefined,
+      },
+    });
+
+    if (!rateLimitResult.success) {
+      await logRateLimitViolation(
+        user.id,
+        ipAddress,
+        endpoint,
+        request.headers.get("user-agent"),
+      );
+      return createRateLimitResponse(rateLimitResult);
+    }
+
     // Disconnect Twitter
     await disconnectTwitter(user.id);
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       ok: true,
       message: "Twitter disconnected successfully",
     });
+
+    return addRateLimitHeaders(response, rateLimitResult);
   } catch (error) {
     console.error("Error disconnecting Twitter:", error);
     return NextResponse.json(

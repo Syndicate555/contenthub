@@ -3,6 +3,10 @@ import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { z } from "zod";
 import type { Prisma } from "@/generated/prisma";
+import {
+  applyStandardRateLimit,
+  addRateLimitHeaders,
+} from "@/lib/rate-limit-helpers";
 
 const tagsQuerySchema = z.object({
   q: z.string().optional(), // Search query
@@ -32,6 +36,13 @@ export async function GET(request: NextRequest) {
         { status: 401 },
       );
     }
+
+    // Check rate limit: 60/min per user
+    const { response: rateLimitResponse, rateLimitResult } =
+      await applyStandardRateLimit(request, user.id, "read", {
+        perMinute: 60,
+      });
+    if (rateLimitResponse) return rateLimitResponse;
 
     const { searchParams } = new URL(request.url);
     const query = tagsQuerySchema.parse({
@@ -128,7 +139,7 @@ export async function GET(request: NextRequest) {
     // Step 5: Apply limit
     const tags = sortedTags.slice(0, query.limit);
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       ok: true,
       data: tags,
       meta: {
@@ -136,6 +147,8 @@ export async function GET(request: NextRequest) {
         sortBy: query.sortBy,
       },
     });
+
+    return addRateLimitHeaders(response, rateLimitResult);
   } catch (error) {
     console.error("GET /api/tags error:", error);
 

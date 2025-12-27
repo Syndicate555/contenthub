@@ -1,11 +1,15 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { ITEM_CATEGORIES, type ItemCategory } from "@/types";
 import { consolidatePlatforms } from "@/lib/platform-normalizer";
+import {
+  applyStandardRateLimit,
+  addRateLimitHeaders,
+} from "@/lib/rate-limit-helpers";
 
 // GET /api/categories - Get category counts with thumbnails (OPTIMIZED)
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const user = await getCurrentUser();
 
@@ -15,6 +19,13 @@ export async function GET() {
         { status: 401 },
       );
     }
+
+    // Check rate limit: 60/min per user
+    const { response: rateLimitResponse, rateLimitResult } =
+      await applyStandardRateLimit(request, user.id, "read", {
+        perMinute: 60,
+      });
+    if (rateLimitResponse) return rateLimitResponse;
 
     // OPTIMIZATION: Use groupBy for counts instead of fetching all items
     const categoryCounts = await db.item.groupBy({
@@ -146,7 +157,7 @@ export async function GET() {
     // User-specific view; do not allow browser caching across sessions
     response.headers.set("Cache-Control", "no-store");
 
-    return response;
+    return addRateLimitHeaders(response, rateLimitResult);
   } catch (error) {
     console.error("GET /api/categories error:", error);
     return NextResponse.json(

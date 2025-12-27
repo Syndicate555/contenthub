@@ -1,16 +1,20 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { getCurrentUser } from "@/lib/auth";
 import { getUserStats, getUserDomainStats, getRecentXPEvents } from "@/lib/xp";
 import { getUserBadges, getAllBadges } from "@/lib/badges";
 import { db } from "@/lib/db";
+import {
+  applyStandardRateLimit,
+  addRateLimitHeaders,
+} from "@/lib/rate-limit-helpers";
 
 /**
  * GET /api/dashboard/profile
  * Batch endpoint that returns all data needed for the Profile page in one request
  * Combines: user stats, domain stats, recent XP events, and badges
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const { userId: clerkId } = await auth();
 
@@ -32,6 +36,11 @@ export async function GET() {
         { status: 404 },
       );
     }
+
+    // Check rate limit: 100/min, 5000/day per user
+    const { response: rateLimitResponse, rateLimitResult } =
+      await applyStandardRateLimit(request, user.id, "read");
+    if (rateLimitResponse) return rateLimitResponse;
 
     // Fetch all profile data in parallel for maximum performance
     const [stats, domainStats, recentEvents, earnedBadges, allBadges] =
@@ -74,7 +83,7 @@ export async function GET() {
       legendary: badgesWithProgress.filter((b) => b.rarity === "legendary"),
     };
 
-    return NextResponse.json(
+    const response = NextResponse.json(
       {
         ok: true,
         data: {
@@ -138,6 +147,8 @@ export async function GET() {
         },
       },
     );
+
+    return addRateLimitHeaders(response, rateLimitResult);
   } catch (error) {
     console.error("GET /api/dashboard/profile error:", error);
     return NextResponse.json(

@@ -8,6 +8,14 @@ import {
   isInFocusArea,
   type XPAction,
 } from "@/lib/xp";
+import { checkRateLimit } from "@/lib/rate-limit";
+import {
+  getClientIp,
+  createRateLimitResponse,
+  addRateLimitHeaders,
+  logRateLimitViolation,
+  getEndpointId,
+} from "@/lib/rate-limit-helpers";
 
 // Valid XP actions
 const validActions = Object.values(XP_ACTIONS);
@@ -23,6 +31,9 @@ const AwardXPSchema = z.object({
 
 // POST /api/xp/award - Award XP to the current user
 export async function POST(request: NextRequest) {
+  const ipAddress = getClientIp(request);
+  const endpoint = getEndpointId(request);
+
   try {
     const user = await getCurrentUser();
 
@@ -31,6 +42,29 @@ export async function POST(request: NextRequest) {
         { ok: false, error: "Unauthorized" },
         { status: 401 },
       );
+    }
+
+    // Check rate limit: 50/day per user
+    const rateLimitResult = await checkRateLimit({
+      identifier: user.id,
+      endpoint,
+      limits: {
+        perDay: 50,
+      },
+      metadata: {
+        ipAddress,
+        userAgent: request.headers.get("user-agent") || undefined,
+      },
+    });
+
+    if (!rateLimitResult.success) {
+      await logRateLimitViolation(
+        user.id,
+        ipAddress,
+        endpoint,
+        request.headers.get("user-agent"),
+      );
+      return createRateLimitResponse(rateLimitResult);
     }
 
     const body = await request.json();
@@ -81,7 +115,7 @@ export async function POST(request: NextRequest) {
 
     const bonusXp = focusAreaBonus ? XP_VALUES[XP_ACTIONS.FOCUS_AREA_BONUS] : 0;
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       ok: true,
       data: {
         xpAwarded: result.xpAwarded + bonusXp,
@@ -95,6 +129,8 @@ export async function POST(request: NextRequest) {
         domainLevel: result.domainLevel,
       },
     });
+
+    return addRateLimitHeaders(response, rateLimitResult);
   } catch (error) {
     console.error("POST /api/xp/award error:", error);
     return NextResponse.json(

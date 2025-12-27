@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { getUserStats } from "@/lib/xp";
 import { db } from "@/lib/db";
@@ -7,6 +7,10 @@ import {
   getPlatformSlugFromSource,
   PlatformSlug,
 } from "@/lib/platforms";
+import {
+  applyStandardRateLimit,
+  addRateLimitHeaders,
+} from "@/lib/rate-limit-helpers";
 
 /**
  * Map source domains to friendly display names and icons
@@ -17,7 +21,7 @@ const PLATFORM_ORDER = [...PLATFORM_CONFIG].sort((a, b) => a.order - b.order);
  * GET /api/dashboard/today-sidebar
  * Returns user profile summary and content source statistics for the today page sidebar
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const user = await getCurrentUser();
 
@@ -27,6 +31,11 @@ export async function GET() {
         { status: 401 },
       );
     }
+
+    // Check rate limit: 100/min, 5000/day per user
+    const { response: rateLimitResponse, rateLimitResult } =
+      await applyStandardRateLimit(request, user.id, "read");
+    if (rateLimitResponse) return rateLimitResponse;
 
     // Fetch stats and source breakdown in parallel
     const [stats, sourceStats] = await Promise.all([
@@ -76,7 +85,7 @@ export async function GET() {
       });
     }
 
-    return NextResponse.json(
+    const response = NextResponse.json(
       {
         ok: true,
         data: {
@@ -97,6 +106,8 @@ export async function GET() {
         },
       },
     );
+
+    return addRateLimitHeaders(response, rateLimitResult);
   } catch (error) {
     console.error("GET /api/dashboard/today-sidebar error:", error);
     return NextResponse.json(

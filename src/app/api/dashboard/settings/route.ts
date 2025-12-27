@@ -1,13 +1,17 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
+import {
+  applyStandardRateLimit,
+  addRateLimitHeaders,
+} from "@/lib/rate-limit-helpers";
 
 /**
  * GET /api/dashboard/settings
  * Batch endpoint that returns all data needed for the Settings page in one request
  * Combines: social connections and focus areas
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const user = await getCurrentUser();
 
@@ -17,6 +21,11 @@ export async function GET() {
         { status: 401 },
       );
     }
+
+    // Check rate limit: 100/min, 5000/day per user
+    const { response: rateLimitResponse, rateLimitResult } =
+      await applyStandardRateLimit(request, user.id, "read");
+    if (rateLimitResponse) return rateLimitResponse;
 
     // Fetch connections, focus areas, and import counts in parallel
     const [connections, focusAreas, importCounts] = await Promise.all([
@@ -63,7 +72,7 @@ export async function GET() {
       importCounts.map((c) => [c.importSource!, c._count]),
     );
 
-    return NextResponse.json(
+    const response = NextResponse.json(
       {
         ok: true,
         data: {
@@ -91,6 +100,8 @@ export async function GET() {
         },
       },
     );
+
+    return addRateLimitHeaders(response, rateLimitResult);
   } catch (error) {
     console.error("GET /api/dashboard/settings error:", error);
     return NextResponse.json(

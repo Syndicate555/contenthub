@@ -1,7 +1,15 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { checkRateLimit } from "@/lib/rate-limit";
+import {
+  getClientIp,
+  createRateLimitResponse,
+  addRateLimitHeaders,
+  logRateLimitViolation,
+  getEndpointId,
+} from "@/lib/rate-limit-helpers";
 
 const feedbackSchema = z.object({
   kind: z.enum(["feedback", "support"]),
@@ -17,7 +25,10 @@ const feedbackSchema = z.object({
   userAgent: z.string().optional(),
 });
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const ipAddress = getClientIp(request);
+  const endpoint = getEndpointId(request);
+
   try {
     const user = await getCurrentUser();
     if (!user) {
@@ -25,6 +36,29 @@ export async function POST(request: Request) {
         { ok: false, error: "Unauthorized" },
         { status: 401 },
       );
+    }
+
+    // Check rate limit: 5/hour per user
+    const rateLimitResult = await checkRateLimit({
+      identifier: user.id,
+      endpoint,
+      limits: {
+        perHour: 5,
+      },
+      metadata: {
+        ipAddress,
+        userAgent: request.headers.get("user-agent") || undefined,
+      },
+    });
+
+    if (!rateLimitResult.success) {
+      await logRateLimitViolation(
+        user.id,
+        ipAddress,
+        endpoint,
+        request.headers.get("user-agent"),
+      );
+      return createRateLimitResponse(rateLimitResult);
     }
 
     const json = await request.json();
@@ -36,18 +70,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Basic rate limit: max 5 submissions per hour per user
-    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-    const recentCount = await db.feedback.count({
-      where: { userId: user.id, createdAt: { gt: oneHourAgo } },
-    });
-    if (recentCount >= 5) {
-      return NextResponse.json(
-        { ok: false, error: "Too many submissions. Please try again later." },
-        { status: 429 },
-      );
-    }
-
     const created = await db.feedback.create({
       data: {
         userId: user.id,
@@ -55,7 +77,8 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json({ ok: true, data: { id: created.id } });
+    const response = NextResponse.json({ ok: true, data: { id: created.id } });
+    return addRateLimitHeaders(response, rateLimitResult);
   } catch (error) {
     console.error("POST /api/feedback error", error);
     return NextResponse.json(

@@ -38,7 +38,7 @@ export default function TodayPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearch = useDebouncedValue(searchTerm, 350);
   const [selectedPlatform, setSelectedPlatform] = useState<PlatformSlug | null>(
-    null,
+    null
   );
   const [page, setPage] = useState(1);
 
@@ -65,7 +65,7 @@ export default function TodayPage() {
   const platformCounts = useMemo(() => {
     const counts = new Map<string, number>();
     sources.forEach((source: { source: string; count: number }) =>
-      counts.set(source.source, source.count),
+      counts.set(source.source, source.count)
     );
     return counts;
   }, [sources]);
@@ -80,7 +80,7 @@ export default function TodayPage() {
 
   const hasActiveFilters = Boolean(
     (selectedPlatform && selectedPlatform !== null) ||
-    (debouncedSearch && debouncedSearch.trim().length > 0),
+      (debouncedSearch && debouncedSearch.trim().length > 0)
   );
   const headerCount =
     (pagination?.total ?? 0) ||
@@ -97,9 +97,9 @@ export default function TodayPage() {
           label: platform.label,
           count: platformCounts.get(platform.slug) || 0,
           icon: platform.icon,
-        }),
+        })
       ),
-    [platformCounts],
+    [platformCounts]
   );
 
   // Handle status change with optimistic update
@@ -113,7 +113,7 @@ export default function TodayPage() {
           data: current.data.filter((item) => item.id !== id),
         };
       },
-      { revalidate: false },
+      { revalidate: false }
     );
 
     setProcessedToday((prev) => prev + 1);
@@ -335,8 +335,9 @@ export default function TodayPage() {
             {/* Metadata row */}
             <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
               <p className="text-xs text-gray-500 font-medium">
-                Your personal social media feed • {today}
+                Your personal social media feed
               </p>
+              <p className="text-xs text-gray-500 font-medium">{today}</p>
               {hasActiveFilters && (
                 <motion.button
                   initial={{ opacity: 0, scale: 0.9 }}
@@ -382,7 +383,7 @@ export default function TodayPage() {
                   "inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all",
                   selectedPlatform === null
                     ? "bg-gray-900 text-white shadow-md"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200",
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                 )}
               >
                 <span className="font-semibold">All</span>
@@ -391,7 +392,7 @@ export default function TodayPage() {
                     "text-xs px-2 py-0.5 rounded-full font-semibold min-w-[1.5rem] text-center",
                     selectedPlatform === null
                       ? "bg-white/20 text-white"
-                      : "bg-gray-200 text-gray-600",
+                      : "bg-gray-200 text-gray-600"
                   )}
                 >
                   {totalCount}
@@ -424,8 +425,11 @@ export default function TodayPage() {
                     className={cn(
                       "inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all",
                       isActive
-                        ? `bg-gradient-to-r ${platformGradients[platform.slug] || "from-indigo-600 to-purple-600"} text-white shadow-md`
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200",
+                        ? `bg-gradient-to-r ${
+                            platformGradients[platform.slug] ||
+                            "from-indigo-600 to-purple-600"
+                          } text-white shadow-md`
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                     )}
                   >
                     <span className="flex items-center gap-2">
@@ -437,7 +441,7 @@ export default function TodayPage() {
                         "text-xs px-2 py-0.5 rounded-full font-semibold min-w-[1.5rem] text-center",
                         isActive
                           ? "bg-white/20 text-white"
-                          : "bg-gray-200 text-gray-600",
+                          : "bg-gray-200 text-gray-600"
                       )}
                     >
                       {platform.count}
@@ -487,7 +491,7 @@ export default function TodayPage() {
                 <div
                   className={cn(
                     "space-y-4 transition-opacity duration-150",
-                    isValidating && items.length > 0 ? "opacity-90" : "",
+                    isValidating && items.length > 0 ? "opacity-90" : ""
                   )}
                 >
                   {/* Feed intro */}
@@ -528,7 +532,7 @@ export default function TodayPage() {
                             "px-3 py-1.5 rounded-md border text-sm transition-colors",
                             pagination.page <= 1 || isLoading || isValidating
                               ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
-                              : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50",
+                              : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
                           )}
                         >
                           Previous
@@ -542,7 +546,7 @@ export default function TodayPage() {
                             "px-3 py-1.5 rounded-md border text-sm transition-colors",
                             !pagination.hasMore || isLoading || isValidating
                               ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
-                              : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50",
+                              : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
                           )}
                         >
                           Next

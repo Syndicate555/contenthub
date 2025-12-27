@@ -13,6 +13,15 @@ import { createItemSchema, itemsQuerySchema } from "@/lib/schemas";
 import type { Prisma } from "@/generated/prisma";
 import { getPlatformDomains, normalizePlatformSlug } from "@/lib/platforms";
 import { normalizeDomain } from "@/lib/platform-normalizer";
+import { checkRateLimit } from "@/lib/rate-limit";
+import {
+  getClientIp,
+  createRateLimitResponse,
+  addRateLimitHeaders,
+  logRateLimitViolation,
+  getEndpointId,
+  applyStandardRateLimit,
+} from "@/lib/rate-limit-helpers";
 
 // Log successful module initialization
 console.log("[API /items] Route module initialized successfully");
@@ -25,7 +34,9 @@ export async function GET(request: NextRequest) {
   try {
     // Get or create user (handles first-time sign-in)
     const user = await getCurrentUser();
-    console.log(`[API /items GET] User auth completed in ${Date.now() - startTime}ms`);
+    console.log(
+      `[API /items GET] User auth completed in ${Date.now() - startTime}ms`,
+    );
 
     if (!user) {
       return NextResponse.json(
@@ -33,6 +44,11 @@ export async function GET(request: NextRequest) {
         { status: 401 },
       );
     }
+
+    // Check rate limit: 100/min, 5000/day per user
+    const { response: rateLimitResponse, rateLimitResult } =
+      await applyStandardRateLimit(request, user.id, "read");
+    if (rateLimitResponse) return rateLimitResponse;
 
     // Parse query params
     const { searchParams } = new URL(request.url);
@@ -313,10 +329,13 @@ export async function GET(request: NextRequest) {
     // For user-specific data, avoid any shared browser caching
     response.headers.set("Cache-Control", "no-store");
 
-    return response;
+    return addRateLimitHeaders(response, rateLimitResult);
   } catch (error) {
     console.error("[API /items GET] Error occurred:", error);
-    console.error("[API /items GET] Error stack:", error instanceof Error ? error.stack : "No stack trace");
+    console.error(
+      "[API /items GET] Error stack:",
+      error instanceof Error ? error.stack : "No stack trace",
+    );
     console.error("[API /items GET] Error details:", {
       name: error instanceof Error ? error.name : "Unknown",
       message: error instanceof Error ? error.message : String(error),
@@ -327,7 +346,8 @@ export async function GET(request: NextRequest) {
       {
         ok: false,
         error: "Failed to fetch items",
-        details: process.env.NODE_ENV === "development" ? String(error) : undefined,
+        details:
+          process.env.NODE_ENV === "development" ? String(error) : undefined,
       },
       { status: 500 },
     );
@@ -336,6 +356,9 @@ export async function GET(request: NextRequest) {
 
 // POST /api/items - Create and process a new item
 export async function POST(request: NextRequest) {
+  const ipAddress = getClientIp(request);
+  const endpoint = getEndpointId(request);
+
   try {
     // Get or create user
     const user = await getCurrentUser();
@@ -345,6 +368,30 @@ export async function POST(request: NextRequest) {
         { ok: false, error: "Unauthorized" },
         { status: 401 },
       );
+    }
+
+    // Check rate limit: 30/min and 200/day per user
+    const rateLimitResult = await checkRateLimit({
+      identifier: user.id,
+      endpoint,
+      limits: {
+        perMinute: 30,
+        perDay: 200,
+      },
+      metadata: {
+        ipAddress,
+        userAgent: request.headers.get("user-agent") || undefined,
+      },
+    });
+
+    if (!rateLimitResult.success) {
+      await logRateLimitViolation(
+        user.id,
+        ipAddress,
+        endpoint,
+        request.headers.get("user-agent"),
+      );
+      return createRateLimitResponse(rateLimitResult);
     }
 
     // Prevent writes in demo mode
@@ -383,10 +430,13 @@ export async function POST(request: NextRequest) {
       preExtractedData: body.preExtractedData,
     });
 
-    return NextResponse.json(
+    // Add rate limit headers to success response
+    const response = NextResponse.json(
       { ok: true, data: result.item, newBadges: result.newBadges },
       { status: 201 },
     );
+
+    return addRateLimitHeaders(response, rateLimitResult);
   } catch (error) {
     console.error("POST /api/items error:", error);
 

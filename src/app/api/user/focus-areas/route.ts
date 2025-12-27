@@ -2,6 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { z } from "zod";
+import { checkRateLimit } from "@/lib/rate-limit";
+import {
+  getClientIp,
+  createRateLimitResponse,
+  addRateLimitHeaders,
+  logRateLimitViolation,
+  getEndpointId,
+} from "@/lib/rate-limit-helpers";
 
 // Validation schema for setting focus areas
 const SetFocusAreasSchema = z.object({
@@ -69,6 +77,9 @@ export async function GET() {
 
 // POST /api/user/focus-areas - Set user's focus areas (replaces existing)
 export async function POST(request: NextRequest) {
+  const ipAddress = getClientIp(request);
+  const endpoint = getEndpointId(request);
+
   try {
     const user = await getCurrentUser();
 
@@ -77,6 +88,29 @@ export async function POST(request: NextRequest) {
         { ok: false, error: "Unauthorized" },
         { status: 401 },
       );
+    }
+
+    // Check rate limit: 30/day per user
+    const rateLimitResult = await checkRateLimit({
+      identifier: user.id,
+      endpoint,
+      limits: {
+        perDay: 30,
+      },
+      metadata: {
+        ipAddress,
+        userAgent: request.headers.get("user-agent") || undefined,
+      },
+    });
+
+    if (!rateLimitResult.success) {
+      await logRateLimitViolation(
+        user.id,
+        ipAddress,
+        endpoint,
+        request.headers.get("user-agent"),
+      );
+      return createRateLimitResponse(rateLimitResult);
     }
 
     // Prevent writes in demo mode
@@ -160,7 +194,7 @@ export async function POST(request: NextRequest) {
       orderBy: { priority: "asc" },
     });
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       ok: true,
       data: {
         focusAreas: focusAreas.map((fa) => ({
@@ -170,6 +204,8 @@ export async function POST(request: NextRequest) {
         })),
       },
     });
+
+    return addRateLimitHeaders(response, rateLimitResult);
   } catch (error) {
     console.error("POST /api/user/focus-areas error:", error);
     return NextResponse.json(
