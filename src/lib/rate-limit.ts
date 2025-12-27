@@ -85,8 +85,8 @@ async function checkWindow(
 
   // Use Prisma transaction to atomically check and increment
   const { record, wasAllowed } = await db.$transaction(async (tx) => {
-    // Find or create rate limit record
-    let rateLimitRecord = await tx.rateLimit.findUnique({
+    // Use upsert to atomically create or increment (handles race conditions)
+    const rateLimitRecord = await tx.rateLimit.upsert({
       where: {
         identifier_endpoint_window_windowStart: {
           identifier,
@@ -95,38 +95,17 @@ async function checkWindow(
           windowStart,
         },
       },
-    });
-
-    if (!rateLimitRecord) {
-      // Create new record
-      rateLimitRecord = await tx.rateLimit.create({
-        data: {
-          identifier,
-          endpoint,
-          window,
-          windowStart,
-          count: 1,
-          lastRequestAt: new Date(),
-          lastIpAddress: metadata?.ipAddress,
-          lastUserAgent: metadata?.userAgent,
-        },
-      });
-
-      return { record: rateLimitRecord, wasAllowed: true };
-    }
-
-    // Check if limit would be exceeded AFTER incrementing
-    const wouldExceed = rateLimitRecord.count + 1 > limit;
-
-    if (wouldExceed) {
-      // Would exceed limit - do not increment, just return current state
-      return { record: rateLimitRecord, wasAllowed: false };
-    }
-
-    // Increment count (will be at or under limit after increment)
-    const updated = await tx.rateLimit.update({
-      where: { id: rateLimitRecord.id },
-      data: {
+      create: {
+        identifier,
+        endpoint,
+        window,
+        windowStart,
+        count: 1,
+        lastRequestAt: new Date(),
+        lastIpAddress: metadata?.ipAddress,
+        lastUserAgent: metadata?.userAgent,
+      },
+      update: {
         count: { increment: 1 },
         lastRequestAt: new Date(),
         lastIpAddress: metadata?.ipAddress,
@@ -134,7 +113,20 @@ async function checkWindow(
       },
     });
 
-    return { record: updated, wasAllowed: true };
+    // Check if current count (after increment) exceeds limit
+    const exceeded = rateLimitRecord.count > limit;
+
+    if (exceeded) {
+      // Exceeded limit - revert the increment
+      const reverted = await tx.rateLimit.update({
+        where: { id: rateLimitRecord.id },
+        data: { count: { decrement: 1 } },
+      });
+
+      return { record: reverted, wasAllowed: false };
+    }
+
+    return { record: rateLimitRecord, wasAllowed: true };
   });
 
   const success = wasAllowed;
