@@ -6,6 +6,7 @@ import {
   Linkedin,
   Instagram,
   Youtube,
+  Facebook,
   MessageCircle,
   Video,
 } from "lucide-react";
@@ -45,6 +46,11 @@ const platformConfig: Record<
 > = {
   twitter: {
     icon: Twitter,
+    color: "#1DA1F2",
+    bgColor: "bg-[#1DA1F2]/10",
+  },
+  facebook: {
+    icon: Facebook,
     color: "#1DA1F2",
     bgColor: "bg-[#1DA1F2]/10",
   },
