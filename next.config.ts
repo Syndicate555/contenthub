@@ -62,7 +62,8 @@ const nextConfig: NextConfig = {
           },
           {
             key: "Permissions-Policy",
-            value: "camera=(self), microphone=(self), geolocation=()",
+            value:
+              'camera=(self "chrome-extension://liecbddmkiiihnedobmlmillhodjkdmb"), microphone=(self "chrome-extension://liecbddmkiiihnedobmlmillhodjkdmb"), geolocation=()',
           },
           {
             key: "Strict-Transport-Security",

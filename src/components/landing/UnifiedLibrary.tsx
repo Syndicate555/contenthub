@@ -18,6 +18,17 @@ const TikTokIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
+const TavloMark = ({ className }: { className?: string }) => (
+  <span
+    className={cn(
+      "inline-flex items-center justify-center rounded-md bg-white/20 text-white font-semibold text-[10px] leading-none",
+      className,
+    )}
+  >
+    T
+  </span>
+);
+
 type Platform = {
   id: string;
   name: string;
@@ -138,14 +149,33 @@ export const UnifiedLibrary = () => {
           </motion.p>
         </div>
 
-        <div className="flex flex-nowrap items-start justify-center gap-4 overflow-x-auto overflow-y-visible pt-4 pb-4 max-w-7xl mx-auto">
-          {PLATFORMS.map((platform, index) => (
-            <PlatformFolder
-              key={platform.id}
-              platform={platform}
-              index={index}
-            />
-          ))}
+        <div className="relative max-w-7xl mx-auto">
+          <div className="relative overflow-hidden rounded-[32px] border border-brand-1/20 bg-gradient-to-br from-brand-1/15 via-white/70 to-brand-2/15 px-6 pb-10 pt-10 shadow-[0_40px_120px_rgba(15,23,42,0.12)]">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(91,91,255,0.16),transparent_45%),radial-gradient(circle_at_80%_15%,rgba(83,193,255,0.18),transparent_40%),radial-gradient(circle_at_50%_90%,rgba(91,91,255,0.12),transparent_55%)]" />
+            <div className="relative z-10 flex flex-col items-center gap-6">
+              <div className="flex w-full max-w-3xl items-center justify-center gap-4">
+                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-brand-1/30 to-transparent" />
+                <div className="relative">
+                  <div className="absolute inset-0 -z-10 rounded-full bg-brand-1/30 blur-2xl" />
+                  <div className="inline-flex items-center gap-3 rounded-full border border-white/70 bg-gradient-to-r from-brand-1 to-brand-2 px-8 py-3 text-sm font-semibold uppercase tracking-[0.3em] text-white shadow-2xl shadow-brand-1/40">
+                    <TavloMark className="h-5 w-5" />
+                    <span>Tavlo</span>
+                  </div>
+                </div>
+                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-brand-1/30 to-transparent" />
+              </div>
+
+              <div className="flex flex-nowrap items-start justify-center gap-4 overflow-x-auto overflow-y-visible pt-2 pb-2 lg:grid lg:grid-cols-6 lg:gap-6 lg:justify-items-center lg:overflow-x-visible lg:overflow-y-visible">
+                {PLATFORMS.map((platform, index) => (
+                  <PlatformFolder
+                    key={platform.id}
+                    platform={platform}
+                    index={index}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
 
         <motion.div
