@@ -35,7 +35,9 @@ export async function validateSession(
   });
 
   if (!user) {
-    return { valid: false, reason: "no_session" };
+    // User doesn't exist in database yet (Clerk webhook hasn't fired)
+    // Trust Clerk's authentication - user record will be created by webhook
+    return { valid: true };
   }
 
   // Check SessionActivity for this Clerk session
