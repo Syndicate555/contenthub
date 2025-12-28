@@ -286,6 +286,24 @@ async function extractRedditContent(url: string): Promise<ExtractedContent> {
   const BROWSER_UA =
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36";
 
+  // Comprehensive browser headers to bypass Reddit's bot detection
+  const BROWSER_HEADERS = {
+    "User-Agent": BROWSER_UA,
+    Accept:
+      "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Accept-Encoding": "gzip, deflate, br",
+    Referer: "https://www.reddit.com/",
+    DNT: "1",
+    Connection: "keep-alive",
+    "Upgrade-Insecure-Requests": "1",
+    "Sec-Fetch-Dest": "document",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-Site": "none",
+    "Sec-Fetch-User": "?1",
+    "Cache-Control": "max-age=0",
+  };
+
   const processJson = (data: any) => {
     // Redlib/Reddit response normalization
     const listing = Array.isArray(data) ? data[0] : data;
@@ -360,11 +378,7 @@ async function extractRedditContent(url: string): Promise<ExtractedContent> {
     console.log(`[Reddit] Fetching metadata from ${jsonUrl}`);
 
     // 1. Try Primary JSON (www.reddit.com)
-    let response = await fetchWithTimeout(
-      jsonUrl,
-      { headers: { "User-Agent": BROWSER_UA } },
-      5000,
-    );
+    let response = await fetchWithTimeout(jsonUrl, { headers: BROWSER_HEADERS }, 8000);
 
     if (response.ok) {
       return processJson(await response.json());
@@ -377,8 +391,8 @@ async function extractRedditContent(url: string): Promise<ExtractedContent> {
     const oldJsonUrl = jsonUrl.replace("www.reddit.com", "old.reddit.com");
     response = await fetchWithTimeout(
       oldJsonUrl,
-      { headers: { "User-Agent": BROWSER_UA } },
-      5000,
+      { headers: BROWSER_HEADERS },
+      8000,
     );
 
     if (response.ok) {
@@ -390,12 +404,58 @@ async function extractRedditContent(url: string): Promise<ExtractedContent> {
     const proxyJsonUrl = jsonUrl.replace("www.reddit.com", "r.nf");
     response = await fetchWithTimeout(
       proxyJsonUrl,
-      { headers: { "User-Agent": BROWSER_UA } },
-      8000,
+      { headers: BROWSER_HEADERS },
+      10000,
     );
 
     if (response.ok) {
       return processJson(await response.json());
+    }
+
+    // 4. Try Microlink API as proxy (bypasses IP restrictions)
+    console.warn(`[Reddit] r.nf proxy failed. Trying Microlink API.`);
+    try {
+      const microlinkUrl = `https://api.microlink.io?url=${encodeURIComponent(cleanUrl)}`;
+      const microlinkRes = await fetchWithTimeout(
+        microlinkUrl,
+        { headers: { Accept: "application/json" } },
+        10000,
+      );
+
+      if (microlinkRes.ok) {
+        const data = (await microlinkRes.json()) as {
+          status?: string;
+          data?: {
+            title?: string;
+            description?: string;
+            author?: string;
+            image?: { url?: string };
+          };
+        };
+
+        if (data.status === "success" && data.data) {
+          console.log(`[Reddit] Microlink API success`);
+          const title = data.data.title || "Reddit Post";
+          const description = data.data.description || "";
+          const imageUrl = data.data.image?.url;
+
+          // Extract subreddit from URL
+          const subredditMatch = cleanUrl.match(/\/r\/([^\/]+)\//);
+          const subreddit = subredditMatch
+            ? `r/${subredditMatch[1]}`
+            : "Reddit";
+
+          return {
+            title,
+            content: description || title,
+            source,
+            author: `${subreddit}`,
+            imageUrl,
+          };
+        }
+      }
+    } catch (microlinkError) {
+      console.log("[Reddit] Microlink API failed:", microlinkError);
     }
 
     throw new Error(`All Reddit API attempts failed`);
@@ -409,8 +469,8 @@ async function extractRedditContent(url: string): Promise<ExtractedContent> {
 
       const htmlResponse = await fetchWithTimeout(
         oldHtmlUrl,
-        { headers: { "User-Agent": BROWSER_UA } },
-        8000,
+        { headers: BROWSER_HEADERS },
+        10000,
       );
 
       if (htmlResponse.ok) {
