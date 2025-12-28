@@ -12,6 +12,8 @@ import {
   UnifiedLibrary,
 } from "@/components/landing";
 import WhyTavloSection from "@/components/landing/WhyTavloSection";
+import VideoDemo from "@/components/landing/VideoDemo";
+import FAQ from "@/components/landing/FAQ";
 import { ComponentSkeleton } from "@/components/landing/ComponentSkeleton";
 import { AnalyticsTracker } from "@/components/AnalyticsTracker";
 
@@ -74,23 +76,16 @@ export const metadata: Metadata = {
 };
 
 // Lazy load below-fold components for better initial bundle size
-const VideoDemo = dynamic(() => import("@/components/landing/VideoDemo"), {
-  loading: () => <ComponentSkeleton variant="video" minHeight="600px" />,
-});
-
+// Note: VideoDemo and FAQ are NOT lazy-loaded because they're linked from navigation
 const Integrations = dynamic(
   () => import("@/components/landing/Integrations"),
   {
     loading: () => <ComponentSkeleton variant="section" minHeight="300px" />,
-  }
+  },
 );
 
 const Pricing = dynamic(() => import("@/components/landing/Pricing"), {
   loading: () => <ComponentSkeleton variant="cards" minHeight="500px" />,
-});
-
-const FAQ = dynamic(() => import("@/components/landing/FAQ"), {
-  loading: () => <ComponentSkeleton variant="section" minHeight="400px" />,
 });
 
 const FinalCTA = dynamic(() => import("@/components/landing/FinalCTA"), {

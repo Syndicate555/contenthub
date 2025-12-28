@@ -11,6 +11,7 @@ import {
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { navLinks } from "@/data/landing";
+import { useAuth } from "@clerk/nextjs";
 
 export const Navbar = () => {
   const ref = useRef<HTMLDivElement>(null);
@@ -66,14 +67,18 @@ interface NavbarProps {
 
 const DesktopNav = ({ navItems, visible }: NavbarProps) => {
   const [hovered, setHovered] = useState<number | null>(null);
+  const { isSignedIn } = useAuth();
 
   const scrollToSection = (href: string) => {
-    if (href.startsWith("#")) {
-      const element = document.querySelector(href);
-      if (element) {
-        element.scrollIntoView({ behavior: "smooth" });
-      }
+    if (!href.startsWith("#")) {
+      return false;
     }
+    const element = document.querySelector(href);
+    if (!element) {
+      return false;
+    }
+    element.scrollIntoView({ behavior: "smooth", block: "start" });
+    return true;
   };
 
   return (
@@ -121,8 +126,9 @@ const DesktopNav = ({ navItems, visible }: NavbarProps) => {
             key={`link=${idx}`}
             href={navItem.href}
             onClick={(e) => {
-              e.preventDefault();
-              scrollToSection(navItem.href);
+              if (scrollToSection(navItem.href)) {
+                e.preventDefault();
+              }
             }}
             onMouseEnter={() => setHovered(idx)}
             className="text-neutral-600 relative px-4 py-2 min-h-[48px] min-w-[48px] flex items-center justify-center"
@@ -139,19 +145,29 @@ const DesktopNav = ({ navItems, visible }: NavbarProps) => {
         ))}
       </motion.div>
       <div className="flex items-center gap-4">
-        <Link href="/sign-in">
-          <Button
-            variant="ghost"
-            className="hidden md:block text-text-secondary hover:text-brand-1"
-          >
-            Sign In
-          </Button>
-        </Link>
-        <Link href="/sign-in">
-          <Button className="hidden md:flex bg-gradient-to-r from-brand-1 to-brand-2 text-white hover:shadow-lg hover:shadow-brand-1/20 rounded-full">
-            Try for free
-          </Button>
-        </Link>
+        {isSignedIn ? (
+          <Link href="/today">
+            <Button className="hidden md:flex bg-gradient-to-r from-brand-1 to-brand-2 text-white hover:shadow-lg hover:shadow-brand-1/20 rounded-full gap-2">
+              Go to App <ArrowRight className="w-4 h-4" />
+            </Button>
+          </Link>
+        ) : (
+          <>
+            <Link href="/sign-in">
+              <Button
+                variant="ghost"
+                className="hidden md:block text-text-secondary hover:text-brand-1"
+              >
+                Sign In
+              </Button>
+            </Link>
+            <Link href="/sign-in">
+              <Button className="hidden md:flex bg-gradient-to-r from-brand-1 to-brand-2 text-white hover:shadow-lg hover:shadow-brand-1/20 rounded-full">
+                Try for free
+              </Button>
+            </Link>
+          </>
+        )}
       </div>
     </motion.div>
   );
@@ -159,15 +175,30 @@ const DesktopNav = ({ navItems, visible }: NavbarProps) => {
 
 const MobileNav = ({ navItems, visible }: NavbarProps) => {
   const [open, setOpen] = useState(false);
+  const { isSignedIn } = useAuth();
 
   const scrollToSection = (href: string) => {
-    if (href.startsWith("#")) {
-      const element = document.querySelector(href);
-      if (element) {
-        element.scrollIntoView({ behavior: "smooth" });
-      }
+    if (!href.startsWith("#")) {
+      return false;
     }
+    const element = document.querySelector(href);
+    if (!element) {
+      return false;
+    }
+    element.scrollIntoView({ behavior: "smooth", block: "start" });
+    return true;
+  };
+
+  const handleNavClick = (href: string) => {
+    // Close menu first
     setOpen(false);
+
+    // Delay scroll until after menu closes (animation takes ~300ms)
+    setTimeout(() => {
+      scrollToSection(href);
+    }, 350);
+
+    return true;
   };
 
   return (
@@ -214,6 +245,7 @@ const MobileNav = ({ navItems, visible }: NavbarProps) => {
         <div className="flex flex-row justify-between items-center w-full px-4 py-2">
           <Logo />
           <button
+            type="button"
             onClick={() => setOpen(!open)}
             className="p-2 min-h-[48px] min-w-[48px] flex items-center justify-center"
             aria-label={open ? "Close menu" : "Open menu"}
@@ -243,8 +275,9 @@ const MobileNav = ({ navItems, visible }: NavbarProps) => {
                   key={`link=${idx}`}
                   href={navItem.href}
                   onClick={(e) => {
-                    e.preventDefault();
-                    scrollToSection(navItem.href);
+                    if (handleNavClick(navItem.href)) {
+                      e.preventDefault();
+                    }
                   }}
                   className="relative text-neutral-600 w-full text-left py-2 font-medium min-h-[48px] flex items-center"
                   aria-label={`Navigate to ${navItem.label} section`}
@@ -252,19 +285,47 @@ const MobileNav = ({ navItems, visible }: NavbarProps) => {
                   <motion.span className="block">{navItem.label}</motion.span>
                 </a>
               ))}
-              <Link href="/sign-in" className="w-full">
-                <Button variant="outline" className="block md:hidden w-full">
-                  Sign In
-                </Button>
-              </Link>
-              <Link href="/sign-in" className="w-full">
-                <Button
-                  variant="default"
-                  className="block md:hidden w-full bg-gradient-to-r from-brand-1 to-brand-2"
+              {isSignedIn ? (
+                <Link
+                  href="/today"
+                  className="w-full"
+                  onClick={() => setOpen(false)}
                 >
-                  Try for free
-                </Button>
-              </Link>
+                  <Button
+                    variant="default"
+                    className="block md:hidden w-full bg-gradient-to-r from-brand-1 to-brand-2 gap-2"
+                  >
+                    Go to App <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </Link>
+              ) : (
+                <>
+                  <Link
+                    href="/sign-in"
+                    className="w-full"
+                    onClick={() => setOpen(false)}
+                  >
+                    <Button
+                      variant="outline"
+                      className="block md:hidden w-full"
+                    >
+                      Sign In
+                    </Button>
+                  </Link>
+                  <Link
+                    href="/sign-in"
+                    className="w-full"
+                    onClick={() => setOpen(false)}
+                  >
+                    <Button
+                      variant="default"
+                      className="block md:hidden w-full bg-gradient-to-r from-brand-1 to-brand-2"
+                    >
+                      Try for free
+                    </Button>
+                  </Link>
+                </>
+              )}
             </motion.div>
           )}
         </AnimatePresence>

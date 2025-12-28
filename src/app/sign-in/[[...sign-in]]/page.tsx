@@ -1,10 +1,34 @@
+"use client";
+
+import { Suspense } from "react";
 import { SignIn } from "@clerk/nextjs";
+import { useSearchParams } from "next/navigation";
 import AnimatedCharactersLoginPage from "@/components/ui/animated-characters-login-page";
 
-export default function SignInPage() {
+function SignInContent() {
+  const searchParams = useSearchParams();
+  const reason = searchParams.get("reason");
+
+  const getMessage = () => {
+    if (reason === "timeout") {
+      return "Your session expired due to inactivity. Please sign in again.";
+    }
+    if (reason === "terminated") {
+      return "Your session has ended. Please sign in again.";
+    }
+    return null;
+  };
+
+  const message = getMessage();
+
   return (
     <AnimatedCharactersLoginPage>
-      <div className="relative mx-auto w-full max-w-md">
+      <div className="relative mx-auto w-full max-w-md space-y-4">
+        {message && (
+          <div className="p-3 bg-amber-50 border border-amber-200 rounded-md">
+            <p className="text-sm text-amber-800">{message}</p>
+          </div>
+        )}
         <SignIn
           appearance={{
             variables: {
@@ -48,5 +72,13 @@ export default function SignInPage() {
         />
       </div>
     </AnimatedCharactersLoginPage>
+  );
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <SignInContent />
+    </Suspense>
   );
 }

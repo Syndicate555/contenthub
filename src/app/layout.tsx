@@ -5,6 +5,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
 import { Toaster } from "@/components/ui/sonner";
 import { SWRProvider } from "@/components/providers/swr-provider";
+import { SessionProvider } from "@/components/providers/session-provider";
 import { WebVitals } from "@/components/web-vitals";
 import { ConsoleSuppressor } from "@/components/ConsoleSuppressor";
 import "./globals.css";
@@ -47,7 +48,9 @@ export default function RootLayout({
           <WebVitals />
           <SpeedInsights />
           <Analytics />
-          <SWRProvider>{children}</SWRProvider>
+          <SWRProvider>
+            <SessionProvider>{children}</SessionProvider>
+          </SWRProvider>
           <Toaster richColors position="top-right" />
         </body>
       </html>

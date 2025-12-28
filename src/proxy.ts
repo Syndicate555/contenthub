@@ -1,4 +1,6 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
+import { validateSession } from "./lib/session-validation";
 
 // Public routes that don't require authentication
 const isPublicRoute = createRouteMatcher([
@@ -15,8 +17,23 @@ const isPublicRoute = createRouteMatcher([
 
 // Proxy replaces the deprecated middleware convention in Next.js 16+
 const proxy = clerkMiddleware(async (auth, request) => {
+  const { userId, sessionId } = await auth();
+
+  // Protect non-public routes
   if (!isPublicRoute(request)) {
     await auth.protect();
+
+    // Server-side session validation for authenticated users
+    if (userId && sessionId) {
+      const sessionValidation = await validateSession(userId, sessionId);
+
+      if (!sessionValidation.valid) {
+        const url = request.nextUrl.clone();
+        url.pathname = "/sign-in";
+        url.searchParams.set("reason", sessionValidation.reason ?? "unknown");
+        return NextResponse.redirect(url);
+      }
+    }
   }
 });
 

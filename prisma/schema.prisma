@@ -28,6 +28,7 @@ model User {
   userBadges        UserBadge[]
   feedbacks         Feedback[]
   auditLogs         AuditLog[]
+  sessionActivities SessionActivity[]
 }
 
 // ============================================
@@ -176,6 +177,40 @@ model AuditLog {
   @@index([action, createdAt])
   @@index([success, createdAt])
   @@index([createdAt]) // For time-based queries and cleanup
+}
+
+// SessionActivity tracks active sessions for auto-logout and token rotation
+model SessionActivity {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Session identification
+  sessionId String // Clerk session ID or demo token ID
+  isDemo    Boolean @default(false)
+
+  // Activity tracking
+  lastActivityAt   DateTime @default(now())
+  lastActivityType String? // "click" | "scroll" | "api_call" | "refresh"
+
+  // Token rotation tracking
+  lastTokenRefresh   DateTime @default(now())
+  tokenRotationCount Int      @default(0)
+
+  // Client metadata for security
+  ipAddress String?
+  userAgent String?
+  deviceId  String? // Browser fingerprint
+
+  // Session lifecycle
+  createdAt          DateTime  @default(now())
+  expiresAt          DateTime
+  terminatedAt       DateTime?
+  terminationReason  String? // "logout" | "timeout" | "token_rotation_failure"
+
+  @@index([userId, lastActivityAt])
+  @@index([sessionId])
+  @@index([expiresAt])
 }
 
 // XPEvent tracks individual XP awards for audit trail and analytics

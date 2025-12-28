@@ -4,12 +4,14 @@ import { motion } from "framer-motion";
 import { ArrowRight, ArrowDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { useAuth } from "@clerk/nextjs";
 
 function AnimatedHero() {
   const [titleNumber, setTitleNumber] = useState(0);
+  const { isSignedIn } = useAuth();
   const titles = useMemo(
     () => ["personal", "customized", "unique", "special"],
-    []
+    [],
   );
 
   useEffect(() => {
@@ -116,14 +118,25 @@ function AnimatedHero() {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-2.5 w-full sm:w-auto">
-              <Link href="/sign-in" className="w-full sm:w-auto">
-                <Button
-                  size="lg"
-                  className="w-full sm:w-auto gap-2 bg-gradient-to-r from-brand-1 to-brand-2 text-white border-0 hover:shadow-lg hover:shadow-brand-1/20 rounded-full h-11 px-7 text-sm"
-                >
-                  Try it today for free <ArrowRight className="w-4 h-4" />
-                </Button>
-              </Link>
+              {isSignedIn ? (
+                <Link href="/today" className="w-full sm:w-auto">
+                  <Button
+                    size="lg"
+                    className="w-full sm:w-auto gap-2 bg-gradient-to-r from-brand-1 to-brand-2 text-white border-0 hover:shadow-lg hover:shadow-brand-1/20 rounded-full h-11 px-7 text-sm"
+                  >
+                    Go to App <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </Link>
+              ) : (
+                <Link href="/sign-in" className="w-full sm:w-auto">
+                  <Button
+                    size="lg"
+                    className="w-full sm:w-auto gap-2 bg-gradient-to-r from-brand-1 to-brand-2 text-white border-0 hover:shadow-lg hover:shadow-brand-1/20 rounded-full h-11 px-7 text-sm"
+                  >
+                    Try it today for free <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </Link>
+              )}
               <Button
                 size="lg"
                 variant="ghost"
