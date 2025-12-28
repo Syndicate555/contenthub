@@ -278,8 +278,8 @@ async function extractRedditContent(url: string): Promise<ExtractedContent> {
 
   // Clean URL to ensure we can append .json correctly
   const urlBase = url.split("?")[0];
-  const urlNoSlash = urlBase.replace(new RegExp("/+"), "");
-  const cleanUrl = urlNoSlash.replace("old.reddit.com", "www.reddit.com");
+  const urlNoTrailingSlash = urlBase.replace(/\/+$/, ""); // Remove only trailing slashes
+  const cleanUrl = urlNoTrailingSlash.replace("old.reddit.com", "www.reddit.com");
 
   const jsonUrl = `${cleanUrl}.json`;
 
