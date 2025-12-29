@@ -412,52 +412,6 @@ async function extractRedditContent(url: string): Promise<ExtractedContent> {
       return processJson(await response.json());
     }
 
-    // 4. Try Microlink API as proxy (bypasses IP restrictions)
-    console.warn(`[Reddit] r.nf proxy failed. Trying Microlink API.`);
-    try {
-      const microlinkUrl = `https://api.microlink.io?url=${encodeURIComponent(cleanUrl)}`;
-      const microlinkRes = await fetchWithTimeout(
-        microlinkUrl,
-        { headers: { Accept: "application/json" } },
-        10000,
-      );
-
-      if (microlinkRes.ok) {
-        const data = (await microlinkRes.json()) as {
-          status?: string;
-          data?: {
-            title?: string;
-            description?: string;
-            author?: string;
-            image?: { url?: string };
-          };
-        };
-
-        if (data.status === "success" && data.data) {
-          console.log(`[Reddit] Microlink API success`);
-          const title = data.data.title || "Reddit Post";
-          const description = data.data.description || "";
-          const imageUrl = data.data.image?.url;
-
-          // Extract subreddit from URL
-          const subredditMatch = cleanUrl.match(/\/r\/([^\/]+)\//);
-          const subreddit = subredditMatch
-            ? `r/${subredditMatch[1]}`
-            : "Reddit";
-
-          return {
-            title,
-            content: description || title,
-            source,
-            author: `${subreddit}`,
-            imageUrl,
-          };
-        }
-      }
-    } catch (microlinkError) {
-      console.log("[Reddit] Microlink API failed:", microlinkError);
-    }
-
     throw new Error(`All Reddit API attempts failed`);
   } catch (error) {
     console.error("Reddit API extraction failed:", error);
@@ -541,6 +495,148 @@ async function extractRedditContent(url: string): Promise<ExtractedContent> {
       }
     } catch (fallbackError) {
       console.error("Reddit HTML fallback failed:", fallbackError);
+    }
+
+    // Final Tier 5 Fallback: Microlink API (bypasses IP restrictions)
+    // Try both the HTML page and the JSON endpoint
+    try {
+      console.log(`[Reddit] Final fallback: Trying Microlink API for JSON`);
+
+      // First try: Fetch Reddit JSON through Microlink's proxy
+      const jsonUrl = `${cleanUrl}.json`;
+      const microlinkJsonUrl = `https://api.microlink.io?url=${encodeURIComponent(jsonUrl)}&meta=false&screenshot=false&video=false`;
+
+      let jsonData: any = null;
+
+      try {
+        const microlinkJsonRes = await fetchWithTimeout(
+          microlinkJsonUrl,
+          { headers: { Accept: "application/json" } },
+          10000,
+        );
+
+        if (microlinkJsonRes.ok) {
+          const jsonResponse = await microlinkJsonRes.json();
+          // Microlink wraps the response, extract the actual Reddit data
+          if (jsonResponse.data) {
+            jsonData = jsonResponse.data;
+            console.log("[Reddit] Microlink JSON proxy succeeded");
+          }
+        }
+      } catch (jsonError) {
+        console.log("[Reddit] Microlink JSON proxy failed:", jsonError);
+      }
+
+      // If we got JSON data, process it
+      if (jsonData) {
+        try {
+          const processed = processJson(jsonData);
+          console.log(
+            `[Reddit] Successfully extracted via Microlink JSON proxy`,
+          );
+          return processed;
+        } catch (processError) {
+          console.log(
+            "[Reddit] Failed to process Microlink JSON data:",
+            processError,
+          );
+        }
+      }
+
+      // Second try: Fetch HTML page metadata through Microlink
+      console.log(`[Reddit] Trying Microlink API for HTML metadata`);
+      const microlinkUrl = `https://api.microlink.io?url=${encodeURIComponent(cleanUrl)}`;
+      const microlinkRes = await fetchWithTimeout(
+        microlinkUrl,
+        { headers: { Accept: "application/json" } },
+        10000,
+      );
+
+      if (microlinkRes.ok) {
+        const data = (await microlinkRes.json()) as {
+          status?: string;
+          data?: {
+            title?: string;
+            description?: string;
+            author?: string;
+            image?: { url?: string };
+          };
+        };
+
+        if (data.status === "success" && data.data) {
+          const microlinkTitle = data.data.title || "";
+          const microlinkDescription = data.data.description || "";
+          const microlinkImage = data.data.image?.url;
+
+          // Extract metadata from URL
+          const subredditMatch = cleanUrl.match(/\/r\/([^\/]+)\//);
+          const subreddit = subredditMatch ? `r/${subredditMatch[1]}` : "reddit";
+
+          // Extract author username from URL (e.g., /comments/id/title/?context=3)
+          // Reddit URLs don't always have username in the path, but Microlink might provide it
+          let author = data.data.author || subreddit;
+
+          // Try to extract author from title if Microlink provides it
+          // Reddit titles often include author in format "Post title : r/subreddit"
+          if (microlinkTitle && !data.data.author) {
+            // Check if description has author info
+            const authorMatch = microlinkDescription.match(
+              /(?:by|from)\s+u\/([a-zA-Z0-9_-]+)/i,
+            );
+            if (authorMatch) {
+              author = `u/${authorMatch[1]} in ${subreddit}`;
+            } else {
+              author = subreddit;
+            }
+          }
+
+          // Clean up Reddit's title format if it contains subreddit info
+          let cleanTitle = microlinkTitle;
+          const titleCleanMatch = microlinkTitle.match(/^(.+?)\s*:\s*r\//);
+          if (titleCleanMatch) {
+            cleanTitle = titleCleanMatch[1].trim();
+          }
+
+          // Build content - ensure we have at least 50 chars for AI summarization
+          let formattedContent = "";
+
+          if (microlinkDescription && microlinkDescription.length >= 50) {
+            // Good description - use it
+            formattedContent = `[${subreddit}] ${cleanTitle}\n\n${microlinkDescription}`;
+          } else if (microlinkDescription) {
+            // Short description - combine with title
+            formattedContent = `[${subreddit}] ${cleanTitle}\n\n${microlinkDescription}`;
+          } else {
+            // No description - use title with subreddit context
+            formattedContent = `[${subreddit}] ${cleanTitle}`;
+          }
+
+          // Validate we have enough data (at least 50 chars for AI summarization)
+          const hasEnoughContent = formattedContent.length >= 50;
+          const hasValidTitle =
+            cleanTitle && cleanTitle !== "Reddit" && cleanTitle.length > 5;
+
+          if (hasValidTitle && hasEnoughContent) {
+            console.log(
+              `[Reddit] Microlink API success: title="${cleanTitle.substring(0, 50)}", content=${formattedContent.length} chars, hasImage=${!!microlinkImage}`,
+            );
+
+            return {
+              title: cleanTitle,
+              content: formattedContent,
+              source,
+              author,
+              imageUrl: microlinkImage,
+            };
+          } else {
+            console.log(
+              `[Reddit] Microlink returned insufficient data: title="${cleanTitle}" (${cleanTitle.length} chars), content=${formattedContent.length} chars (need 50+)`,
+            );
+          }
+        }
+      }
+    } catch (microlinkError) {
+      console.error("Reddit Microlink final fallback failed:", microlinkError);
     }
 
     throw new Error(
