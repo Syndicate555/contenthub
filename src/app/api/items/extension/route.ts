@@ -148,7 +148,6 @@ export async function POST(request: NextRequest) {
       metadata: {
         ipAddress,
         userAgent: request.headers.get("user-agent") || undefined,
-        source: "extension",
       },
     });
 
