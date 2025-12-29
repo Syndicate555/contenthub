@@ -498,53 +498,9 @@ async function extractRedditContent(url: string): Promise<ExtractedContent> {
     }
 
     // Final Tier 5 Fallback: Microlink API (bypasses IP restrictions)
-    // Try both the HTML page and the JSON endpoint
+    // Note: Microlink extracts metadata, not raw JSON, so we parse what we can
     try {
-      console.log(`[Reddit] Final fallback: Trying Microlink API for JSON`);
-
-      // First try: Fetch Reddit JSON through Microlink's proxy
-      const jsonUrl = `${cleanUrl}.json`;
-      const microlinkJsonUrl = `https://api.microlink.io?url=${encodeURIComponent(jsonUrl)}&meta=false&screenshot=false&video=false`;
-
-      let jsonData: any = null;
-
-      try {
-        const microlinkJsonRes = await fetchWithTimeout(
-          microlinkJsonUrl,
-          { headers: { Accept: "application/json" } },
-          10000,
-        );
-
-        if (microlinkJsonRes.ok) {
-          const jsonResponse = await microlinkJsonRes.json();
-          // Microlink wraps the response, extract the actual Reddit data
-          if (jsonResponse.data) {
-            jsonData = jsonResponse.data;
-            console.log("[Reddit] Microlink JSON proxy succeeded");
-          }
-        }
-      } catch (jsonError) {
-        console.log("[Reddit] Microlink JSON proxy failed:", jsonError);
-      }
-
-      // If we got JSON data, process it
-      if (jsonData) {
-        try {
-          const processed = processJson(jsonData);
-          console.log(
-            `[Reddit] Successfully extracted via Microlink JSON proxy`,
-          );
-          return processed;
-        } catch (processError) {
-          console.log(
-            "[Reddit] Failed to process Microlink JSON data:",
-            processError,
-          );
-        }
-      }
-
-      // Second try: Fetch HTML page metadata through Microlink
-      console.log(`[Reddit] Trying Microlink API for HTML metadata`);
+      console.log(`[Reddit] Final fallback: Trying Microlink API`);
       const microlinkUrl = `https://api.microlink.io?url=${encodeURIComponent(cleanUrl)}`;
       const microlinkRes = await fetchWithTimeout(
         microlinkUrl,
@@ -597,6 +553,27 @@ async function extractRedditContent(url: string): Promise<ExtractedContent> {
             cleanTitle = titleCleanMatch[1].trim();
           }
 
+          // If title is just URL slug (has underscores, no spaces), extract from URL
+          if (cleanTitle.includes("_") && !cleanTitle.includes(" ")) {
+            // Extract title from URL path (Reddit format: /r/sub/comments/id/title-slug/)
+            const urlTitleMatch = cleanUrl.match(
+              /\/comments\/[^\/]+\/([^\/\?]+)/,
+            );
+            if (urlTitleMatch) {
+              // Convert slug to title: prompt_to_create → Prompt to Create
+              cleanTitle = urlTitleMatch[1]
+                .replace(/_/g, " ")
+                .split(" ")
+                .map(
+                  (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase(),
+                )
+                .join(" ");
+              console.log(
+                `[Reddit] Extracted title from URL slug: "${cleanTitle}"`,
+              );
+            }
+          }
+
           // Build content - ensure we have at least 50 chars for AI summarization
           let formattedContent = "";
 
@@ -611,6 +588,34 @@ async function extractRedditContent(url: string): Promise<ExtractedContent> {
             formattedContent = `[${subreddit}] ${cleanTitle}`;
           }
 
+          // Try to get image from Reddit's oEmbed API if Microlink didn't provide one
+          let imageUrl = microlinkImage;
+          if (!imageUrl) {
+            try {
+              console.log(`[Reddit] Trying oEmbed API for thumbnail`);
+              const oembedUrl = `https://www.reddit.com/oembed?url=${encodeURIComponent(cleanUrl)}`;
+              const oembedRes = await fetchWithTimeout(
+                oembedUrl,
+                { headers: BROWSER_HEADERS },
+                5000,
+              );
+
+              if (oembedRes.ok) {
+                const oembedData = (await oembedRes.json()) as {
+                  thumbnail_url?: string;
+                };
+                if (oembedData.thumbnail_url) {
+                  imageUrl = oembedData.thumbnail_url;
+                  console.log(
+                    `[Reddit] oEmbed API provided thumbnail: ${imageUrl}`,
+                  );
+                }
+              }
+            } catch (oembedError) {
+              console.log("[Reddit] oEmbed thumbnail fetch failed:", oembedError);
+            }
+          }
+
           // Validate we have enough data (at least 50 chars for AI summarization)
           const hasEnoughContent = formattedContent.length >= 50;
           const hasValidTitle =
@@ -618,7 +623,7 @@ async function extractRedditContent(url: string): Promise<ExtractedContent> {
 
           if (hasValidTitle && hasEnoughContent) {
             console.log(
-              `[Reddit] Microlink API success: title="${cleanTitle.substring(0, 50)}", content=${formattedContent.length} chars, hasImage=${!!microlinkImage}`,
+              `[Reddit] Microlink API success: title="${cleanTitle.substring(0, 50)}", content=${formattedContent.length} chars, hasImage=${!!imageUrl}`,
             );
 
             return {
@@ -626,7 +631,7 @@ async function extractRedditContent(url: string): Promise<ExtractedContent> {
               content: formattedContent,
               source,
               author,
-              imageUrl: microlinkImage,
+              imageUrl,
             };
           } else {
             console.log(
