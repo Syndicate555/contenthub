@@ -8,6 +8,7 @@ const isPublicRoute = createRouteMatcher([
   "/sign-in(.*)",
   "/api/webhooks(.*)",
   "/api/quick-add", // Uses bearer token auth instead
+  "/api/items/extension(.*)", // Extension API - uses bearer token auth instead
   "/api/domains", // Public - domains are global, not user-specific
   "/api/health(.*)", // Health check for function warming and monitoring
   "/video(.*)", // Serve static demo video without auth
