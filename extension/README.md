@@ -7,6 +7,7 @@ Save links to your personal Tavlo feed with one click!
 ### Prerequisites
 - Node.js 18+ installed
 - Chrome browser
+- Tavlo web app running (default: http://localhost:3000)
 
 ### Installation
 
@@ -15,12 +16,23 @@ Save links to your personal Tavlo feed with one click!
 npm install
 ```
 
-2. Start development server:
+2. Configure environment (optional):
+```bash
+# Copy example .env file
+cp .env.example .env
+
+# Edit .env if your dev server runs on a different port
+# VITE_API_URL=http://localhost:3001
+```
+
+3. Start development server:
 ```bash
 npm run dev
 ```
 
 The extension will be compiled to the `dist/` directory with hot reloading enabled.
+
+**Note**: Make sure the Tavlo web app is running on the same port configured in your `.env` file (default: http://localhost:3000).
 
 ### Loading the Extension in Chrome
 
@@ -152,11 +164,37 @@ The extension uses a **token bridge** approach for authentication:
 - Rate limits: 30 saves/min, 200 saves/day (same as web app)
 - Demo mode blocked from saving
 
-## Next Steps
+## Configuration
 
-Phase 2, Day 4-7 (UI Screens):
-- [ ] Build LoginScreen component
-- [ ] Build SaveScreen component
-- [ ] Build SuccessScreen component
-- [ ] Integrate storage & API utilities
-- [ ] Test complete user flow
+### Environment Variables
+
+The extension supports the following environment variables in `.env`:
+
+- `VITE_API_URL` - Base URL for the Tavlo API
+  - **Development**: Defaults to `http://localhost:3000`
+  - **Production**: Defaults to `https://tavlo.ca`
+  - Override by setting in `.env` file
+
+### Building for Production
+
+```bash
+npm run build
+```
+
+This creates an optimized production build in the `dist/` folder, ready for Chrome Web Store submission.
+
+## Troubleshooting
+
+### "Failed to fetch" Error
+
+This usually means:
+1. **Web app not running**: Start the Tavlo web app with `npm run dev` in the root directory
+2. **Port mismatch**: Check that `VITE_API_URL` in `.env` matches your web app's port
+3. **Stale server**: Kill any stale processes on port 3000: `lsof -ti:3000 | xargs kill`
+
+### Extension Not Updating
+
+After making code changes:
+1. The extension should auto-reload (thanks to CRXJS HMR)
+2. If not, manually reload: `chrome://extensions/` → click reload icon
+3. For manifest.json changes, you must reload manually

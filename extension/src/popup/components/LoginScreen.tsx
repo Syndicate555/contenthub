@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { setToken } from "../../shared/storage";
 import { validateToken } from "../../shared/api";
+import { getWebAppUrl } from "../../shared/config";
 
 interface LoginScreenProps {
   onLoginSuccess: (token: string) => void;
@@ -14,7 +15,7 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
   const handleOpenAuthPage = () => {
     // Open the extension-auth page in a new tab
     chrome.tabs.create({
-      url: "http://localhost:3000/extension-auth",
+      url: `${getWebAppUrl()}/extension-auth`,
     });
   };
 

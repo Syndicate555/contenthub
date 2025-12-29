@@ -9,14 +9,11 @@ import type {
   Item,
   SaveResult,
 } from "./types";
+import { getApiBaseUrl } from "./config";
 
 // API base URL - uses environment or defaults
 // In production, use tavlo.ca; in development, use localhost
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL ||
-  (import.meta.env.MODE === "production"
-    ? "https://tavlo.ca"
-    : "http://localhost:3000");
+const API_BASE_URL = getApiBaseUrl();
 
 // API endpoint for extension - uses Bearer token authentication
 const ITEMS_ENDPOINT = `${API_BASE_URL}/api/items/extension`;

@@ -1,4 +1,5 @@
 import React from "react";
+import { getWebAppUrl } from "../../shared/config";
 
 interface SuccessScreenProps {
   onSaveAnother: () => void;
@@ -8,7 +9,7 @@ export default function SuccessScreen({ onSaveAnother }: SuccessScreenProps) {
   const handleViewInTavlo = () => {
     // Open Tavlo in new tab
     chrome.tabs.create({
-      url: "http://localhost:3000/today",
+      url: `${getWebAppUrl()}/today`,
     });
   };
 

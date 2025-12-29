@@ -34,10 +34,12 @@ export default function SaveScreen({
               let url = window.location.href;
               let title = document.title;
 
+              console.log("[Tavlo Extension] Initial URL:", url);
+
               // For Twitter/X: Check canonical URL meta tag
               // Twitter sets this even when viewing tweets in modals
               const canonicalLink = document.querySelector(
-                'link[rel="canonical"]'
+                'link[rel="canonical"]',
               ) as HTMLLinkElement;
               if (canonicalLink && canonicalLink.href) {
                 // Use canonical URL if it's more specific than current URL
@@ -52,13 +54,350 @@ export default function SaveScreen({
 
               // For Twitter/X: Try to get URL from og:url meta tag as fallback
               const ogUrl = document.querySelector(
-                'meta[property="og:url"]'
+                'meta[property="og:url"]',
               ) as HTMLMetaElement;
               if (ogUrl && ogUrl.content && url.includes("/home")) {
                 if (ogUrl.content.includes("/status/")) {
                   url = ogUrl.content;
                 }
               }
+
+              // For TikTok: Extract video URL from DOM
+              // TikTok videos in feed don't update URL, need to extract from page structure
+              if (url.includes("tiktok.com")) {
+                console.log("[Tavlo Extension] TikTok detected");
+                console.log(
+                  "[Tavlo Extension] Canonical URL:",
+                  canonicalLink?.href,
+                );
+                console.log("[Tavlo Extension] OG URL:", ogUrl?.content);
+
+                let videoUrl = null;
+
+                // Method 1: Check canonical URL first
+                if (canonicalLink && canonicalLink.href) {
+                  if (
+                    canonicalLink.href.includes("/video/") ||
+                    (canonicalLink.href.includes("/@") &&
+                      canonicalLink.href !== url)
+                  ) {
+                    console.log(
+                      "[Tavlo Extension] Found video URL in canonical:",
+                      canonicalLink.href,
+                    );
+                    videoUrl = canonicalLink.href;
+                  }
+                }
+
+                // Method 2: Check og:url
+                if (
+                  !videoUrl &&
+                  ogUrl &&
+                  ogUrl.content &&
+                  (ogUrl.content.includes("/video/") ||
+                    (ogUrl.content.includes("/@") && ogUrl.content !== url))
+                ) {
+                  console.log(
+                    "[Tavlo Extension] Found video URL in og:url:",
+                    ogUrl.content,
+                  );
+                  videoUrl = ogUrl.content;
+                }
+
+                // Method 3: Extract from DOM - look for share button or link with video URL
+                if (!videoUrl) {
+                  console.log(
+                    "[Tavlo Extension] Extracting video URL from DOM...",
+                  );
+
+                  // Try to find the currently playing video container
+                  const videoContainer = document.querySelector(
+                    '[data-e2e="browse-video"]',
+                  );
+
+                  if (videoContainer) {
+                    // Look for link elements within the video container
+                    const links = videoContainer.querySelectorAll("a");
+                    for (const link of links) {
+                      if (
+                        link.href &&
+                        link.href.includes("/@") &&
+                        link.href.includes("/video/")
+                      ) {
+                        console.log(
+                          "[Tavlo Extension] Found video URL in DOM link:",
+                          link.href,
+                        );
+                        videoUrl = link.href;
+                        break;
+                      }
+                    }
+                  }
+                }
+
+                // Method 4: Look for video link in share buttons or metadata
+                if (!videoUrl) {
+                  // Check for share button URL
+                  const shareButtons = document.querySelectorAll(
+                    '[data-e2e="share-button"], [aria-label*="Share"], [aria-label*="share"]',
+                  );
+
+                  for (const button of shareButtons) {
+                    const parent = button.closest("div[data-e2e]");
+                    if (parent) {
+                      const links = parent.querySelectorAll("a");
+                      for (const link of links) {
+                        if (
+                          link.href &&
+                          link.href.includes("/@") &&
+                          link.href.includes("/video/")
+                        ) {
+                          console.log(
+                            "[Tavlo Extension] Found video URL near share button:",
+                            link.href,
+                          );
+                          videoUrl = link.href;
+                          break;
+                        }
+                      }
+                    }
+                    if (videoUrl) break;
+                  }
+                }
+
+                // Method 5: Search ALL links on page (broader search)
+                if (!videoUrl) {
+                  const allLinks = document.querySelectorAll("a");
+                  console.log(
+                    `[Tavlo Extension] Searching ${allLinks.length} total links...`,
+                  );
+
+                  const videoLinks: HTMLAnchorElement[] = [];
+
+                  // Collect all links that look like video URLs
+                  for (const link of allLinks) {
+                    const href = link.getAttribute("href") || link.href;
+                    if (
+                      href &&
+                      (href.includes("/video/") ||
+                        (href.includes("/@") && href.includes("/video")))
+                    ) {
+                      videoLinks.push(link as HTMLAnchorElement);
+                    }
+                  }
+
+                  console.log(
+                    `[Tavlo Extension] Found ${videoLinks.length} potential video links`,
+                  );
+
+                  // Find the first visible video link
+                  for (const link of videoLinks) {
+                    const href = link.getAttribute("href") || link.href;
+                    const rect = link.getBoundingClientRect();
+                    if (
+                      rect.width > 0 &&
+                      rect.height > 0 &&
+                      rect.top >= 0 &&
+                      rect.top <= window.innerHeight
+                    ) {
+                      console.log(
+                        "[Tavlo Extension] Found visible video URL:",
+                        href,
+                      );
+                      videoUrl = href.startsWith("http")
+                        ? href
+                        : `https://www.tiktok.com${href}`;
+                      break;
+                    }
+                  }
+
+                  // If no visible link, take the first one
+                  if (!videoUrl && videoLinks.length > 0) {
+                    const href =
+                      videoLinks[0].getAttribute("href") || videoLinks[0].href;
+                    console.log(
+                      "[Tavlo Extension] Using first video URL found:",
+                      href,
+                    );
+                    videoUrl = href.startsWith("http")
+                      ? href
+                      : `https://www.tiktok.com${href}`;
+                  }
+                }
+
+                // Method 6: Extract from page data/attributes - FIND ACTIVE VIDEO
+                if (!videoUrl) {
+                  console.log(
+                    "[Tavlo Extension] Attempting to extract from page data...",
+                  );
+
+                  // CRITICAL: Find the currently VISIBLE/PLAYING video container
+                  // TikTok loads multiple videos, we need the one in viewport
+                  let activeVideoContainer: Element | null = null;
+
+                  // Try to find active video container (the one currently in view)
+                  const videoContainers = document.querySelectorAll(
+                    '[data-e2e="recommend-list-item-container"]',
+                  );
+                  console.log(
+                    `[Tavlo Extension] Found ${videoContainers.length} video containers`,
+                  );
+
+                  // Find the container that's most visible in viewport
+                  let maxVisibility = 0;
+                  for (const container of videoContainers) {
+                    const rect = container.getBoundingClientRect();
+                    const visibleHeight =
+                      Math.min(rect.bottom, window.innerHeight) -
+                      Math.max(rect.top, 0);
+                    const visibility = visibleHeight / window.innerHeight;
+
+                    if (visibility > maxVisibility) {
+                      maxVisibility = visibility;
+                      activeVideoContainer = container;
+                    }
+                  }
+
+                  if (activeVideoContainer) {
+                    console.log(
+                      "[Tavlo Extension] Found active video container with",
+                      Math.round(maxVisibility * 100),
+                      "% visibility",
+                    );
+                  } else {
+                    console.log(
+                      "[Tavlo Extension] No video container found, searching entire page",
+                    );
+                  }
+
+                  // Search within the active container (or entire page if not found)
+                  const searchContext = activeVideoContainer || document;
+
+                  // Look for video ID in the page - try multiple approaches
+                  let videoId = null;
+                  let username = null;
+
+                  // Get username from user profile link WITHIN active video
+                  const userLinks =
+                    searchContext.querySelectorAll('a[href^="/@"]');
+                  console.log(
+                    `[Tavlo Extension] Found ${userLinks.length} user profile links in active video`,
+                  );
+
+                  if (userLinks.length > 0) {
+                    const userHref = (
+                      userLinks[0] as HTMLAnchorElement
+                    ).getAttribute("href");
+                    if (userHref && userHref.startsWith("/@")) {
+                      username = userHref; // e.g., "/@theaisurfer"
+                      console.log(
+                        "[Tavlo Extension] Extracted username from active video:",
+                        username,
+                      );
+                    }
+                  }
+
+                  // Try to find video ID from various sources WITHIN active video
+                  // 1. Check for data attributes in active video container
+                  const elementsWithData = searchContext.querySelectorAll(
+                    "[data-video-id], [data-item-id], [data-id]",
+                  );
+                  console.log(
+                    `[Tavlo Extension] Found ${elementsWithData.length} elements with data attributes in active video`,
+                  );
+
+                  for (const el of elementsWithData) {
+                    const id =
+                      el.getAttribute("data-video-id") ||
+                      el.getAttribute("data-item-id") ||
+                      el.getAttribute("data-id");
+                    if (id && id.length > 10) {
+                      // Video IDs are long numbers
+                      videoId = id;
+                      console.log(
+                        "[Tavlo Extension] Found video ID in data attribute:",
+                        videoId,
+                      );
+                      break;
+                    }
+                  }
+
+                  // 2. Check window.__NEXT_DATA__ or similar TikTok state
+                  if (!videoId && typeof window !== "undefined") {
+                    try {
+                      const nextData = (window as any).__NEXT_DATA__;
+                      if (nextData) {
+                        console.log(
+                          "[Tavlo Extension] Found __NEXT_DATA__, searching for video ID...",
+                        );
+                        const dataStr = JSON.stringify(nextData);
+                        // Look for long number that might be video ID
+                        const match = dataStr.match(/"itemId":"(\d{15,})"/);
+                        if (match) {
+                          videoId = match[1];
+                          console.log(
+                            "[Tavlo Extension] Extracted video ID from __NEXT_DATA__:",
+                            videoId,
+                          );
+                        }
+                      }
+                    } catch (e) {
+                      console.log(
+                        "[Tavlo Extension] Error reading __NEXT_DATA__:",
+                        e,
+                      );
+                    }
+                  }
+
+                  // 3. Search for video ID in active container HTML (as last resort)
+                  if (!videoId && activeVideoContainer) {
+                    console.log(
+                      "[Tavlo Extension] Searching active video HTML for video ID pattern...",
+                    );
+                    const containerText = activeVideoContainer.innerHTML;
+                    // Look for TikTok video ID pattern (long numbers, typically 19 digits)
+                    const matches = containerText.match(/\b\d{16,20}\b/g);
+                    if (matches && matches.length > 0) {
+                      // Take the first long number we find in active container
+                      videoId = matches[0];
+                      console.log(
+                        "[Tavlo Extension] Found potential video ID in active video HTML:",
+                        videoId,
+                      );
+                    }
+                  }
+
+                  // Construct URL if we have both username and video ID
+                  if (username && videoId) {
+                    videoUrl = `https://www.tiktok.com${username}/video/${videoId}`;
+                    console.log(
+                      "[Tavlo Extension] Constructed video URL:",
+                      videoUrl,
+                    );
+                  } else {
+                    console.log(
+                      "[Tavlo Extension] Missing data - username:",
+                      username,
+                      "videoId:",
+                      videoId,
+                    );
+                  }
+                }
+
+                if (videoUrl) {
+                  console.log(
+                    "[Tavlo Extension] Successfully extracted video URL:",
+                    videoUrl,
+                  );
+                  url = videoUrl;
+                } else {
+                  console.log(
+                    "[Tavlo Extension] Could not extract video URL, using page URL",
+                  );
+                }
+              }
+
+              console.log("[Tavlo Extension] Final URL:", url);
 
               return {
                 url,
@@ -146,7 +485,7 @@ export default function SaveScreen({
             // Validation error - throw to catch block
             throw new Error(result.error || "Failed to save item");
           }
-        }
+        },
       );
 
       // Race between timeout and save request
@@ -155,7 +494,9 @@ export default function SaveScreen({
       if (response.optimistic) {
         // Timeout completed first - show success optimistically
         // The request continues in background
-        console.log("Showing optimistic success, request continues in background");
+        console.log(
+          "Showing optimistic success, request continues in background",
+        );
         onSaveSuccess();
 
         // Continue waiting for actual response in background
@@ -178,7 +519,9 @@ export default function SaveScreen({
       console.error("Save error:", error);
       setIsSaving(false);
       setError(
-        error instanceof Error ? error.message : "Failed to save. Please try again."
+        error instanceof Error
+          ? error.message
+          : "Failed to save. Please try again.",
       );
     }
   };
