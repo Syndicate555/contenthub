@@ -3,7 +3,7 @@
   "name": "Tavlo - Save to Your Feed",
   "version": "0.1.0",
   "description": "Save links to your personal Tavlo feed with one click",
-  "permissions": ["activeTab", "contextMenus", "storage"],
+  "permissions": ["activeTab", "contextMenus", "storage", "scripting"],
   "host_permissions": ["https://tavlo.ca/*", "http://localhost:3000/*"],
   "action": {
     "default_popup": "src/popup/index.html",
