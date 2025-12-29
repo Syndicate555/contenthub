@@ -24,8 +24,12 @@ export default async function ExtensionAuthPage() {
   const email = user?.emailAddresses?.[0]?.emailAddress || "your account";
 
   // Get session token for extension
+  // Use custom JWT template "extension" with long expiration (30 days)
+  // This template must be configured in Clerk Dashboard -> JWT Templates
   const { getToken } = await auth();
-  const token = await getToken();
+  const token = await getToken({
+    template: "extension", // Custom template with 30-day expiration
+  });
 
   if (!token) {
     return (

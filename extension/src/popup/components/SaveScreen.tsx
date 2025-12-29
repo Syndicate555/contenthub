@@ -18,6 +18,8 @@ export default function SaveScreen({
   const [note, setNote] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isEditingUrl, setIsEditingUrl] = useState(false);
+  const [editedUrl, setEditedUrl] = useState("");
 
   // Get current tab URL on mount
   useEffect(() => {
@@ -28,9 +30,39 @@ export default function SaveScreen({
           const results = await chrome.scripting.executeScript({
             target: { tabId: tabs[0].id },
             func: () => {
+              // Get URL from multiple sources for better SPA support
+              let url = window.location.href;
+              let title = document.title;
+
+              // For Twitter/X: Check canonical URL meta tag
+              // Twitter sets this even when viewing tweets in modals
+              const canonicalLink = document.querySelector(
+                'link[rel="canonical"]'
+              ) as HTMLLinkElement;
+              if (canonicalLink && canonicalLink.href) {
+                // Use canonical URL if it's more specific than current URL
+                // e.g., canonical might be tweet URL while location.href is still /home
+                if (
+                  url.includes("/home") &&
+                  canonicalLink.href.includes("/status/")
+                ) {
+                  url = canonicalLink.href;
+                }
+              }
+
+              // For Twitter/X: Try to get URL from og:url meta tag as fallback
+              const ogUrl = document.querySelector(
+                'meta[property="og:url"]'
+              ) as HTMLMetaElement;
+              if (ogUrl && ogUrl.content && url.includes("/home")) {
+                if (ogUrl.content.includes("/status/")) {
+                  url = ogUrl.content;
+                }
+              }
+
               return {
-                url: window.location.href,
-                title: document.title,
+                url,
+                title,
               };
             },
           });
@@ -53,29 +85,101 @@ export default function SaveScreen({
     });
   }, []);
 
+  const handleUrlEdit = () => {
+    setEditedUrl(currentUrl);
+    setIsEditingUrl(true);
+  };
+
+  const handleUrlSave = () => {
+    // Validate URL
+    try {
+      new URL(editedUrl);
+      setCurrentUrl(editedUrl);
+      setIsEditingUrl(false);
+      setError(null);
+    } catch {
+      setError("Invalid URL format. Please enter a valid URL.");
+    }
+  };
+
+  const handleUrlCancel = () => {
+    setEditedUrl("");
+    setIsEditingUrl(false);
+    setError(null);
+  };
+
   const handleSave = async () => {
-    if (!currentUrl) {
+    const urlToSave = isEditingUrl ? editedUrl : currentUrl;
+
+    if (!urlToSave) {
       setError("No URL to save");
+      return;
+    }
+
+    // Validate URL before saving
+    try {
+      new URL(urlToSave);
+    } catch {
+      setError("Invalid URL format. Please enter a valid URL.");
       return;
     }
 
     setError(null);
     setIsSaving(true);
 
-    try {
-      const result = await saveItem(currentUrl, note || undefined, token);
+    // Fire-and-forget with smart validation
+    // We'll wait up to 2 seconds for validation errors, then show success
+    const VALIDATION_TIMEOUT = 2000; // 2 seconds
 
-      if (result.success) {
-        // TODO: Store result for success screen
+    try {
+      // Create a promise that resolves after validation timeout
+      const timeoutPromise = new Promise<{ optimistic: boolean }>((resolve) => {
+        setTimeout(() => resolve({ optimistic: true }), VALIDATION_TIMEOUT);
+      });
+
+      // Create the save request promise
+      const savePromise = saveItem(urlToSave, note || undefined, token).then(
+        (result) => {
+          if (result.success) {
+            return { optimistic: false, success: true, result };
+          } else {
+            // Validation error - throw to catch block
+            throw new Error(result.error || "Failed to save item");
+          }
+        }
+      );
+
+      // Race between timeout and save request
+      const response = await Promise.race([timeoutPromise, savePromise]);
+
+      if (response.optimistic) {
+        // Timeout completed first - show success optimistically
+        // The request continues in background
+        console.log("Showing optimistic success, request continues in background");
         onSaveSuccess();
+
+        // Continue waiting for actual response in background
+        savePromise
+          .then(() => {
+            console.log("Background save completed successfully");
+          })
+          .catch((error) => {
+            // If it fails after showing success, log it
+            // In a real app, you might want to show a toast notification
+            console.error("Background save failed:", error);
+          });
       } else {
-        setError(result.error || "Failed to save item");
+        // Save completed before timeout - show actual success
+        console.log("Save completed quickly, showing real success");
+        onSaveSuccess();
       }
     } catch (error) {
+      // This catches validation errors (auth, rate limit, invalid URL, etc.)
       console.error("Save error:", error);
-      setError("Failed to save. Please try again.");
-    } finally {
       setIsSaving(false);
+      setError(
+        error instanceof Error ? error.message : "Failed to save. Please try again."
+      );
     }
   };
 
@@ -95,7 +199,8 @@ export default function SaveScreen({
     return "Web";
   };
 
-  const platform = getPlatform(currentUrl);
+  const displayUrl = isEditingUrl ? editedUrl : currentUrl;
+  const platform = getPlatform(displayUrl);
 
   return (
     <div className="w-full h-full p-6">
@@ -117,22 +222,60 @@ export default function SaveScreen({
 
       {/* Current URL */}
       <div className="mb-4">
-        <label className="block text-sm font-medium text-text-primary mb-2">
-          Current Page
-        </label>
-        <div className="bg-white border border-gray-200 rounded-lg p-3">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded font-medium">
-              {platform}
-            </span>
-            {currentTitle && (
-              <span className="text-sm text-text-primary truncate flex-1">
-                {currentTitle}
-              </span>
-            )}
-          </div>
-          <p className="text-xs text-text-secondary truncate">{currentUrl}</p>
+        <div className="flex items-center justify-between mb-2">
+          <label className="block text-sm font-medium text-text-primary">
+            URL to Save
+          </label>
+          {!isEditingUrl && (
+            <button
+              onClick={handleUrlEdit}
+              className="text-xs text-brand-1 hover:text-brand-2 transition-colors font-medium"
+            >
+              Edit URL
+            </button>
+          )}
         </div>
+
+        {isEditingUrl ? (
+          <div>
+            <input
+              type="text"
+              value={editedUrl}
+              onChange={(e) => setEditedUrl(e.target.value)}
+              placeholder="https://example.com/page"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-1 focus:border-transparent mb-2"
+              autoFocus
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={handleUrlSave}
+                className="flex-1 px-3 py-2 bg-brand-1 text-white rounded-lg text-xs font-medium hover:bg-brand-2 transition-colors"
+              >
+                Save URL
+              </button>
+              <button
+                onClick={handleUrlCancel}
+                className="flex-1 px-3 py-2 bg-gray-200 text-gray-700 rounded-lg text-xs font-medium hover:bg-gray-300 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-white border border-gray-200 rounded-lg p-3">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded font-medium">
+                {platform}
+              </span>
+              {currentTitle && (
+                <span className="text-sm text-text-primary truncate flex-1">
+                  {currentTitle}
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-text-secondary truncate">{displayUrl}</p>
+          </div>
+        )}
       </div>
 
       {/* Note Input */}
@@ -170,7 +313,7 @@ export default function SaveScreen({
         {isSaving ? (
           <span className="flex items-center justify-center gap-2">
             <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-            Saving...
+            Validating...
           </span>
         ) : (
           "Save to Tavlo"
