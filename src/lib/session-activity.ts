@@ -42,6 +42,8 @@ export class SessionActivityTracker {
     event: string;
     handler: EventListener;
   }> = [];
+  private isTabVisible = true;
+  private sessionExpired = false;
 
   constructor(callbacks: SessionActivityCallbacks) {
     this.callbacks = callbacks;
@@ -53,6 +55,9 @@ export class SessionActivityTracker {
    * Start tracking activity
    */
   private start(): void {
+    // Initialize tab visibility state
+    this.isTabVisible = !document.hidden;
+
     // Register activity event listeners
     ACTIVITY_EVENTS.forEach((eventType) => {
       const handler = this.handleActivity.bind(this);
@@ -72,7 +77,11 @@ export class SessionActivityTracker {
 
     // Start timers
     this.resetTimers();
-    this.scheduleTokenRefresh();
+
+    // Only start token refresh if tab is currently visible
+    if (this.isTabVisible) {
+      this.scheduleTokenRefresh();
+    }
   }
 
   /**
@@ -90,9 +99,20 @@ export class SessionActivityTracker {
    * Handle visibility change (tab switching)
    */
   private handleVisibilityChange(): void {
-    if (!document.hidden && !this.timeoutReached) {
-      // Tab became visible - treat as activity
-      this.recordActivity("click");
+    const wasHidden = !this.isTabVisible;
+    this.isTabVisible = !document.hidden;
+
+    if (this.isTabVisible && !this.timeoutReached) {
+      // Tab became visible
+      if (wasHidden) {
+        // Resume token refresh when tab becomes visible again
+        this.resumeTokenRefresh();
+        // Treat as activity
+        this.recordActivity("click");
+      }
+    } else if (!this.isTabVisible) {
+      // Tab became hidden - pause token refresh to avoid browser throttling
+      this.pauseTokenRefresh();
     }
   }
 
@@ -161,10 +181,38 @@ export class SessionActivityTracker {
    */
   private scheduleTokenRefresh(): void {
     this.tokenRefreshTimer = setInterval(() => {
-      if (!this.timeoutReached) {
+      // Only refresh if tab is visible, session hasn't expired, and timeout not reached
+      if (!this.timeoutReached && !this.sessionExpired && this.isTabVisible) {
         void this.callbacks.onTokenRefresh();
       }
     }, TOKEN_REFRESH_INTERVAL_MS);
+  }
+
+  /**
+   * Pause token refresh (when tab is hidden)
+   */
+  private pauseTokenRefresh(): void {
+    if (this.tokenRefreshTimer) {
+      clearInterval(this.tokenRefreshTimer);
+      this.tokenRefreshTimer = null;
+    }
+  }
+
+  /**
+   * Resume token refresh (when tab becomes visible)
+   */
+  private resumeTokenRefresh(): void {
+    if (!this.tokenRefreshTimer && !this.sessionExpired) {
+      this.scheduleTokenRefresh();
+    }
+  }
+
+  /**
+   * Mark session as expired (stop all refresh attempts)
+   */
+  public markSessionExpired(): void {
+    this.sessionExpired = true;
+    this.pauseTokenRefresh();
   }
 
   /**
