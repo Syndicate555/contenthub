@@ -1,5 +1,4 @@
-import React, { useState } from "react";
-import { setToken } from "../../shared/storage";
+import { useState, useEffect } from "react";
 import { validateToken } from "../../shared/api";
 import { getWebAppUrl } from "../../shared/config";
 
@@ -8,106 +7,174 @@ interface LoginScreenProps {
 }
 
 export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
-  const [tokenInput, setTokenInput] = useState("");
-  const [isValidating, setIsValidating] = useState(false);
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleOpenAuthPage = () => {
-    // Open the extension-auth page in a new tab
-    chrome.tabs.create({
-      url: `${getWebAppUrl()}/extension-auth`,
-    });
-  };
+  // Listen for storage changes (when background worker saves the token)
+  useEffect(() => {
+    const handleStorageChange = (
+      changes: { [key: string]: chrome.storage.StorageChange },
+      areaName: string,
+    ) => {
+      // Check if auth token was added
+      if (areaName === "sync" && changes.tavlo_auth_token) {
+        const newToken = changes.tavlo_auth_token.newValue;
 
-  const handleValidateToken = async () => {
-    if (!tokenInput.trim()) {
-      setError("Please enter a token");
-      return;
-    }
+        if (newToken) {
+          console.log("[Tavlo Extension] Auth token detected in storage");
+          setIsAuthenticating(false);
 
+          // Validate and use the token
+          validateToken(newToken)
+            .then((isValid) => {
+              if (isValid) {
+                console.log("[Tavlo Extension] Token validated successfully");
+                onLoginSuccess(newToken);
+              } else {
+                setError("Invalid or expired token. Please try again.");
+                setIsAuthenticating(false);
+              }
+            })
+            .catch((error) => {
+              console.error("[Tavlo Extension] Token validation error:", error);
+              setError(
+                "Failed to validate token. Please check your connection.",
+              );
+              setIsAuthenticating(false);
+            });
+        }
+      }
+    };
+
+    // Listen for storage changes
+    chrome.storage.onChanged.addListener(handleStorageChange);
+
+    return () => {
+      chrome.storage.onChanged.removeListener(handleStorageChange);
+    };
+  }, [onLoginSuccess]);
+
+  const handleOpenAuthPage = async () => {
     setError(null);
-    setIsValidating(true);
+    setIsAuthenticating(true);
 
     try {
-      // Validate token with backend
-      const isValid = await validateToken(tokenInput.trim());
+      // Get extension ID
+      const extensionId = chrome.runtime.id;
 
-      if (isValid) {
-        // Store token
-        await setToken(tokenInput.trim());
-        // Notify parent of success
-        onLoginSuccess(tokenInput.trim());
-      } else {
-        setError("Invalid or expired token. Please try again.");
-      }
+      // Build auth URL with extension ID as parameter
+      const authUrl = `${getWebAppUrl()}/extension-auth?extensionId=${extensionId}`;
+
+      console.log("[Tavlo Extension] Opening auth page:", authUrl);
+
+      // Open auth page in a new tab
+      chrome.tabs.create({
+        url: authUrl,
+        active: true,
+      });
     } catch (error) {
-      console.error("Token validation error:", error);
-      setError("Failed to validate token. Please check your connection.");
-    } finally {
-      setIsValidating(false);
+      console.error("[Tavlo Extension] Error opening auth page:", error);
+      setError("Failed to open authentication page. Please try again.");
+      setIsAuthenticating(false);
     }
   };
 
   return (
-    <div className="w-full h-full p-6 flex flex-col items-center justify-center">
+    <div className="w-full h-full p-6 flex flex-col items-center justify-center bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50">
       {/* Logo */}
-      <div className="mb-6 text-center">
-        <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-brand-1 to-brand-2 flex items-center justify-center text-white text-2xl font-bold shadow-lg shadow-brand-1/25 mx-auto mb-3">
+      <div className="mb-8 text-center animate-[fadeIn_0.5s_ease-out]">
+        <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-purple-500 via-blue-500 to-indigo-500 flex items-center justify-center text-white text-3xl font-bold shadow-2xl shadow-purple-300 mx-auto mb-4 transform hover:scale-110 transition-transform duration-300">
           T
         </div>
-        <h1 className="text-2xl font-bold text-text-primary mb-1">
+        <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent mb-2">
           Welcome to Tavlo
         </h1>
-        <p className="text-sm text-text-secondary">
-          Sign in to start saving links
+        <p className="text-sm text-gray-600 font-medium">
+          One-click saving for the web ✨
         </p>
       </div>
 
-      {/* Instructions */}
-      <div className="w-full mb-6">
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-          <p className="text-sm text-text-body mb-2">
-            <strong>Step 1:</strong> Click below to get your authentication
-            token
-          </p>
+      {/* Auth Instructions */}
+      <div className="w-full mb-6 animate-[fadeIn_0.6s_ease-out]">
+        <div className="bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-200">
+          <div className="flex items-start gap-3 mb-4">
+            <span className="text-2xl">🔐</span>
+            <div className="flex-1">
+              <h2 className="text-lg font-bold text-gray-800 mb-2">
+                Sign in to get started
+              </h2>
+              <p className="text-sm text-gray-600 font-medium">
+                Click below to authenticate with your Tavlo account. You&apos;ll
+                be redirected to a secure login page.
+              </p>
+            </div>
+          </div>
+
           <button
             onClick={handleOpenAuthPage}
-            className="w-full px-4 py-2 bg-white border border-blue-300 text-brand-1 rounded-lg hover:bg-blue-50 transition-colors font-medium"
+            disabled={isAuthenticating}
+            className="w-full px-6 py-4 bg-gradient-to-r from-purple-500 via-blue-500 to-indigo-500 text-white rounded-2xl hover:shadow-2xl hover:shadow-purple-300 transition-all duration-300 font-bold text-base hover:scale-105 transform disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
           >
-            Open Tavlo Auth Page
+            {isAuthenticating ? (
+              <span className="flex items-center justify-center gap-3">
+                <div className="w-5 h-5 border-3 border-white border-t-transparent rounded-full animate-spin"></div>
+                Waiting for authentication...
+              </span>
+            ) : (
+              <span className="flex items-center justify-center gap-2">
+                Login with Tavlo
+                <span>🚀</span>
+              </span>
+            )}
           </button>
-        </div>
 
-        <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-          <p className="text-sm text-text-body mb-3">
-            <strong>Step 2:</strong> Paste your token below
-          </p>
-          <textarea
-            value={tokenInput}
-            onChange={(e) => setTokenInput(e.target.value)}
-            placeholder="Paste your authentication token here..."
-            className="w-full h-24 px-3 py-2 border border-gray-300 rounded-lg resize-none text-xs font-mono focus:outline-none focus:ring-2 focus:ring-brand-1 focus:border-transparent"
-          />
-
-          {error && (
-            <p className="text-red-600 text-sm mt-2 flex items-center gap-1">
-              <span>⚠️</span> {error}
-            </p>
+          {isAuthenticating && (
+            <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-xl animate-[fadeIn_0.3s_ease-out]">
+              <p className="text-xs text-blue-700 font-medium text-center">
+                💡 Complete the login in the new tab, then return here
+              </p>
+            </div>
           )}
+        </div>
+      </div>
 
-          <button
-            onClick={handleValidateToken}
-            disabled={isValidating || !tokenInput.trim()}
-            className="w-full mt-3 px-4 py-2 bg-gradient-to-r from-brand-1 to-brand-2 text-white rounded-lg hover:shadow-lg hover:shadow-brand-1/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-          >
-            {isValidating ? "Validating..." : "Validate & Save"}
-          </button>
+      {/* Error Message */}
+      {error && (
+        <div className="w-full mb-6 animate-[shake_0.5s_ease-in-out]">
+          <div className="bg-gradient-to-r from-red-50 to-rose-50 border-2 border-red-200 rounded-2xl p-4">
+            <p className="text-red-600 text-sm flex items-center gap-2 font-medium">
+              <span className="text-lg">⚠️</span> {error}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Info Section */}
+      <div className="w-full animate-[fadeIn_0.7s_ease-out]">
+        <div className="bg-white border-2 border-gray-100 rounded-2xl p-5 shadow-sm">
+          <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
+            <span>✨</span> What you&apos;ll get:
+          </h3>
+          <ul className="space-y-2 text-sm text-gray-600">
+            <li className="flex items-start gap-2">
+              <span className="text-purple-500 font-bold">•</span>
+              <span>Save links from any website with one click</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-blue-500 font-bold">•</span>
+              <span>Automatic platform detection (Twitter, Reddit, etc.)</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-indigo-500 font-bold">•</span>
+              <span>Earn badges and track your reading habits</span>
+            </li>
+          </ul>
         </div>
       </div>
 
       {/* Footer */}
-      <p className="text-xs text-text-secondary text-center">
-        First time? You&apos;ll need to sign in to Tavlo first
+      <p className="text-xs text-gray-500 text-center mt-6 font-medium animate-[fadeIn_0.8s_ease-out]">
+        First time? You&apos;ll be prompted to create an account 💜
       </p>
     </div>
   );

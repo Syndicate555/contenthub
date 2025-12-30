@@ -1,200 +1,113 @@
 # Tavlo Chrome Extension
 
-Save links to your personal Tavlo feed with one click!
+Save links to your personal Tavlo feed with one click. Supports Twitter, LinkedIn, TikTok, YouTube, Reddit, and more!
 
-## Development Setup
+## Features
 
-### Prerequisites
-- Node.js 18+ installed
-- Chrome browser
-- Tavlo web app running (default: http://localhost:3000)
+✨ **One-Click Saving**: Save any link with a single click from the extension popup or right-click menu
 
-### Installation
+🎯 **Smart URL Detection**: Automatically detects the correct URL for posts on:
 
-1. Install dependencies:
-```bash
-npm install
-```
+- Twitter/X (handles modals and SPA routing)
+- LinkedIn (extracts post URLs from feeds)
+- TikTok (finds video URLs in the For You page)
+- YouTube, Reddit, Instagram, and more
 
-2. Configure environment (optional):
-```bash
-# Copy example .env file
-cp .env.example .env
+📝 **Add Notes**: Optionally add context to any saved link
 
-# Edit .env if your dev server runs on a different port
-# VITE_API_URL=http://localhost:3001
-```
+🏆 **Gamification**: Earn badges as you save more content
 
-3. Start development server:
-```bash
-npm run dev
-```
+🔒 **Secure**: Uses OAuth-style authentication with Clerk
 
-The extension will be compiled to the `dist/` directory with hot reloading enabled.
+## Installation
 
-**Note**: Make sure the Tavlo web app is running on the same port configured in your `.env` file (default: http://localhost:3000).
+### From Chrome Web Store
 
-### Loading the Extension in Chrome
+1. Visit the Tavlo Extension on Chrome Web Store (coming soon)
+2. Click "Add to Chrome"
+3. Click "Login with Tavlo" and authenticate with your account
 
-1. Open Chrome and navigate to `chrome://extensions/`
-2. Enable **Developer mode** (toggle in top-right corner)
-3. Click **"Load unpacked"**
-4. Select the `extension/dist` folder
-5. The Tavlo extension icon should appear in your extensions toolbar
+### For Development
 
-### Testing
+1. Clone this repository
+2. Run `npm install`
+3. Run `npm run build`
+4. Open Chrome and go to `chrome://extensions`
+5. Enable "Developer mode"
+6. Click "Load unpacked" and select the `dist` folder
 
-- Click the extension icon to open the popup (you should see "Hello World!")
-- Right-click on any webpage and look for "Save to Tavlo" in the context menu
-- Check the console logs for any errors
+## Usage
 
-### Development Workflow
+### Saving from the Popup
 
-With the dev server running (`npm run dev`):
-- Any changes to source files will automatically rebuild the extension
-- The extension will auto-reload in Chrome (thanks to CRXJS HMR)
-- Check the popup console: Right-click popup → Inspect
-- Check the background worker: chrome://extensions/ → "Inspect views: service worker"
+1. Click the Tavlo extension icon in your browser toolbar
+2. The current tab's URL will be automatically detected
+3. (Optional) Add a note
+4. Click "Save to Tavlo"
 
-## Project Structure
+### Saving from the Context Menu
 
-```
-extension/
-├── src/
-│   ├── background/
-│   │   └── index.ts              # Service worker (context menu)
-│   ├── popup/
-│   │   ├── index.html            # Popup HTML
-│   │   ├── main.tsx              # React entry point
-│   │   ├── App.tsx               # Main App component
-│   │   └── index.css             # Tailwind styles
-│   ├── shared/                   # Shared utilities (TODO)
-│   └── manifest.json             # Extension manifest
-├── public/
-│   └── icons/                    # Extension icons
-├── dist/                         # Build output (generated)
-├── package.json
-├── vite.config.ts
-└── tsconfig.json
-```
+1. Right-click any link or page
+2. Select "Save to Tavlo"
+3. The link will be saved instantly
 
-## Build Commands
+### Editing URLs
 
-- `npm run dev` - Start development server with HMR
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
+If the extension doesn't detect the correct URL (e.g., on a feed page), you can:
 
-## Shared Utilities
+1. Click "Edit URL" in the popup
+2. Paste the correct link
+3. Click "Save URL"
 
-### Storage (`src/shared/storage.ts`)
-Chrome storage utilities for managing authentication and extension state:
-- `setToken(token)` - Store auth token in sync storage
-- `getToken()` - Retrieve stored auth token
-- `clearToken()` - Remove auth token (logout)
-- `setUserEmail(email)` - Store user email for display
-- `getUserEmail()` - Retrieve stored email
-- `isAuthenticated()` - Check if user has valid token
-- `clearAllData()` - Clear all extension data
+## Supported Platforms
 
-### Types (`src/shared/types.ts`)
-TypeScript type definitions for:
-- API request/response types (`CreateItemInput`, `ApiResponse`, etc.)
-- Domain models (`Item`, `Badge`, `Domain`, `Tag`, etc.)
-- Extension state (`AuthState`, `ExtensionState`, `SaveResult`, etc.)
+The extension has special handling for:
 
-### API Client (`src/shared/api.ts`)
-Backend communication functions:
-- `validateToken(token)` - Verify token is valid
-- `saveItem(url, note, token)` - Save a link to Tavlo
-- `getCurrentUser(token)` - Get user info (future)
+- **Twitter/X**: Detects tweet URLs even when viewing in modals
+- **LinkedIn**: Extracts post URLs from the feed
+- **TikTok**: Finds video URLs on the For You page
+- **YouTube**: Standard video URLs
+- **Reddit**: Posts and comments
+- **Instagram**: Posts
+- Plus any standard webpage!
 
-## Testing Utilities
+## Privacy
 
-To test storage functions in the extension console:
+Your privacy is important to us:
 
-1. Load the extension in Chrome
-2. Go to `chrome://extensions/`
-3. Click "Inspect views: service worker" under Tavlo extension
-4. In the console, test storage:
+- ✅ We only access the current tab when you open the extension
+- ✅ No tracking or analytics
+- ✅ Authentication tokens are stored securely
+- ✅ Data is only sent when you explicitly save a link
 
-```javascript
-// Import storage utilities (they'll be available via the background script)
-chrome.storage.sync.set({ tavlo_auth_token: "test-token" });
-chrome.storage.sync.get("tavlo_auth_token", (result) => {
-  console.log("Token:", result.tavlo_auth_token);
-});
-```
+See our full [Privacy Policy](./PRIVACY.md) for details.
 
-## Authentication Flow
+## Development
 
-The extension uses a **token bridge** approach for authentication:
+### Tech Stack
 
-### How It Works
+- React 19
+- TypeScript
+- Vite
+- Tailwind CSS
+- Chrome Extension Manifest V3
 
-1. **Get Token from Web App**:
-   - User signs in to Tavlo web app
-   - Navigate to `/extension-auth` page
-   - Web app displays Clerk session token
-
-2. **Copy Token to Extension**:
-   - User copies token from web app
-   - Opens extension popup
-   - Pastes token into login screen
-
-3. **Token Validation**:
-   - Extension stores token in Chrome sync storage
-   - Makes authenticated API calls with `Authorization: Bearer <token>`
-   - Extension API route (`/api/items/extension`) validates token with Clerk
-
-4. **Saving Items**:
-   - Extension calls `POST /api/items/extension` with Bearer token
-   - Backend processes item through same pipeline as web app
-   - Returns saved item + earned badges
-
-### API Endpoints
-
-- **Web App**: `GET /extension-auth` - Displays session token for user
-- **Extension API**: `POST /api/items/extension` - Create item with Bearer auth
-- **Regular API**: `GET /api/items` - Used for token validation
-
-### Security
-
-- Tokens stored in Chrome sync storage (encrypted by Chrome)
-- Tokens verified server-side with Clerk
-- Rate limits: 30 saves/min, 200 saves/day (same as web app)
-- Demo mode blocked from saving
-
-## Configuration
-
-### Environment Variables
-
-The extension supports the following environment variables in `.env`:
-
-- `VITE_API_URL` - Base URL for the Tavlo API
-  - **Development**: Defaults to `http://localhost:3000`
-  - **Production**: Defaults to `https://tavlo.ca`
-  - Override by setting in `.env` file
-
-### Building for Production
+### Building
 
 ```bash
 npm run build
 ```
 
-This creates an optimized production build in the `dist/` folder, ready for Chrome Web Store submission.
+### Development Mode
 
-## Troubleshooting
+```bash
+npm run dev
+```
 
-### "Failed to fetch" Error
+## Support
 
-This usually means:
-1. **Web app not running**: Start the Tavlo web app with `npm run dev` in the root directory
-2. **Port mismatch**: Check that `VITE_API_URL` in `.env` matches your web app's port
-3. **Stale server**: Kill any stale processes on port 3000: `lsof -ti:3000 | xargs kill`
+Having issues? Please open an issue on our GitHub repository or contact support@tavlo.ca.
 
-### Extension Not Updating
+## License
 
-After making code changes:
-1. The extension should auto-reload (thanks to CRXJS HMR)
-2. If not, manually reload: `chrome://extensions/` → click reload icon
-3. For manifest.json changes, you must reload manually
+Copyright © 2024 Tavlo. All rights reserved.

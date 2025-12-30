@@ -12,6 +12,7 @@ import { checkAllBadges } from "./badges";
 import { validateItemData } from "./content-validator";
 import { assignTagsToItem } from "./tags/service";
 import { detectPlatform } from "./platform-detector";
+import { normalizeUrl } from "./url-normalizer";
 import type { Item } from "@/generated/prisma";
 
 export interface ProcessItemInput {
@@ -47,7 +48,11 @@ export interface ProcessItemResult {
 export async function processItem(
   input: ProcessItemInput,
 ): Promise<ProcessItemResult> {
-  const { url, note, userId } = input;
+  const { note, userId } = input;
+
+  // Normalize URL to canonical form (removes /photo/X, /video/X, tracking params, etc.)
+  // This ensures consistent metadata extraction and deduplication
+  const url = normalizeUrl(input.url);
 
   // Extract source domain
   let source = "unknown";

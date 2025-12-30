@@ -1,0 +1,27 @@
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background with gradient -->
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#8B5CF6;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#6366F1;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3B82F6;stop-opacity:1" />
+    </linearGradient>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+
+  <!-- Rounded square background -->
+  <rect x="0" y="0" width="128" height="128" rx="28" fill="url(#grad)"/>
+
+  <!-- White "T" letter - bold and readable -->
+  <text
+    x="64"
+    y="98"
+    font-family="Arial, Helvetica, sans-serif"
+    font-size="88"
+    font-weight="900"
+    fill="white"
+    text-anchor="middle"
+    style="filter: url(#shadow)">T</text>
+</svg>

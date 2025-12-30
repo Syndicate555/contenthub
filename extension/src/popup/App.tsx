@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { getToken, isAuthenticated } from "../shared/storage";
 import { validateToken } from "../shared/api";
-import type { PopupScreen } from "../shared/types";
+import type { PopupScreen, Badge } from "../shared/types";
 
 // Import screen components (will create these next)
 import LoginScreen from "./components/LoginScreen";
@@ -12,6 +12,7 @@ function App() {
   const [currentScreen, setCurrentScreen] = useState<PopupScreen>("login");
   const [isLoading, setIsLoading] = useState(true);
   const [authToken, setAuthToken] = useState<string | null>(null);
+  const [earnedBadges, setEarnedBadges] = useState<Badge[]>([]);
 
   // Check authentication status on mount
   useEffect(() => {
@@ -57,7 +58,8 @@ function App() {
   };
 
   // Handle successful save
-  const handleSaveSuccess = () => {
+  const handleSaveSuccess = (badges?: Badge[]) => {
+    setEarnedBadges(badges || []);
     setCurrentScreen("success");
   };
 
@@ -100,7 +102,10 @@ function App() {
       )}
 
       {currentScreen === "success" && (
-        <SuccessScreen onSaveAnother={handleSaveAnother} />
+        <SuccessScreen
+          onSaveAnother={handleSaveAnother}
+          badges={earnedBadges}
+        />
       )}
     </div>
   );

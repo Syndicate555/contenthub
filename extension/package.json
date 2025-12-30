@@ -1,7 +1,11 @@
 {
   "name": "tavlo-extension",
   "version": "0.1.0",
-  "description": "Tavlo Chrome Extension - Save links to your personal feed with one click",
+  "description": "Save links to your personal Tavlo feed with one click. Supports Twitter, LinkedIn, TikTok, YouTube, and more.",
+  "author": "Tavlo",
+  "homepage": "https://tavlo.ca",
+  "license": "UNLICENSED",
+  "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite",

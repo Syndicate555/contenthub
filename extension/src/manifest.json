@@ -3,8 +3,14 @@
   "name": "Tavlo - Save to Your Feed",
   "version": "0.1.0",
   "description": "Save links to your personal Tavlo feed with one click",
-  "permissions": ["activeTab", "contextMenus", "storage", "scripting"],
-  "host_permissions": ["https://tavlo.ca/*", "http://localhost:3000/*"],
+  "permissions": [
+    "activeTab",
+    "contextMenus",
+    "storage",
+    "scripting",
+    "notifications"
+  ],
+  "host_permissions": ["https://tavlo.ca/*"],
   "action": {
     "default_popup": "src/popup/index.html",
     "default_icon": {
@@ -21,5 +27,11 @@
   "background": {
     "service_worker": "src/background/index.ts",
     "type": "module"
+  },
+  "externally_connectable": {
+    "matches": ["https://tavlo.ca/*"]
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
   }
 }

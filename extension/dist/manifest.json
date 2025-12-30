@@ -7,11 +7,11 @@
     "activeTab",
     "contextMenus",
     "storage",
-    "scripting"
+    "scripting",
+    "notifications"
   ],
   "host_permissions": [
-    "https://tavlo.ca/*",
-    "http://localhost:3000/*"
+    "https://tavlo.ca/*"
   ],
   "action": {
     "default_popup": "src/popup/index.html",
@@ -29,5 +29,13 @@
   "background": {
     "service_worker": "service-worker-loader.js",
     "type": "module"
+  },
+  "externally_connectable": {
+    "matches": [
+      "https://tavlo.ca/*"
+    ]
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
   }
 }

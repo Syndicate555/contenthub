@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { saveItem } from "../../shared/api";
 import { clearAllData } from "../../shared/storage";
+import type { Badge } from "../../shared/types";
 
 interface SaveScreenProps {
   token: string;
-  onSaveSuccess: () => void;
+  onSaveSuccess: (badges?: Badge[]) => void;
   onLogout: () => void;
 }
 
@@ -34,8 +35,6 @@ export default function SaveScreen({
               let url = window.location.href;
               let title = document.title;
 
-              console.log("[Tavlo Extension] Initial URL:", url);
-
               // For Twitter/X: Check canonical URL meta tag
               // Twitter sets this even when viewing tweets in modals
               const canonicalLink = document.querySelector(
@@ -62,16 +61,208 @@ export default function SaveScreen({
                 }
               }
 
+              // For LinkedIn: Extract post URL from DOM
+              // LinkedIn posts in feed don't update URL, need to extract from page structure
+              if (url.includes("linkedin.com")) {
+                let postUrl = null;
+
+                // Method 1: Check canonical URL
+                if (canonicalLink && canonicalLink.href) {
+                  if (
+                    canonicalLink.href.includes("/posts/") ||
+                    canonicalLink.href.includes("/feed/update/")
+                  ) {
+                    console.log(
+                      "[Tavlo Extension] Found LinkedIn post URL in canonical:",
+                      canonicalLink.href,
+                    );
+                    postUrl = canonicalLink.href;
+                  }
+                }
+
+                // Method 2: Check og:url
+                if (
+                  !postUrl &&
+                  ogUrl &&
+                  ogUrl.content &&
+                  (ogUrl.content.includes("/posts/") ||
+                    ogUrl.content.includes("/feed/update/"))
+                ) {
+                  console.log(
+                    "[Tavlo Extension] Found LinkedIn post URL in og:url:",
+                    ogUrl.content,
+                  );
+                  postUrl = ogUrl.content;
+                }
+
+                // Method 3: Extract from DOM - look for post permalink in share menu or modal
+                if (!postUrl) {
+                  console.log(
+                    "[Tavlo Extension] Extracting LinkedIn post URL from DOM...",
+                  );
+
+                  // Look for the currently open post modal/overlay
+                  const postModal = document.querySelector(
+                    '[role="dialog"][aria-labelledby], .scaffold-layout__detail',
+                  );
+
+                  if (postModal) {
+                    // Strategy A: Find permalink in "Copy link" button or share options
+                    const copyLinkButton = postModal.querySelector(
+                      '[aria-label*="Copy link"], [data-test-id="share-via-copy-link"]',
+                    );
+
+                    if (copyLinkButton) {
+                      // Try to extract URL from data attributes or nearby elements
+                      const dataUrl = copyLinkButton.getAttribute("data-url");
+                      if (dataUrl && dataUrl.includes("/posts/")) {
+                        postUrl = dataUrl;
+                        console.log(
+                          "[Tavlo Extension] Found post URL in copy link button data:",
+                          postUrl,
+                        );
+                      }
+                    }
+
+                    // Strategy B: Find URN in data attributes and construct URL
+                    if (!postUrl) {
+                      const urnElements = postModal.querySelectorAll(
+                        "[data-urn], [data-activity-urn]",
+                      );
+
+                      for (const el of urnElements) {
+                        const urn =
+                          el.getAttribute("data-urn") ||
+                          el.getAttribute("data-activity-urn");
+
+                        if (urn && urn.includes("activity:")) {
+                          // Extract activity ID from URN like "urn:li:activity:1234567890"
+                          const activityMatch = urn.match(/activity:(\d+)/);
+                          if (activityMatch) {
+                            const activityId = activityMatch[1];
+                            postUrl = `https://www.linkedin.com/feed/update/urn:li:activity:${activityId}`;
+                            console.log(
+                              "[Tavlo Extension] Constructed post URL from URN:",
+                              postUrl,
+                            );
+                            break;
+                          }
+                        }
+
+                        if (urn && urn.includes("ugcPost:")) {
+                          // Extract ugcPost ID from URN
+                          const ugcMatch = urn.match(/ugcPost:(\d+)/);
+                          if (ugcMatch) {
+                            const ugcId = ugcMatch[1];
+                            postUrl = `https://www.linkedin.com/feed/update/urn:li:ugcPost:${ugcId}`;
+                            console.log(
+                              "[Tavlo Extension] Constructed post URL from ugcPost URN:",
+                              postUrl,
+                            );
+                            break;
+                          }
+                        }
+                      }
+                    }
+
+                    // Strategy C: Look for share button with URL
+                    if (!postUrl) {
+                      const shareButtons = postModal.querySelectorAll(
+                        'button[aria-label*="Share"], button[data-test-id*="share"]',
+                      );
+
+                      for (const button of shareButtons) {
+                        // Click share button reveals URL - look in nearby elements
+                        const parent = button.closest("div");
+                        if (parent) {
+                          const links = parent.querySelectorAll("a[href]");
+                          for (const link of links) {
+                            const href = (link as HTMLAnchorElement).href;
+                            if (
+                              href &&
+                              (href.includes("/posts/") ||
+                                href.includes("/feed/update/"))
+                            ) {
+                              postUrl = href;
+                              console.log(
+                                "[Tavlo Extension] Found post URL near share button:",
+                                postUrl,
+                              );
+                              break;
+                            }
+                          }
+                        }
+                        if (postUrl) break;
+                      }
+                    }
+
+                    // Strategy D: Look for author profile + post slug in URL structure
+                    if (!postUrl) {
+                      const postLinks =
+                        postModal.querySelectorAll('a[href*="/posts/"]');
+                      for (const link of postLinks) {
+                        const href = (link as HTMLAnchorElement).href;
+                        // Match pattern: /posts/username_activity-1234567890-hash
+                        if (href.match(/\/posts\/[^\/]+_activity-\d+/)) {
+                          postUrl = href;
+                          console.log(
+                            "[Tavlo Extension] Found post URL in post link:",
+                            postUrl,
+                          );
+                          break;
+                        }
+                      }
+                    }
+                  }
+
+                  // Fallback: Search entire page if modal not found
+                  if (!postUrl) {
+                    console.log(
+                      "[Tavlo Extension] Modal not found, searching entire page...",
+                    );
+
+                    // Look for focused/highlighted post in feed
+                    const focusedPost = document.querySelector(
+                      '.feed-shared-update-v2--focused, [data-test-id="main-feed-activity-card"]',
+                    );
+
+                    if (focusedPost) {
+                      const urn =
+                        focusedPost.getAttribute("data-urn") ||
+                        focusedPost.getAttribute("data-activity-urn");
+
+                      if (urn && urn.includes("activity:")) {
+                        const activityMatch = urn.match(/activity:(\d+)/);
+                        if (activityMatch) {
+                          postUrl = `https://www.linkedin.com/feed/update/urn:li:activity:${activityMatch[1]}`;
+                          console.log(
+                            "[Tavlo Extension] Constructed URL from focused post URN:",
+                            postUrl,
+                          );
+                        }
+                      }
+                    }
+                  }
+                }
+
+                if (postUrl) {
+                  console.log(
+                    "[Tavlo Extension] Successfully extracted LinkedIn post URL:",
+                    postUrl,
+                  );
+                  url = postUrl;
+                } else {
+                  console.log(
+                    "[Tavlo Extension] Could not extract LinkedIn post URL, using page URL",
+                  );
+                  // Keep the original URL (linkedin.com/feed)
+                  // We'll show a helpful message in the UI
+                }
+              }
+
               // For TikTok: Extract video URL from DOM
               // TikTok videos in feed don't update URL, need to extract from page structure
               if (url.includes("tiktok.com")) {
-                console.log("[Tavlo Extension] TikTok detected");
-                console.log(
-                  "[Tavlo Extension] Canonical URL:",
-                  canonicalLink?.href,
-                );
-                console.log("[Tavlo Extension] OG URL:", ogUrl?.content);
-
                 let videoUrl = null;
 
                 // Method 1: Check canonical URL first
@@ -397,8 +588,6 @@ export default function SaveScreen({
                 }
               }
 
-              console.log("[Tavlo Extension] Final URL:", url);
-
               return {
                 url,
                 title,
@@ -497,7 +686,7 @@ export default function SaveScreen({
         console.log(
           "Showing optimistic success, request continues in background",
         );
-        onSaveSuccess();
+        onSaveSuccess(); // No badges yet in optimistic mode
 
         // Continue waiting for actual response in background
         savePromise
@@ -512,7 +701,12 @@ export default function SaveScreen({
       } else {
         // Save completed before timeout - show actual success
         console.log("Save completed quickly, showing real success");
-        onSaveSuccess();
+        // Extract badges from result
+        const badges =
+          "result" in response && response.result?.badges
+            ? response.result.badges
+            : undefined;
+        onSaveSuccess(badges);
       }
     } catch (error) {
       // This catches validation errors (auth, rate limit, invalid URL, etc.)
@@ -537,42 +731,65 @@ export default function SaveScreen({
     if (url.includes("reddit.com")) return "Reddit";
     if (url.includes("youtube.com")) return "YouTube";
     if (url.includes("instagram.com")) return "Instagram";
-    if (url.includes("linkedin.com")) return "LinkedIn";
+    if (url.includes("linkedin.com")) {
+      // More specific platform detection for LinkedIn
+      if (url.includes("/feed") && !url.includes("/feed/update/")) {
+        return "LinkedIn Feed";
+      }
+      return "LinkedIn";
+    }
     if (url.includes("tiktok.com")) return "TikTok";
     return "Web";
   };
 
+  const isGenericFeedUrl = (url: string) => {
+    // Detect if URL is a generic feed page (not a specific post)
+    if (url.includes("linkedin.com/feed") && !url.includes("/feed/update/")) {
+      return true;
+    }
+    if (url.includes("twitter.com/home") || url.includes("x.com/home")) {
+      return true;
+    }
+    if (url === "https://www.tiktok.com/" || url === "https://tiktok.com/") {
+      return true;
+    }
+    return false;
+  };
+
   const displayUrl = isEditingUrl ? editedUrl : currentUrl;
   const platform = getPlatform(displayUrl);
+  const showFeedWarning = isGenericFeedUrl(displayUrl);
 
   return (
-    <div className="w-full h-full p-6">
+    <div className="w-full h-full p-6 bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-1 to-brand-2 flex items-center justify-center text-white text-sm font-bold">
+      <div className="flex items-center justify-between mb-6 animate-[slideDown_0.3s_ease-out]">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-purple-500 via-blue-500 to-indigo-500 flex items-center justify-center text-white text-base font-bold shadow-lg shadow-purple-200 transform hover:scale-105 transition-transform duration-200">
             T
           </div>
-          <h1 className="text-lg font-bold text-text-primary">Save to Tavlo</h1>
+          <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+            Save to Tavlo
+          </h1>
         </div>
         <button
           onClick={handleLogout}
-          className="text-xs text-text-secondary hover:text-red-600 transition-colors"
+          className="text-xs text-gray-500 hover:text-red-500 transition-all duration-200 hover:scale-105 font-medium px-3 py-1.5 rounded-full hover:bg-red-50"
         >
           Logout
         </button>
       </div>
 
       {/* Current URL */}
-      <div className="mb-4">
-        <div className="flex items-center justify-between mb-2">
-          <label className="block text-sm font-medium text-text-primary">
+      <div className="mb-5 animate-[fadeIn_0.4s_ease-out]">
+        <div className="flex items-center justify-between mb-3">
+          <label className="block text-sm font-semibold text-gray-700">
             URL to Save
           </label>
           {!isEditingUrl && (
             <button
               onClick={handleUrlEdit}
-              className="text-xs text-brand-1 hover:text-brand-2 transition-colors font-medium"
+              className="text-xs text-purple-600 hover:text-purple-700 transition-all duration-200 font-semibold hover:scale-105 px-2 py-1 rounded-lg hover:bg-purple-50"
             >
               Edit URL
             </button>
@@ -580,50 +797,81 @@ export default function SaveScreen({
         </div>
 
         {isEditingUrl ? (
-          <div>
+          <div className="animate-[fadeIn_0.2s_ease-out]">
             <input
               type="text"
               value={editedUrl}
               onChange={(e) => setEditedUrl(e.target.value)}
+              onFocus={(e) => e.target.select()} // Auto-select all text on focus
               placeholder="https://example.com/page"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-1 focus:border-transparent mb-2"
+              className="w-full px-4 py-3 border-2 border-purple-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent mb-3 transition-all duration-200 bg-white shadow-sm hover:shadow-md"
               autoFocus
             />
-            <div className="flex gap-2">
+            <div className="flex gap-3">
               <button
                 onClick={handleUrlSave}
-                className="flex-1 px-3 py-2 bg-brand-1 text-white rounded-lg text-xs font-medium hover:bg-brand-2 transition-colors"
+                className="flex-1 px-4 py-2.5 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-xl text-sm font-semibold hover:shadow-lg hover:shadow-purple-200 transition-all duration-200 hover:scale-105"
               >
                 Save URL
               </button>
               <button
                 onClick={handleUrlCancel}
-                className="flex-1 px-3 py-2 bg-gray-200 text-gray-700 rounded-lg text-xs font-medium hover:bg-gray-300 transition-colors"
+                className="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl text-sm font-semibold hover:bg-gray-200 transition-all duration-200 hover:scale-105"
               >
                 Cancel
               </button>
             </div>
           </div>
         ) : (
-          <div className="bg-white border border-gray-200 rounded-lg p-3">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded font-medium">
+          <div className="bg-white border-2 border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all duration-200">
+            <div className="flex items-center gap-2 mb-2">
+              <span
+                className={`px-3 py-1.5 text-xs rounded-full font-semibold shadow-sm ${
+                  showFeedWarning
+                    ? "bg-gradient-to-r from-yellow-100 to-amber-100 text-yellow-700"
+                    : "bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700"
+                }`}
+              >
                 {platform}
               </span>
               {currentTitle && (
-                <span className="text-sm text-text-primary truncate flex-1">
+                <span className="text-sm text-gray-700 truncate flex-1 font-medium">
                   {currentTitle}
                 </span>
               )}
             </div>
-            <p className="text-xs text-text-secondary truncate">{displayUrl}</p>
+            <p className="text-xs text-gray-500 truncate font-mono">
+              {displayUrl}
+            </p>
+          </div>
+        )}
+
+        {/* Generic feed URL warning */}
+        {showFeedWarning && !isEditingUrl && (
+          <div className="mt-3 p-4 bg-gradient-to-r from-yellow-50 to-amber-50 border-2 border-yellow-200 rounded-2xl animate-[fadeIn_0.3s_ease-out] shadow-sm">
+            <p className="text-yellow-800 text-xs flex items-start gap-2">
+              <span className="text-lg">⚠️</span>
+              <span className="flex-1">
+                <strong className="font-semibold">
+                  Generic feed URL detected.
+                </strong>{" "}
+                This will save the feed page, not a specific post. Click{" "}
+                <button
+                  onClick={handleUrlEdit}
+                  className="text-yellow-900 underline font-semibold hover:text-yellow-700 transition-colors duration-200"
+                >
+                  Edit URL
+                </button>{" "}
+                to paste the correct post link.
+              </span>
+            </p>
           </div>
         )}
       </div>
 
       {/* Note Input */}
-      <div className="mb-4">
-        <label className="block text-sm font-medium text-text-primary mb-2">
+      <div className="mb-5 animate-[fadeIn_0.5s_ease-out]">
+        <label className="block text-sm font-semibold text-gray-700 mb-3">
           Add a Note (Optional)
         </label>
         <textarea
@@ -631,18 +879,18 @@ export default function SaveScreen({
           onChange={(e) => setNote(e.target.value)}
           placeholder="Why are you saving this? Add context..."
           maxLength={500}
-          className="w-full h-24 px-3 py-2 border border-gray-300 rounded-lg resize-none text-sm focus:outline-none focus:ring-2 focus:ring-brand-1 focus:border-transparent"
+          className="w-full h-28 px-4 py-3 border-2 border-gray-100 rounded-2xl resize-none text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent transition-all duration-200 bg-white shadow-sm hover:shadow-md placeholder-gray-400"
         />
-        <p className="text-xs text-text-secondary mt-1">
+        <p className="text-xs text-gray-500 mt-2 font-medium">
           {note.length}/500 characters
         </p>
       </div>
 
       {/* Error Message */}
       {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-red-600 text-sm flex items-center gap-1">
-            <span>⚠️</span> {error}
+        <div className="mb-5 p-4 bg-gradient-to-r from-red-50 to-rose-50 border-2 border-red-200 rounded-2xl animate-[shake_0.5s_ease-in-out] shadow-sm">
+          <p className="text-red-600 text-sm flex items-center gap-2 font-medium">
+            <span className="text-lg">⚠️</span> {error}
           </p>
         </div>
       )}
@@ -651,20 +899,23 @@ export default function SaveScreen({
       <button
         onClick={handleSave}
         disabled={isSaving || !currentUrl}
-        className="w-full px-4 py-3 bg-gradient-to-r from-brand-1 to-brand-2 text-white rounded-lg hover:shadow-lg hover:shadow-brand-1/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+        className="w-full px-6 py-4 bg-gradient-to-r from-purple-500 via-blue-500 to-indigo-500 text-white rounded-2xl hover:shadow-2xl hover:shadow-purple-300 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed font-bold text-base hover:scale-105 transform animate-[fadeIn_0.6s_ease-out]"
       >
         {isSaving ? (
-          <span className="flex items-center justify-center gap-2">
-            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+          <span className="flex items-center justify-center gap-3">
+            <div className="w-5 h-5 border-3 border-white border-t-transparent rounded-full animate-spin"></div>
             Validating...
           </span>
         ) : (
-          "Save to Tavlo"
+          <span className="flex items-center justify-center gap-2">
+            Save to Tavlo
+            <span className="text-lg">✨</span>
+          </span>
         )}
       </button>
 
       {/* Footer */}
-      <p className="text-xs text-text-secondary text-center mt-4">
+      <p className="text-xs text-gray-500 text-center mt-5 font-medium animate-[fadeIn_0.7s_ease-out]">
         This will be saved to your Tavlo library
       </p>
     </div>

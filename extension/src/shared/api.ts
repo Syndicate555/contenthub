@@ -3,12 +3,7 @@
  * Handles all communication with the Tavlo backend
  */
 
-import type {
-  CreateItemInput,
-  ApiResponse,
-  Item,
-  SaveResult,
-} from "./types";
+import type { CreateItemInput, ApiResponse, Item, SaveResult } from "./types";
 import { getApiBaseUrl } from "./config";
 
 // API base URL - uses environment or defaults
@@ -41,9 +36,9 @@ async function apiRequest<T>(
 ): Promise<ApiResponse<T>> {
   const { token, ...fetchOptions } = options;
 
-  const headers: HeadersInit = {
+  const headers: Record<string, string> = {
     "Content-Type": "application/json",
-    ...fetchOptions.headers,
+    ...(fetchOptions.headers as Record<string, string>),
   };
 
   // Add authorization header if token provided
@@ -55,7 +50,6 @@ async function apiRequest<T>(
     const response = await fetch(endpoint, {
       ...fetchOptions,
       headers,
-      credentials: "include", // Include cookies (not strictly needed with Bearer token)
     });
 
     const data = await response.json();
@@ -95,7 +89,6 @@ export async function validateToken(token: string): Promise<boolean> {
       headers: {
         Authorization: `Bearer ${token}`,
       },
-      credentials: "include",
     });
 
     // 200 = valid token, 401 = invalid/expired
@@ -162,17 +155,4 @@ export async function saveItem(
       error: errorMessage,
     };
   }
-}
-
-/**
- * Get current user info (for displaying in extension)
- * Note: This will be implemented in a future phase
- */
-export async function getCurrentUser(token: string) {
-  // TODO: Implement /api/user endpoint
-  // For now, return minimal info
-  return {
-    id: "user",
-    email: null,
-  };
 }
