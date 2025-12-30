@@ -1,6 +1,7 @@
 import { Readability } from "@mozilla/readability";
 import { fetchWithTimeout } from "./utils/timeout";
 import { YoutubeTranscript } from "youtube-transcript";
+import { normalizeUrl } from "./url-normalizer";
 
 export interface ExtractedContent {
   title: string;
@@ -279,7 +280,10 @@ async function extractRedditContent(url: string): Promise<ExtractedContent> {
   // Clean URL to ensure we can append .json correctly
   const urlBase = url.split("?")[0];
   const urlNoTrailingSlash = urlBase.replace(/\/+$/, ""); // Remove only trailing slashes
-  const cleanUrl = urlNoTrailingSlash.replace("old.reddit.com", "www.reddit.com");
+  const cleanUrl = urlNoTrailingSlash.replace(
+    "old.reddit.com",
+    "www.reddit.com",
+  );
 
   const jsonUrl = `${cleanUrl}.json`;
 
@@ -378,7 +382,11 @@ async function extractRedditContent(url: string): Promise<ExtractedContent> {
     console.log(`[Reddit] Fetching metadata from ${jsonUrl}`);
 
     // 1. Try Primary JSON (www.reddit.com)
-    let response = await fetchWithTimeout(jsonUrl, { headers: BROWSER_HEADERS }, 8000);
+    let response = await fetchWithTimeout(
+      jsonUrl,
+      { headers: BROWSER_HEADERS },
+      8000,
+    );
 
     if (response.ok) {
       return processJson(await response.json());
@@ -526,7 +534,9 @@ async function extractRedditContent(url: string): Promise<ExtractedContent> {
 
           // Extract metadata from URL
           const subredditMatch = cleanUrl.match(/\/r\/([^\/]+)\//);
-          const subreddit = subredditMatch ? `r/${subredditMatch[1]}` : "reddit";
+          const subreddit = subredditMatch
+            ? `r/${subredditMatch[1]}`
+            : "reddit";
 
           // Extract author username from URL (e.g., /comments/id/title/?context=3)
           // Reddit URLs don't always have username in the path, but Microlink might provide it
@@ -565,7 +575,8 @@ async function extractRedditContent(url: string): Promise<ExtractedContent> {
                 .replace(/_/g, " ")
                 .split(" ")
                 .map(
-                  (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase(),
+                  (word) =>
+                    word.charAt(0).toUpperCase() + word.slice(1).toLowerCase(),
                 )
                 .join(" ");
               console.log(
@@ -612,7 +623,10 @@ async function extractRedditContent(url: string): Promise<ExtractedContent> {
                 }
               }
             } catch (oembedError) {
-              console.log("[Reddit] oEmbed thumbnail fetch failed:", oembedError);
+              console.log(
+                "[Reddit] oEmbed thumbnail fetch failed:",
+                oembedError,
+              );
             }
           }
 
@@ -930,14 +944,8 @@ async function extractTwitterContent(url: string): Promise<ExtractedContent> {
   const tweetId = extractTweetId(url);
 
   // Normalize the URL for oEmbed compatibility
-  const canonicalTweetUrl = (() => {
-    const safe = new URL(url);
-    safe.search = "";
-    if (safe.hostname.includes("x.com")) {
-      safe.hostname = "twitter.com";
-    }
-    return safe.toString();
-  })();
+  // This removes /photo/X, /video/X, /analytics suffixes and tracking params
+  const canonicalTweetUrl = normalizeUrl(url);
 
   let tweetText = "";
   let authorName: string | undefined;
@@ -1559,7 +1567,9 @@ function extractLinkedInUrn(url: string): string | null {
     const type = postsMatch[1].toLowerCase();
     const id = postsMatch[2];
     // Use the correct URN type: ugcPost or activity
-    return type === "ugcpost" ? `urn:li:ugcPost:${id}` : `urn:li:activity:${id}`;
+    return type === "ugcpost"
+      ? `urn:li:ugcPost:${id}`
+      : `urn:li:activity:${id}`;
   }
 
   // Pattern 3: Feed update URL with activity ID
