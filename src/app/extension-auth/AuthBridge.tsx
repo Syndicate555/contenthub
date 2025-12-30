@@ -10,9 +10,9 @@ interface AuthBridgeProps {
 
 export function AuthBridge({ token, email }: AuthBridgeProps) {
   const [status, setStatus] = useState<"sending" | "success" | "error">(
-    "sending",
+    "sending"
   );
-  const [countdown, setCountdown] = useState(3);
+  const [countdown, setCountdown] = useState(10);
   const [extensionId, setExtensionId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -34,7 +34,7 @@ export function AuthBridge({ token, email }: AuthBridgeProps) {
         console.log("[Tavlo Auth] Chrome available:", chromeAvailable);
         console.log(
           "[Tavlo Auth] Chrome runtime available:",
-          chromeRuntimeAvailable,
+          chromeRuntimeAvailable
         );
 
         // Get extension ID from URL parameters
@@ -46,7 +46,7 @@ export function AuthBridge({ token, email }: AuthBridgeProps) {
         if (!extId) {
           console.error(
             "[Tavlo Auth] No extension ID in URL parameters. Full search params:",
-            window.location.search,
+            window.location.search
           );
           setStatus("error");
           return;
@@ -54,7 +54,7 @@ export function AuthBridge({ token, email }: AuthBridgeProps) {
 
         console.log(
           "[Tavlo Auth] Attempting to send token to extension:",
-          extId,
+          extId
         );
 
         // Save extension ID for later use
@@ -76,12 +76,12 @@ export function AuthBridge({ token, email }: AuthBridgeProps) {
                 console.error(
                   "[Tavlo Auth] Error sending message:",
                   // @ts-expect-error - chrome.runtime.lastError
-                  window.chrome.runtime.lastError.message,
+                  window.chrome.runtime.lastError.message
                 );
                 console.error("[Tavlo Auth] Extension ID used:", extId);
                 console.error(
                   "[Tavlo Auth] Current domain:",
-                  window.location.origin,
+                  window.location.origin
                 );
                 setStatus("error");
                 return;
@@ -89,21 +89,21 @@ export function AuthBridge({ token, email }: AuthBridgeProps) {
 
               if (response?.success) {
                 console.log(
-                  "[Tavlo Auth] Token sent successfully to extension",
+                  "[Tavlo Auth] Token sent successfully to extension"
                 );
                 setStatus("success");
               } else {
                 console.error(
                   "[Tavlo Auth] Extension rejected token:",
-                  response?.error,
+                  response?.error
                 );
                 setStatus("error");
               }
-            },
+            }
           );
         } else {
           console.error(
-            "[Tavlo Auth] Chrome runtime not available. This page must be accessed from Chrome/Edge with the extension installed.",
+            "[Tavlo Auth] Chrome runtime not available. This page must be accessed from Chrome/Edge with the extension installed."
           );
           setStatus("error");
         }
@@ -140,7 +140,7 @@ export function AuthBridge({ token, email }: AuthBridgeProps) {
                 () => {
                   // Fallback: try window.close() in case it works
                   window.close();
-                },
+                }
               );
             } else {
               // Fallback if chrome API not available
