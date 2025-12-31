@@ -1,11 +1,7 @@
-// Background service worker for Tavlo extension
-// Handles context menu and Chrome extension events
-
 import { saveItem } from "../shared/api";
 import { getToken, setToken, setUserEmail } from "../shared/storage";
 
 chrome.runtime.onInstalled.addListener(() => {
-  // Create context menu item for saving links
   chrome.contextMenus.create({
     id: "save-to-tavlo",
     title: "Save to Tavlo",
@@ -13,7 +9,6 @@ chrome.runtime.onInstalled.addListener(() => {
   });
 });
 
-// Handle context menu clicks
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   if (info.menuItemId === "save-to-tavlo") {
     const url = info.linkUrl || info.pageUrl || tab?.url;
@@ -28,7 +23,6 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
       return;
     }
 
-    // Get auth token
     const token = await getToken();
 
     if (!token) {
@@ -42,11 +36,9 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     }
 
     try {
-      // Save the item
       const result = await saveItem(url, undefined, token);
 
       if (result.success) {
-        // Show success notification
         chrome.notifications.create({
           type: "basic",
           iconUrl: chrome.runtime.getURL("icons/icon-48.png"),
@@ -57,7 +49,6 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
               : "Link saved to your Tavlo library",
         });
       } else {
-        // Show error notification
         chrome.notifications.create({
           type: "basic",
           iconUrl: chrome.runtime.getURL("icons/icon-48.png"),
@@ -66,7 +57,6 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
         });
       }
     } catch (error) {
-      // Show error notification
       chrome.notifications.create({
         type: "basic",
         iconUrl: chrome.runtime.getURL("icons/icon-48.png"),
@@ -80,12 +70,8 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   }
 });
 
-// Handle authentication messages from the web app
 chrome.runtime.onMessageExternal.addListener(
   (message, sender, sendResponse) => {
-    console.log("[Tavlo Extension] Received external message:", message);
-
-    // Handle authentication token from web app
     if (message.type === "TAVLO_EXTENSION_AUTH") {
       const { token, email } = message;
 
@@ -95,19 +81,11 @@ chrome.runtime.onMessageExternal.addListener(
         return;
       }
 
-      console.log("[Tavlo Extension] Storing auth token for:", email);
-
-      // Store token and email
       Promise.all([
         setToken(token),
         email ? setUserEmail(email) : Promise.resolve(),
       ])
         .then(() => {
-          console.log("[Tavlo Extension] Auth token stored successfully");
-
-          // Don't close the tab - let the web page show success message
-          // and handle auto-close with countdown
-
           sendResponse({ success: true });
         })
         .catch((error) => {
@@ -115,14 +93,10 @@ chrome.runtime.onMessageExternal.addListener(
           sendResponse({ success: false, error: error.message });
         });
 
-      // Return true to indicate we'll send response asynchronously
       return true;
     }
 
-    // Handle tab close request from auth page
     if (message.type === "TAVLO_EXTENSION_CLOSE_TAB") {
-      console.log("[Tavlo Extension] Received tab close request");
-
       if (sender.tab?.id) {
         chrome.tabs.remove(sender.tab.id).catch((err) => {
           console.warn("[Tavlo Extension] Could not close tab:", err);

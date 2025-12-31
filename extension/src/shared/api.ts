@@ -6,8 +6,6 @@
 import type { CreateItemInput, ApiResponse, Item, SaveResult } from "./types";
 import { getApiBaseUrl } from "./config";
 
-// API base URL - uses environment or defaults
-// In production, use tavlo.ca; in development, use localhost
 const API_BASE_URL = getApiBaseUrl();
 
 // API endpoint for extension - uses Bearer token authentication

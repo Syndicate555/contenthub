@@ -21,14 +21,11 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
         const newToken = changes.tavlo_auth_token.newValue;
 
         if (newToken) {
-          console.log("[Tavlo Extension] Auth token detected in storage");
           setIsAuthenticating(false);
 
-          // Validate and use the token
           validateToken(newToken)
             .then((isValid) => {
               if (isValid) {
-                console.log("[Tavlo Extension] Token validated successfully");
                 onLoginSuccess(newToken);
               } else {
                 setError("Invalid or expired token. Please try again.");
@@ -59,15 +56,9 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
     setIsAuthenticating(true);
 
     try {
-      // Get extension ID
       const extensionId = chrome.runtime.id;
-
-      // Build auth URL with extension ID as parameter
       const authUrl = `${getWebAppUrl()}/extension-auth?extensionId=${extensionId}`;
 
-      console.log("[Tavlo Extension] Opening auth page:", authUrl);
-
-      // Open auth page in a new tab
       chrome.tabs.create({
         url: authUrl,
         active: true,
