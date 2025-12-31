@@ -9,8 +9,38 @@ import type { ReactNode } from "react";
 async function fetcher(url: string) {
   const res = await fetch(url, { cache: "no-store" });
 
+  // Check if response is HTML (session expired, redirected to sign-in)
+  const contentType = res.headers.get("content-type");
+  if (contentType?.includes("text/html")) {
+    // Session expired - redirect to sign-in
+    window.location.href = "/sign-in?reason=session-expired";
+    throw new Error("Session expired");
+  }
+
   if (!res.ok) {
-    throw new Error("Failed to fetch");
+    // Handle 401 Unauthorized - session expired
+    if (res.status === 401) {
+      // Try to parse error details
+      let reason = "session-expired";
+      try {
+        const errorData = await res.json();
+        reason = errorData.reason || "session-expired";
+      } catch {
+        // Ignore parse errors, use default reason
+      }
+
+      // Redirect to sign-in
+      window.location.href = `/sign-in?reason=${reason}`;
+      throw new Error("Session expired");
+    }
+
+    // Try to parse other errors as JSON
+    try {
+      const errorData = await res.json();
+      throw new Error(errorData.error || `HTTP ${res.status}`);
+    } catch {
+      throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+    }
   }
 
   const json = await res.json();

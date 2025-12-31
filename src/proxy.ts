@@ -19,20 +19,46 @@ const isPublicRoute = createRouteMatcher([
 // Proxy replaces the deprecated middleware convention in Next.js 16+
 const proxy = clerkMiddleware(async (auth, request) => {
   const { userId, sessionId } = await auth();
+  const isApiRoute = request.nextUrl.pathname.startsWith("/api/");
 
   // Protect non-public routes
   if (!isPublicRoute(request)) {
-    await auth.protect();
+    // For API routes, check auth manually and return JSON errors
+    if (isApiRoute) {
+      if (!userId || !sessionId) {
+        return NextResponse.json(
+          { ok: false, error: "Unauthorized - Session expired" },
+          { status: 401 },
+        );
+      }
 
-    // Server-side session validation for authenticated users
-    if (userId && sessionId) {
+      // Server-side session validation for authenticated API requests
       const sessionValidation = await validateSession(userId, sessionId);
 
       if (!sessionValidation.valid) {
-        const url = request.nextUrl.clone();
-        url.pathname = "/sign-in";
-        url.searchParams.set("reason", sessionValidation.reason ?? "unknown");
-        return NextResponse.redirect(url);
+        return NextResponse.json(
+          {
+            ok: false,
+            error: "Session expired",
+            reason: sessionValidation.reason,
+          },
+          { status: 401 },
+        );
+      }
+    } else {
+      // For non-API routes, use standard auth.protect() which redirects
+      await auth.protect();
+
+      // Server-side session validation for authenticated page requests
+      if (userId && sessionId) {
+        const sessionValidation = await validateSession(userId, sessionId);
+
+        if (!sessionValidation.valid) {
+          const url = request.nextUrl.clone();
+          url.pathname = "/sign-in";
+          url.searchParams.set("reason", sessionValidation.reason ?? "unknown");
+          return NextResponse.redirect(url);
+        }
       }
     }
   }

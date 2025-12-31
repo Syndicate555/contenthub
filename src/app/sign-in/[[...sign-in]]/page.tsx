@@ -16,6 +16,9 @@ function SignInContent() {
     if (reason === "terminated") {
       return "Your session has ended. Please sign in again.";
     }
+    if (reason === "session-expired") {
+      return "Your session has expired. Please sign in again to continue.";
+    }
     return null;
   };
 
