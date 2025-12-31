@@ -2,7 +2,12 @@
 
 import { useMemo } from "react";
 import useSWR from "swr";
-import { Flame, Calendar as CalendarIcon, Sparkles, Clock3 } from "lucide-react";
+import {
+  Flame,
+  Calendar as CalendarIcon,
+  Sparkles,
+  Clock3,
+} from "lucide-react";
 
 interface CalendarData {
   activityDates: string[]; // ISO date strings (YYYY-MM-DD)
@@ -111,7 +116,7 @@ function calculateCurrentStreak(activityDates: Set<string>): number {
   today.setHours(0, 0, 0, 0);
 
   let streak = 0;
-  let checkDate = new Date(today);
+  const checkDate = new Date(today);
 
   while (true) {
     const dateString = checkDate.toISOString().split("T")[0];
@@ -138,8 +143,7 @@ function calculateLongestStreak(activityDates: Set<string>): number {
     date.setHours(0, 0, 0, 0);
 
     if (prev) {
-      const diff =
-        (date.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24);
+      const diff = (date.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24);
       if (diff === 1) {
         current += 1;
       } else {
@@ -180,10 +184,7 @@ export function StreakCalendar({ days = 180 }: { days?: number }) {
 
   const lastActiveDate = useMemo(() => {
     if (!data || !data.activityDates.length) return null;
-    const latest = data.activityDates
-      .slice()
-      .sort()
-      .at(-1);
+    const latest = data.activityDates.slice().sort().at(-1);
     return latest ? new Date(latest) : null;
   }, [data]);
 
@@ -312,70 +313,79 @@ export function StreakCalendar({ days = 180 }: { days?: number }) {
 
       {/* Calendar Grid */}
       <div className="relative mt-1">
-        {/* Month labels above calendar */}
-        <div className="flex gap-0.5 mb-1 ml-6">
-          {calendarGrid.map((week, index) => {
-            const label = getMonthLabel(index);
-            return (
-              <div key={index} className="flex-1 text-[10px] text-gray-500">
-                {label || ""}
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="flex gap-3">
-          {/* Day labels on the left */}
-          <div className="flex flex-col gap-1 justify-between py-0.5">
-            {weekDays.map((day, index) => (
-              <div
-                key={day + index}
-                className="w-5 h-3 text-[10px] text-gray-500 flex items-center"
-              >
-                {index % 2 === 1 ? day : ""}
-              </div>
-            ))}
+        {/* Horizontal scroll container for mobile */}
+        <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-slate-100">
+          {/* Month labels above calendar */}
+          <div className="flex gap-0.5 mb-1 ml-6">
+            {calendarGrid.map((week, index) => {
+              const label = getMonthLabel(index);
+              return (
+                <div
+                  key={index}
+                  className="flex-1 text-[10px] text-gray-500 min-w-[12px]"
+                >
+                  {label || ""}
+                </div>
+              );
+            })}
           </div>
 
-          {/* Calendar grid (weeks as columns) */}
-          <div className="flex-1 flex gap-1">
-            {calendarGrid.map((week, weekIndex) => (
-              <div key={weekIndex} className="flex flex-col gap-1 flex-1">
-                {week.map((cell, dayIndex) => {
-                  const key = `${weekIndex}-${dayIndex}`;
-                  const ageDays = Math.max(
-                    0,
-                    Math.round(
-                      (new Date().getTime() - cell.date.getTime()) /
-                        (1000 * 60 * 60 * 24),
-                    ),
-                  );
-                  const intensity = cell.hasActivity
-                    ? ageDays <= 7
-                      ? "bg-emerald-500 hover:bg-emerald-600 text-white"
-                      : ageDays <= 30
-                        ? "bg-emerald-400 hover:bg-emerald-500 text-white/90"
-                        : ageDays <= 90
-                          ? "bg-emerald-300 hover:bg-emerald-400 text-emerald-900"
-                          : "bg-emerald-200 hover:bg-emerald-300 text-emerald-900"
-                    : "bg-slate-200 hover:bg-slate-300 text-slate-500";
+          <div className="flex gap-3">
+            {/* Day labels on the left */}
+            <div className="flex flex-col gap-1 justify-between py-0.5 flex-shrink-0">
+              {weekDays.map((day, index) => (
+                <div
+                  key={day + index}
+                  className="w-5 h-3 text-[10px] text-gray-500 flex items-center"
+                >
+                  {index % 2 === 1 ? day : ""}
+                </div>
+              ))}
+            </div>
 
-                  const todayHighlight = cell.isToday
-                    ? "ring-2 ring-indigo-300 shadow-sm"
-                    : "";
+            {/* Calendar grid (weeks as columns) */}
+            <div className="flex gap-1 flex-1">
+              {calendarGrid.map((week, weekIndex) => (
+                <div
+                  key={weekIndex}
+                  className="flex flex-col gap-1 flex-1 min-w-[12px]"
+                >
+                  {week.map((cell, dayIndex) => {
+                    const key = `${weekIndex}-${dayIndex}`;
+                    const ageDays = Math.max(
+                      0,
+                      Math.round(
+                        (new Date().getTime() - cell.date.getTime()) /
+                          (1000 * 60 * 60 * 24),
+                      ),
+                    );
+                    const intensity = cell.hasActivity
+                      ? ageDays <= 7
+                        ? "bg-emerald-500 hover:bg-emerald-600 text-white"
+                        : ageDays <= 30
+                          ? "bg-emerald-400 hover:bg-emerald-500 text-white/90"
+                          : ageDays <= 90
+                            ? "bg-emerald-300 hover:bg-emerald-400 text-emerald-900"
+                            : "bg-emerald-200 hover:bg-emerald-300 text-emerald-900"
+                      : "bg-slate-200 hover:bg-slate-300 text-slate-500";
 
-                  return (
-                    <div
-                      key={key}
-                      className={`h-3 w-3 rounded-md transition-all duration-150 cursor-pointer ${intensity} ${todayHighlight}`}
-                      title={`${cell.date.toLocaleDateString("en-US", { month: "short", day: "numeric" })}${
-                        cell.hasActivity ? " • Active day" : " • No activity"
-                      }${cell.isToday ? " (Today)" : ""}`}
-                    />
-                  );
-                })}
-              </div>
-            ))}
+                    const todayHighlight = cell.isToday
+                      ? "ring-2 ring-indigo-300 shadow-sm"
+                      : "";
+
+                    return (
+                      <div
+                        key={key}
+                        className={`h-3 w-3 rounded-md transition-all duration-150 cursor-pointer ${intensity} ${todayHighlight}`}
+                        title={`${cell.date.toLocaleDateString("en-US", { month: "short", day: "numeric" })}${
+                          cell.hasActivity ? " • Active day" : " • No activity"
+                        }${cell.isToday ? " (Today)" : ""}`}
+                      />
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 

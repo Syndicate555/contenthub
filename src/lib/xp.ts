@@ -278,7 +278,80 @@ export async function awardXP(params: AwardXPParams): Promise<AwardXPResult> {
 }
 
 /**
+ * Calculate current streak from XP events (activity dates)
+ * This ensures the streak matches what's shown in the calendar
+ */
+async function calculateCurrentStreakFromActivity(
+  userId: string,
+): Promise<{ currentStreak: number; longestStreak: number }> {
+  // Get last 180 days of activity
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - 180);
+
+  const events = await db.xPEvent.findMany({
+    where: {
+      userId,
+      createdAt: { gte: startDate },
+    },
+    select: { createdAt: true },
+    orderBy: { createdAt: "desc" },
+  });
+
+  // Get unique activity dates
+  const activityDates = new Set<string>();
+  events.forEach((event) => {
+    const dateStr = event.createdAt.toISOString().split("T")[0];
+    activityDates.add(dateStr);
+  });
+
+  // Calculate current streak (counting back from today)
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  let currentStreak = 0;
+  const checkDate = new Date(today);
+
+  while (true) {
+    const dateString = checkDate.toISOString().split("T")[0];
+    if (activityDates.has(dateString)) {
+      currentStreak++;
+      checkDate.setDate(checkDate.getDate() - 1);
+    } else {
+      break;
+    }
+  }
+
+  // Calculate longest streak
+  const sortedDates = Array.from(activityDates).sort();
+  let longestStreak = 0;
+  let tempStreak = 0;
+  let prevDate: Date | null = null;
+
+  for (const dateStr of sortedDates) {
+    const date = new Date(dateStr);
+    date.setHours(0, 0, 0, 0);
+
+    if (prevDate) {
+      const diffDays =
+        (date.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24);
+      if (diffDays === 1) {
+        tempStreak += 1;
+      } else {
+        tempStreak = 1;
+      }
+    } else {
+      tempStreak = 1;
+    }
+
+    longestStreak = Math.max(longestStreak, tempStreak);
+    prevDate = date;
+  }
+
+  return { currentStreak, longestStreak };
+}
+
+/**
  * Get user's current stats
+ * Calculates streak dynamically from activity data for accuracy
  */
 export async function getUserStats(userId: string) {
   const stats = await db.userStats.findUnique({
@@ -301,8 +374,14 @@ export async function getUserStats(userId: string) {
     };
   }
 
+  // Calculate streak dynamically from activity data
+  const { currentStreak, longestStreak } =
+    await calculateCurrentStreakFromActivity(userId);
+
   return {
     ...stats,
+    currentStreak, // Override with calculated value
+    longestStreak: Math.max(stats.longestStreak, longestStreak), // Use max of stored and calculated
     levelProgress: getXpForNextLevel(stats.totalXp),
   };
 }
