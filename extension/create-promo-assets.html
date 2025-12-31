@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tavlo - Promo Assets Generator</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            margin: 20px;
+            background: #f5f7fa;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .canvas-wrapper {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        canvas {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            display: block;
+            margin: 10px 0;
+        }
+
+        .controls {
+            margin: 20px 0;
+        }
+
+        button {
+            background: linear-gradient(to right, #8B5CF6, #6366F1, #3B82F6);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        .info {
+            background: #EEF2FF;
+            border-left: 4px solid #6366F1;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .success {
+            background: #ECFDF5;
+            border-left: 4px solid #10B981;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Tavlo Promo Assets Generator</h1>
+        <p class="subtitle">Generate professional promotional images for Chrome Web Store</p>
+
+        <div class="info">
+            <strong>📸 Instructions:</strong>
+            <ol>
+                <li>Click "Generate Assets" to create the images</li>
+                <li>Right-click each canvas and "Save image as..."</li>
+                <li>Save with the filenames shown below</li>
+                <li>Upload to Chrome Web Store</li>
+            </ol>
+        </div>
+
+        <!-- Small Promo Tile -->
+        <div class="canvas-wrapper">
+            <h2>Small Promo Tile (Required)</h2>
+            <p><strong>Size:</strong> 440×280 pixels</p>
+            <p><strong>Used for:</strong> Homepage, category pages, search results</p>
+            <canvas id="smallTile" width="440" height="280"></canvas>
+            <p><strong>Save as:</strong> small-promo-tile.png</p>
+        </div>
+
+        <!-- Marquee Image -->
+        <div class="canvas-wrapper">
+            <h2>Marquee Image (Optional)</h2>
+            <p><strong>Size:</strong> 1400×560 pixels</p>
+            <p><strong>Used for:</strong> Homepage carousel (if featured)</p>
+            <canvas id="marquee" width="1400" height="560"></canvas>
+            <p><strong>Save as:</strong> marquee.png</p>
+        </div>
+
+        <div class="controls">
+            <button onclick="generateAssets()">Generate Assets</button>
+        </div>
+
+        <div id="successMessage" class="success" style="display: none;">
+            ✅ <strong>Assets generated!</strong> Right-click each image above and select "Save image as..." to download.
+        </div>
+    </div>
+
+    <script>
+        function generateAssets() {
+            generateSmallTile();
+            generateMarquee();
+            document.getElementById('successMessage').style.display = 'block';
+        }
+
+        function generateSmallTile() {
+            const canvas = document.getElementById('smallTile');
+            const ctx = canvas.getContext('2d');
+            const width = 440;
+            const height = 280;
+
+            // Create gradient background
+            const gradient = ctx.createLinearGradient(0, 0, width, height);
+            gradient.addColorStop(0, '#8B5CF6');
+            gradient.addColorStop(0.5, '#6366F1');
+            gradient.addColorStop(1, '#3B82F6');
+
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, width, height);
+
+            // Draw "T" logo
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 100px Arial, Helvetica, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('T', width / 2, height / 2 - 30);
+
+            // Draw "Tavlo" text
+            ctx.font = 'bold 36px Arial, Helvetica, sans-serif';
+            ctx.fillText('Tavlo', width / 2, height / 2 + 60);
+
+            // Draw tagline
+            ctx.font = '16px Arial, Helvetica, sans-serif';
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+            ctx.fillText('One-click saving for the web', width / 2, height / 2 + 90);
+        }
+
+        function generateMarquee() {
+            const canvas = document.getElementById('marquee');
+            const ctx = canvas.getContext('2d');
+            const width = 1400;
+            const height = 560;
+
+            // Create gradient background
+            const gradient = ctx.createLinearGradient(0, 0, width, height);
+            gradient.addColorStop(0, '#8B5CF6');
+            gradient.addColorStop(0.5, '#6366F1');
+            gradient.addColorStop(1, '#3B82F6');
+
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, width, height);
+
+            // Draw "T" logo (larger)
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 200px Arial, Helvetica, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('T', width / 2, height / 2 - 60);
+
+            // Draw "Tavlo" text
+            ctx.font = 'bold 72px Arial, Helvetica, sans-serif';
+            ctx.fillText('Tavlo', width / 2, height / 2 + 120);
+
+            // Draw tagline
+            ctx.font = '32px Arial, Helvetica, sans-serif';
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+            ctx.fillText('One-click saving for the web', width / 2, height / 2 + 180);
+        }
+
+        // Auto-generate on load
+        window.onload = function() {
+            generateAssets();
+        };
+    </script>
+</body>
+</html>
