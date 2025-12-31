@@ -197,6 +197,36 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+
+  /* TAVLO Design System - Dark Mode */
+  --bg-page: oklch(0.13 0 0);
+  --surface: rgba(30, 30, 30, 0.72);
+  --surface-solid: oklch(0.18 0 0);
+  --bg-card: rgba(40, 40, 40, 0.8);
+  --bg-section: rgba(35, 35, 35, 0.5);
+  --bg-elevated: rgba(50, 50, 50, 0.95);
+
+  --ink: oklch(0.98 0 0);
+  --text-primary: oklch(0.98 0 0);
+  --text-body: oklch(0.92 0 0);
+  --text-secondary: oklch(0.75 0 0);
+  --text-muted: oklch(0.6 0 0);
+
+  --border-light: rgba(255, 255, 255, 0.06);
+  --border-medium: rgba(255, 255, 255, 0.12);
+  --border-strong: rgba(255, 255, 255, 0.18);
+
+  /* Gamification colors (slightly brighter for dark mode) */
+  --xp-gold: oklch(0.8 0.2 75);
+  --xp-gold-dark: oklch(0.7 0.22 70);
+  --level-purple: oklch(0.65 0.28 285);
+  --streak-fire-start: oklch(0.75 0.24 35);
+  --streak-fire-end: oklch(0.65 0.27 15);
+
+  /* Background gradients for dark mode */
+  --bg-gradient-1: oklch(0.15 0.01 270);
+  --bg-gradient-2: oklch(0.14 0.02 210);
+  --bg-gradient-3: oklch(0.15 0.01 300);
 }
 
 @layer base {

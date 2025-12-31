@@ -42,28 +42,28 @@ const RARITY_COLORS: Record<
   { bg: string; border: string; glow: string; text: string }
 > = {
   common: {
-    bg: "bg-gray-50",
-    border: "border-gray-300",
-    glow: "shadow-gray-200",
-    text: "text-gray-700",
+    bg: "bg-gray-50 dark:bg-gray-800/50",
+    border: "border-gray-300 dark:border-gray-600",
+    glow: "shadow-gray-200 dark:shadow-gray-700",
+    text: "text-gray-700 dark:text-gray-300",
   },
   rare: {
-    bg: "bg-blue-50",
-    border: "border-blue-400",
-    glow: "shadow-blue-200",
-    text: "text-blue-700",
+    bg: "bg-blue-50 dark:bg-blue-950/50",
+    border: "border-blue-400 dark:border-blue-600",
+    glow: "shadow-blue-200 dark:shadow-blue-800",
+    text: "text-blue-700 dark:text-blue-400",
   },
   epic: {
-    bg: "bg-purple-50",
-    border: "border-purple-400",
-    glow: "shadow-purple-200",
-    text: "text-purple-700",
+    bg: "bg-purple-50 dark:bg-purple-950/50",
+    border: "border-purple-400 dark:border-purple-600",
+    glow: "shadow-purple-200 dark:shadow-purple-800",
+    text: "text-purple-700 dark:text-purple-400",
   },
   legendary: {
-    bg: "bg-yellow-50",
-    border: "border-yellow-400",
-    glow: "shadow-yellow-200",
-    text: "text-yellow-700",
+    bg: "bg-yellow-50 dark:bg-yellow-950/50",
+    border: "border-yellow-400 dark:border-yellow-600",
+    glow: "shadow-yellow-200 dark:shadow-yellow-800",
+    text: "text-yellow-700 dark:text-yellow-400",
   },
 };
 
@@ -180,59 +180,59 @@ export function BadgeDetailModal({
             <h2 className={`text-2xl font-bold ${rarityStyle.text}`}>
               {badge.name}
             </h2>
-            <p className="text-sm font-medium uppercase tracking-wide text-gray-500">
+            <p className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
               {badge.rarity} Badge
             </p>
           </div>
 
           {/* Description */}
-          <p className="text-center text-gray-600 leading-relaxed">
+          <p className="text-center text-muted-foreground leading-relaxed">
             {badge.description}
           </p>
 
           {/* Earned Info or Progress */}
           {isEarned && badge.awardedAt ? (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
-              <p className="text-sm font-medium text-green-800">
+            <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg p-4 text-center">
+              <p className="text-sm font-medium text-green-800 dark:text-green-300">
                 Unlocked{" "}
                 {formatDistanceToNow(new Date(badge.awardedAt), {
                   addSuffix: true,
                 })}
               </p>
-              <p className="text-xs text-green-600 mt-1">🎉 Congratulations!</p>
+              <p className="text-xs text-green-600 dark:text-green-400 mt-1">🎉 Congratulations!</p>
             </div>
           ) : progress ? (
             <div className="space-y-3">
               {/* Progress Bar */}
               <div>
                 <div className="flex items-center justify-between text-sm mb-2">
-                  <span className="font-medium text-gray-700">Progress</span>
-                  <span className="text-gray-600">
+                  <span className="font-medium text-foreground">Progress</span>
+                  <span className="text-muted-foreground">
                     {progress.current.toLocaleString()} /{" "}
                     {progress.target.toLocaleString()}
                   </span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                <div className="w-full bg-muted rounded-full h-3 overflow-hidden">
                   <div
                     className="bg-gradient-to-r from-blue-500 to-purple-500 h-full rounded-full transition-all duration-500"
                     style={{ width: `${progress.percentage}%` }}
                   />
                 </div>
-                <p className="text-xs text-gray-500 mt-1 text-right">
+                <p className="text-xs text-muted-foreground mt-1 text-right">
                   {progress.percentage}% complete
                 </p>
               </div>
 
               {/* Criteria */}
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                <p className="text-sm text-gray-700 text-center">
+              <div className="bg-muted border border-border rounded-lg p-4">
+                <p className="text-sm text-foreground text-center">
                   <span className="font-medium">Goal:</span>{" "}
                   {formatCriteriaValue(badge)}
                 </p>
               </div>
 
               {/* Call to Action */}
-              <p className="text-sm text-center text-gray-600 italic">
+              <p className="text-sm text-center text-muted-foreground italic">
                 {getCallToAction(badge)}
               </p>
             </div>

@@ -40,17 +40,17 @@ interface BadgeShowcaseProps {
 }
 
 const RARITY_COLORS: Record<string, string> = {
-  common: "border-gray-300 bg-gray-50",
-  rare: "border-blue-400 bg-blue-50",
-  epic: "border-purple-400 bg-purple-50",
-  legendary: "border-yellow-400 bg-yellow-50",
+  common: "border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/50",
+  rare: "border-blue-400 dark:border-blue-600 bg-blue-50 dark:bg-blue-950/50",
+  epic: "border-purple-400 dark:border-purple-600 bg-purple-50 dark:bg-purple-950/50",
+  legendary: "border-yellow-400 dark:border-yellow-600 bg-yellow-50 dark:bg-yellow-950/50",
 };
 
 const RARITY_TEXT: Record<string, string> = {
-  common: "text-gray-700",
-  rare: "text-blue-700",
-  epic: "text-purple-700",
-  legendary: "text-yellow-700",
+  common: "text-gray-700 dark:text-gray-300",
+  rare: "text-blue-700 dark:text-blue-400",
+  epic: "text-purple-700 dark:text-purple-400",
+  legendary: "text-yellow-700 dark:text-yellow-400",
 };
 
 const LOCKED_STYLE = "opacity-50 grayscale";
@@ -153,12 +153,12 @@ export function BadgeShowcase({
 
   if (badges.length === 0) {
     return (
-      <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
+      <div className="bg-card rounded-lg p-6 border border-border shadow-sm">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold">Badges</h2>
-          <span className="text-sm text-gray-500">0 / {total}</span>
+          <h2 className="text-lg font-semibold text-foreground">Badges</h2>
+          <span className="text-sm text-muted-foreground">0 / {total}</span>
         </div>
-        <div className="text-center py-8 text-gray-500">
+        <div className="text-center py-8 text-muted-foreground">
           <div className="text-4xl mb-2">🏆</div>
           <p className="text-sm">No badges available yet</p>
           <p className="text-xs mt-1">Start saving items to unlock badges!</p>
@@ -171,10 +171,10 @@ export function BadgeShowcase({
 
   return (
     <>
-      <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
+      <div className="bg-card rounded-lg p-6 border border-border shadow-sm">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold">Badges</h2>
-          <span className="text-sm text-gray-500">
+          <h2 className="text-lg font-semibold text-foreground">Badges</h2>
+          <span className="text-sm text-muted-foreground">
             {earned} / {total}
           </span>
         </div>
@@ -214,7 +214,7 @@ export function BadgeShowcase({
                 {/* Lock icon for locked badges */}
                 {isLocked && (
                   <div className="absolute top-2 right-2">
-                    <Lock className="w-4 h-4 text-gray-500" />
+                    <Lock className="w-4 h-4 text-muted-foreground" />
                   </div>
                 )}
 
@@ -231,7 +231,7 @@ export function BadgeShowcase({
                 </div>
 
                 {/* Rarity Label */}
-                <div className="text-center text-xs text-gray-600 mt-1 capitalize">
+                <div className="text-center text-xs text-muted-foreground mt-1 capitalize">
                   {badge.rarity}
                 </div>
 
@@ -257,14 +257,14 @@ export function BadgeShowcase({
         </div>
 
         {/* Progress Message */}
-        <div className="mt-6 pt-4 border-t border-gray-100 text-center">
-          <p className="text-sm text-gray-600">
+        <div className="mt-6 pt-4 border-t border-border text-center">
+          <p className="text-sm text-muted-foreground">
             {earned < total
               ? `${total - earned} more badge${total - earned !== 1 ? "s" : ""} to unlock!`
               : "All badges unlocked! 🎉"}
           </p>
           {badgeStats && earned > 0 && earned < total && (
-            <div className="mt-2 w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+            <div className="mt-2 w-full bg-muted rounded-full h-2 overflow-hidden">
               <div
                 className="bg-gradient-to-r from-yellow-400 to-yellow-600 h-full transition-all duration-500"
                 style={{ width: `${badgeStats.progress}%` }}

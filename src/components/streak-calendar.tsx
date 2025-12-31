@@ -190,10 +190,10 @@ export function StreakCalendar({ days = 180 }: { days?: number }) {
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm">
+      <div className="bg-card rounded-2xl p-5 border border-border shadow-sm">
         <div className="animate-pulse">
-          <div className="h-5 bg-gray-200 rounded w-1/3 mb-3"></div>
-          <div className="h-20 bg-gray-200 rounded"></div>
+          <div className="h-5 bg-muted rounded w-1/3 mb-3"></div>
+          <div className="h-20 bg-muted rounded"></div>
         </div>
       </div>
     );
@@ -234,29 +234,29 @@ export function StreakCalendar({ days = 180 }: { days?: number }) {
   };
 
   return (
-    <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-md">
+    <div className="bg-card rounded-2xl p-5 border border-border shadow-md">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
         <div className="flex items-center gap-2">
-          <div className="h-10 w-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center shadow-inner">
+          <div className="h-10 w-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 flex items-center justify-center shadow-inner">
             <CalendarIcon className="w-5 h-5" />
           </div>
           <div>
-            <p className="text-xs uppercase tracking-[0.18em] text-slate-500 font-semibold">
+            <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground font-semibold">
               Usage pulse
             </p>
-            <h3 className="text-lg font-semibold text-slate-900">
+            <h3 className="text-lg font-semibold text-foreground">
               Last {days} days
             </h3>
           </div>
         </div>
 
         <div className="flex items-center gap-2 text-xs">
-          <div className="inline-flex items-center gap-1 rounded-full bg-orange-50 text-orange-700 px-3 py-1 border border-orange-100">
+          <div className="inline-flex items-center gap-1 rounded-full bg-orange-50 dark:bg-orange-950/50 text-orange-700 dark:text-orange-400 px-3 py-1 border border-orange-100 dark:border-orange-800">
             <Flame className="w-4 h-4" />
             <span className="font-semibold">{currentStreak} day streak</span>
           </div>
-          <div className="inline-flex items-center gap-1 rounded-full bg-indigo-50 text-indigo-700 px-3 py-1 border border-indigo-100">
+          <div className="inline-flex items-center gap-1 rounded-full bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-400 px-3 py-1 border border-indigo-100 dark:border-indigo-800">
             <Sparkles className="w-4 h-4" />
             <span className="font-semibold">
               {Math.round((data.totalActiveDays / days) * 100)}% consistency
@@ -267,36 +267,36 @@ export function StreakCalendar({ days = 180 }: { days?: number }) {
 
       {/* Summary badges */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
-        <div className="rounded-lg border border-emerald-100 bg-emerald-50/70 px-3 py-2">
-          <p className="text-[11px] text-emerald-700 font-semibold uppercase tracking-wide">
+        <div className="rounded-lg border border-emerald-100 dark:border-emerald-800 bg-emerald-50/70 dark:bg-emerald-950/30 px-3 py-2">
+          <p className="text-[11px] text-emerald-700 dark:text-emerald-400 font-semibold uppercase tracking-wide">
             Active days
           </p>
-          <p className="text-lg font-bold text-emerald-800">
+          <p className="text-lg font-bold text-emerald-800 dark:text-emerald-300">
             {data.totalActiveDays}
           </p>
-          <p className="text-[10px] text-emerald-700/80">
+          <p className="text-[10px] text-emerald-700/80 dark:text-emerald-400/80">
             {Math.round((data.totalActiveDays / days) * 100)}% hit rate
           </p>
         </div>
-        <div className="rounded-lg border border-orange-100 bg-orange-50/70 px-3 py-2">
-          <p className="text-[11px] text-orange-700 font-semibold uppercase tracking-wide">
+        <div className="rounded-lg border border-orange-100 dark:border-orange-800 bg-orange-50/70 dark:bg-orange-950/30 px-3 py-2">
+          <p className="text-[11px] text-orange-700 dark:text-orange-400 font-semibold uppercase tracking-wide">
             Current streak
           </p>
-          <p className="text-lg font-bold text-orange-800">{currentStreak}d</p>
-          <p className="text-[10px] text-orange-700/80">Keep the flame alive</p>
+          <p className="text-lg font-bold text-orange-800 dark:text-orange-300">{currentStreak}d</p>
+          <p className="text-[10px] text-orange-700/80 dark:text-orange-400/80">Keep the flame alive</p>
         </div>
-        <div className="rounded-lg border border-blue-100 bg-blue-50/70 px-3 py-2">
-          <p className="text-[11px] text-blue-700 font-semibold uppercase tracking-wide">
+        <div className="rounded-lg border border-blue-100 dark:border-blue-800 bg-blue-50/70 dark:bg-blue-950/30 px-3 py-2">
+          <p className="text-[11px] text-blue-700 dark:text-blue-400 font-semibold uppercase tracking-wide">
             Best run
           </p>
-          <p className="text-lg font-bold text-blue-800">{longestStreak}d</p>
-          <p className="text-[10px] text-blue-700/80">Longest streak yet</p>
+          <p className="text-lg font-bold text-blue-800 dark:text-blue-300">{longestStreak}d</p>
+          <p className="text-[10px] text-blue-700/80 dark:text-blue-400/80">Longest streak yet</p>
         </div>
-        <div className="rounded-lg border border-purple-100 bg-purple-50/70 px-3 py-2">
-          <p className="text-[11px] text-purple-700 font-semibold uppercase tracking-wide">
+        <div className="rounded-lg border border-purple-100 dark:border-purple-800 bg-purple-50/70 dark:bg-purple-950/30 px-3 py-2">
+          <p className="text-[11px] text-purple-700 dark:text-purple-400 font-semibold uppercase tracking-wide">
             Last active
           </p>
-          <p className="text-lg font-bold text-purple-800">
+          <p className="text-lg font-bold text-purple-800 dark:text-purple-300">
             {lastActiveDate
               ? lastActiveDate.toLocaleDateString("en-US", {
                   month: "short",
@@ -304,7 +304,7 @@ export function StreakCalendar({ days = 180 }: { days?: number }) {
                 })
               : "—"}
           </p>
-          <p className="text-[10px] text-purple-700/80 flex items-center gap-1">
+          <p className="text-[10px] text-purple-700/80 dark:text-purple-400/80 flex items-center gap-1">
             <Clock3 className="w-3 h-3" />
             {lastActiveDate ? "Recent visit logged" : "No activity yet"}
           </p>
@@ -314,7 +314,7 @@ export function StreakCalendar({ days = 180 }: { days?: number }) {
       {/* Calendar Grid */}
       <div className="relative mt-1">
         {/* Horizontal scroll container for mobile */}
-        <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-slate-100">
+        <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-muted scrollbar-track-muted/30">
           {/* Month labels above calendar */}
           <div className="flex gap-0.5 mb-1 ml-6">
             {calendarGrid.map((week, index) => {
@@ -322,7 +322,7 @@ export function StreakCalendar({ days = 180 }: { days?: number }) {
               return (
                 <div
                   key={index}
-                  className="flex-1 text-[10px] text-gray-500 min-w-[12px]"
+                  className="flex-1 text-[10px] text-muted-foreground min-w-[12px]"
                 >
                   {label || ""}
                 </div>
@@ -336,7 +336,7 @@ export function StreakCalendar({ days = 180 }: { days?: number }) {
               {weekDays.map((day, index) => (
                 <div
                   key={day + index}
-                  className="w-5 h-3 text-[10px] text-gray-500 flex items-center"
+                  className="w-5 h-3 text-[10px] text-muted-foreground flex items-center"
                 >
                   {index % 2 === 1 ? day : ""}
                 </div>
@@ -361,16 +361,16 @@ export function StreakCalendar({ days = 180 }: { days?: number }) {
                     );
                     const intensity = cell.hasActivity
                       ? ageDays <= 7
-                        ? "bg-emerald-500 hover:bg-emerald-600 text-white"
+                        ? "bg-emerald-500 hover:bg-emerald-600 text-white dark:bg-emerald-600 dark:hover:bg-emerald-500"
                         : ageDays <= 30
-                          ? "bg-emerald-400 hover:bg-emerald-500 text-white/90"
+                          ? "bg-emerald-400 hover:bg-emerald-500 text-white/90 dark:bg-emerald-700 dark:hover:bg-emerald-600"
                           : ageDays <= 90
-                            ? "bg-emerald-300 hover:bg-emerald-400 text-emerald-900"
-                            : "bg-emerald-200 hover:bg-emerald-300 text-emerald-900"
-                      : "bg-slate-200 hover:bg-slate-300 text-slate-500";
+                            ? "bg-emerald-300 hover:bg-emerald-400 text-emerald-900 dark:bg-emerald-800 dark:hover:bg-emerald-700 dark:text-emerald-200"
+                            : "bg-emerald-200 hover:bg-emerald-300 text-emerald-900 dark:bg-emerald-900/60 dark:hover:bg-emerald-800 dark:text-emerald-300"
+                      : "bg-slate-200 hover:bg-slate-300 text-slate-500 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-slate-400";
 
                     const todayHighlight = cell.isToday
-                      ? "ring-2 ring-indigo-300 shadow-sm"
+                      ? "ring-2 ring-indigo-300 dark:ring-indigo-500 shadow-sm"
                       : "";
 
                     return (
@@ -390,25 +390,25 @@ export function StreakCalendar({ days = 180 }: { days?: number }) {
         </div>
 
         {/* Legend */}
-        <div className="flex flex-wrap items-center justify-between mt-4 pt-3 border-t border-slate-100 gap-3">
-          <div className="flex items-center gap-2 text-[11px] text-slate-600">
+        <div className="flex flex-wrap items-center justify-between mt-4 pt-3 border-t border-border gap-3">
+          <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
             <span>Less</span>
             <div className="flex gap-1">
-              <div className="w-3 h-3 rounded-md bg-slate-200"></div>
-              <div className="w-3 h-3 rounded-md bg-emerald-200"></div>
-              <div className="w-3 h-3 rounded-md bg-emerald-300"></div>
-              <div className="w-3 h-3 rounded-md bg-emerald-400"></div>
-              <div className="w-3 h-3 rounded-md bg-emerald-500"></div>
+              <div className="w-3 h-3 rounded-md bg-slate-200 dark:bg-slate-700"></div>
+              <div className="w-3 h-3 rounded-md bg-emerald-200 dark:bg-emerald-900/60"></div>
+              <div className="w-3 h-3 rounded-md bg-emerald-300 dark:bg-emerald-800"></div>
+              <div className="w-3 h-3 rounded-md bg-emerald-400 dark:bg-emerald-700"></div>
+              <div className="w-3 h-3 rounded-md bg-emerald-500 dark:bg-emerald-600"></div>
             </div>
             <span>More recent</span>
           </div>
 
-          <div className="text-[11px] text-slate-600 flex items-center gap-2">
-            <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-1 border border-slate-200">
+          <div className="text-[11px] text-muted-foreground flex items-center gap-2">
+            <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-1 border border-border">
               <Flame className="w-3 h-3 text-orange-500" />
               {currentStreak}d streak
             </span>
-            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-1 border border-emerald-100">
+            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 dark:bg-emerald-950/30 px-2 py-1 border border-emerald-100 dark:border-emerald-800">
               {data.totalActiveDays} active days
             </span>
           </div>

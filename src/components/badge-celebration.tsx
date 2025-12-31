@@ -103,7 +103,7 @@ export function BadgeCelebration({
     >
       <div className="relative animate-in zoom-in duration-500">
         {/* Badge Container */}
-        <div className="bg-white rounded-3xl p-12 shadow-2xl max-w-md mx-4 text-center space-y-6">
+        <div className="bg-card rounded-3xl p-12 shadow-2xl max-w-md mx-4 text-center space-y-6">
           {/* Badge Icon with Bounce Animation */}
           <div className="animate-bounce">
             <div className="text-8xl mb-4">{badge.icon}</div>
@@ -114,28 +114,28 @@ export function BadgeCelebration({
             <h2 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
               Badge Unlocked!
             </h2>
-            <h3 className="text-2xl font-bold text-gray-900">{badge.name}</h3>
+            <h3 className="text-2xl font-bold text-foreground">{badge.name}</h3>
           </div>
 
           {/* Badge Description */}
-          <p className="text-gray-600 leading-relaxed">{badge.description}</p>
+          <p className="text-muted-foreground leading-relaxed">{badge.description}</p>
 
           {/* Rarity Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-100 to-yellow-200 rounded-full">
-            <span className="text-sm font-bold text-yellow-800 uppercase tracking-wide">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-100 to-yellow-200 dark:from-yellow-900/50 dark:to-yellow-800/50 rounded-full">
+            <span className="text-sm font-bold text-yellow-800 dark:text-yellow-300 uppercase tracking-wide">
               {badge.rarity} Badge
             </span>
             {badge.rarity === "legendary" && (
-              <span className="text-yellow-600">⭐</span>
+              <span className="text-yellow-600 dark:text-yellow-400">⭐</span>
             )}
             {badge.rarity === "epic" && (
-              <span className="text-purple-600">👑</span>
+              <span className="text-purple-600 dark:text-purple-400">👑</span>
             )}
           </div>
 
           {/* Congratulations Message */}
           <p className="text-2xl">🎉</p>
-          <p className="text-sm text-gray-500">Click anywhere to continue</p>
+          <p className="text-sm text-muted-foreground">Click anywhere to continue</p>
         </div>
       </div>
     </div>

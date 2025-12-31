@@ -28,22 +28,22 @@ const ACTION_LABELS: Record<string, string> = {
 };
 
 const ACTION_COLORS: Record<string, string> = {
-  save_item: "text-blue-600 bg-blue-50",
-  process_item: "text-green-600 bg-green-50",
-  add_reflection: "text-purple-600 bg-purple-50",
-  complete_daily_quest: "text-orange-600 bg-orange-50",
-  complete_weekly_quest: "text-red-600 bg-red-50",
-  maintain_streak: "text-yellow-600 bg-yellow-50",
-  first_item_of_day: "text-cyan-600 bg-cyan-50",
-  focus_area_bonus: "text-pink-600 bg-pink-50",
+  save_item: "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/50",
+  process_item: "text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/50",
+  add_reflection: "text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/50",
+  complete_daily_quest: "text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/50",
+  complete_weekly_quest: "text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/50",
+  maintain_streak: "text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-950/50",
+  first_item_of_day: "text-cyan-600 dark:text-cyan-400 bg-cyan-50 dark:bg-cyan-950/50",
+  focus_area_bonus: "text-pink-600 dark:text-pink-400 bg-pink-50 dark:bg-pink-950/50",
 };
 
 export function RecentActivity({ events }: RecentActivityProps) {
   if (events.length === 0) {
     return (
-      <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
-        <h2 className="text-lg font-semibold mb-4">Recent Activity</h2>
-        <div className="text-center py-8 text-gray-500">
+      <div className="bg-card rounded-lg p-6 border border-border shadow-sm">
+        <h2 className="text-lg font-semibold text-foreground mb-4">Recent Activity</h2>
+        <div className="text-center py-8 text-muted-foreground">
           <p className="text-sm">No recent activity yet</p>
           <p className="text-xs mt-1">
             Process your first item to get started!
@@ -54,19 +54,19 @@ export function RecentActivity({ events }: RecentActivityProps) {
   }
 
   return (
-    <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
-      <h2 className="text-lg font-semibold mb-4">Recent Activity</h2>
+    <div className="bg-card rounded-lg p-6 border border-border shadow-sm">
+      <h2 className="text-lg font-semibold text-foreground mb-4">Recent Activity</h2>
 
       <div className="space-y-3">
         {events.map((event) => (
           <div
             key={event.id}
-            className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+            className="flex items-start gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors"
           >
             {/* XP Badge */}
             <div
               className={`flex-shrink-0 px-2 py-1 rounded-md font-semibold text-sm ${
-                ACTION_COLORS[event.action] || "text-gray-600 bg-gray-50"
+                ACTION_COLORS[event.action] || "text-muted-foreground bg-muted"
               }`}
             >
               +{event.xpAmount}
@@ -75,7 +75,7 @@ export function RecentActivity({ events }: RecentActivityProps) {
             {/* Event Details */}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-sm font-medium text-gray-900">
+                <span className="text-sm font-medium text-foreground">
                   {ACTION_LABELS[event.action] || event.action}
                 </span>
                 {event.domain && (
@@ -90,7 +90,7 @@ export function RecentActivity({ events }: RecentActivityProps) {
                   </div>
                 )}
               </div>
-              <div className="text-xs text-gray-500 mt-0.5">
+              <div className="text-xs text-muted-foreground mt-0.5">
                 {formatDistanceToNow(new Date(event.createdAt), {
                   addSuffix: true,
                 })}
@@ -102,8 +102,8 @@ export function RecentActivity({ events }: RecentActivityProps) {
 
       {/* View More Link */}
       {events.length >= 10 && (
-        <div className="mt-4 pt-4 border-t border-gray-100 text-center">
-          <button className="text-sm text-gray-600 hover:text-gray-900 font-medium transition-colors">
+        <div className="mt-4 pt-4 border-t border-border text-center">
+          <button className="text-sm text-muted-foreground hover:text-foreground font-medium transition-colors">
             View All Activity →
           </button>
         </div>

@@ -163,12 +163,12 @@ export default function FocusAreasSection() {
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+          <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
             <Target className="w-5 h-5" />
             Focus Areas
           </h2>
         </div>
-        <div className="flex items-center gap-2 p-4 rounded-lg text-sm bg-red-50 text-red-800">
+        <div className="flex items-center gap-2 p-4 rounded-lg text-sm bg-red-50 dark:bg-red-950/50 text-red-800 dark:text-red-300">
           <AlertCircle className="w-5 h-5 flex-shrink-0" />
           <div className="flex-1">
             <p className="font-medium">Unable to load focus areas</p>
@@ -187,17 +187,17 @@ export default function FocusAreasSection() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+          <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
             <Target className="w-5 h-5" />
             Focus Areas
           </h2>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-muted-foreground">
             Select up to 3 domains to focus on. This helps personalize your
             quests and recommendations.
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-500">
+          <span className="text-sm text-muted-foreground">
             {selectedIds.length}/3 selected
           </span>
           {hasChanges && (
@@ -219,8 +219,8 @@ export default function FocusAreasSection() {
           className={cn(
             "flex items-center gap-2 p-3 rounded-lg text-sm",
             notification.type === "success"
-              ? "bg-green-50 text-green-800"
-              : "bg-red-50 text-red-800",
+              ? "bg-green-50 dark:bg-green-950/50 text-green-800 dark:text-green-300"
+              : "bg-red-50 dark:bg-red-950/50 text-red-800 dark:text-red-300",
           )}
         >
           {notification.type === "success" ? (
@@ -245,8 +245,8 @@ export default function FocusAreasSection() {
               className={cn(
                 "relative p-4 rounded-xl border-2 transition-all text-left",
                 isSelected
-                  ? "border-blue-500 bg-blue-50"
-                  : "border-gray-200 bg-white hover:border-gray-300",
+                  ? "border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-950/50"
+                  : "border-border bg-card hover:border-muted-foreground/50",
               )}
             >
               {/* Priority Badge */}
@@ -263,12 +263,12 @@ export default function FocusAreasSection() {
               <div className="text-2xl mb-2">{domain.icon}</div>
 
               {/* Name */}
-              <div className="font-medium text-gray-900">
+              <div className="font-medium text-foreground">
                 {domain.displayName}
               </div>
 
               {/* Description (truncated) */}
-              <div className="text-xs text-gray-500 line-clamp-2 mt-1">
+              <div className="text-xs text-muted-foreground line-clamp-2 mt-1">
                 {domain.description}
               </div>
             </button>
@@ -278,8 +278,8 @@ export default function FocusAreasSection() {
 
       {/* Current Focus Areas (if saved) */}
       {focusAreas.length > 0 && !hasChanges && (
-        <div className="bg-gray-50 rounded-lg p-4">
-          <h3 className="text-sm font-medium text-gray-700 mb-2">
+        <div className="bg-muted rounded-lg p-4">
+          <h3 className="text-sm font-medium text-muted-foreground mb-2">
             Your Current Focus
           </h3>
           <div className="flex flex-wrap gap-2">

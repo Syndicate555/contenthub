@@ -358,11 +358,11 @@ export default function SettingsPageClient({
     <div className="space-y-6">
       {/* Header */}
       <div className="space-y-1">
-        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+        <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
           <Settings className="w-6 h-6" />
           Settings
         </h1>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-muted-foreground">
           Manage your connected accounts and sync preferences
         </p>
       </div>
@@ -373,8 +373,8 @@ export default function SettingsPageClient({
           className={cn(
             "flex items-center gap-2 p-4 rounded-lg",
             notification.type === "success"
-              ? "bg-green-50 text-green-800"
-              : "bg-red-50 text-red-800"
+              ? "bg-green-50 dark:bg-green-950/50 text-green-800 dark:text-green-300"
+              : "bg-red-50 dark:bg-red-950/50 text-red-800 dark:text-red-300"
           )}
         >
           {notification.type === "success" ? (
@@ -388,26 +388,26 @@ export default function SettingsPageClient({
 
       {/* Sync Result */}
       {syncResult && (
-        <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 space-y-2">
-          <h3 className="font-medium text-blue-900">Sync Complete</h3>
+        <div className="bg-blue-50 dark:bg-blue-950/50 border border-blue-100 dark:border-blue-800 rounded-lg p-4 space-y-2">
+          <h3 className="font-medium text-blue-900 dark:text-blue-300">Sync Complete</h3>
           <div className="grid grid-cols-3 gap-4 text-sm">
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">
+              <div className="text-2xl font-bold text-green-600 dark:text-green-400">
                 {syncResult.synced}
               </div>
-              <div className="text-gray-600">Imported</div>
+              <div className="text-muted-foreground">Imported</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-gray-600">
+              <div className="text-2xl font-bold text-muted-foreground">
                 {syncResult.skipped}
               </div>
-              <div className="text-gray-600">Skipped</div>
+              <div className="text-muted-foreground">Skipped</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-red-600">
+              <div className="text-2xl font-bold text-red-600 dark:text-red-400">
                 {syncResult.failed}
               </div>
-              <div className="text-gray-600">Failed</div>
+              <div className="text-muted-foreground">Failed</div>
             </div>
           </div>
         </div>
@@ -415,15 +415,15 @@ export default function SettingsPageClient({
 
       {/* Connected Accounts Section */}
       <div className="space-y-4">
-        <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+        <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
           <Link2 className="w-5 h-5" />
           Connected Accounts
         </h2>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-muted-foreground">
           Connect your social media accounts to automatically import your
           bookmarks and saved posts.
         </p>
-        <div className="rounded-lg border border-amber-200 bg-amber-50 text-amber-800 px-3 py-2 text-sm">
+        <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 px-3 py-2 text-sm">
           Platform connections are coming soon for beta. For now, add links manually via Add.
         </div>
 
@@ -436,7 +436,7 @@ export default function SettingsPageClient({
             return (
               <div
                 key={provider}
-                className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm"
+                className="bg-card border border-border rounded-xl p-4 shadow-sm"
               >
                 <div className="flex items-center justify-between">
                   {/* Platform Info */}
@@ -450,15 +450,15 @@ export default function SettingsPageClient({
                       {platform.icon}
                     </div>
                     <div>
-                      <h3 className="font-medium text-gray-900">
+                      <h3 className="font-medium text-foreground">
                         {platform.name}
                       </h3>
                       {connection ? (
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-muted-foreground">
                           @{connection.providerHandle}
                         </p>
                       ) : (
-                        <p className="text-sm text-gray-400">
+                        <p className="text-sm text-muted-foreground">
                           {platform.description}
                         </p>
                       )}
@@ -502,7 +502,7 @@ export default function SettingsPageClient({
 
                 {/* Connection Stats */}
                 {connection && (
-                  <div className="mt-4 pt-4 border-t border-gray-100 flex items-center gap-6 text-sm text-gray-500">
+                  <div className="mt-4 pt-4 border-t border-border flex items-center gap-6 text-sm text-muted-foreground">
                     <div className="flex items-center gap-1.5">
                       <Download className="w-4 h-4" />
                       <span>{connection.importedCount} imported</span>
@@ -522,23 +522,23 @@ export default function SettingsPageClient({
       </div>
 
       {/* Feedback & Support */}
-      <div className="border-t border-gray-200 pt-6">
+      <div className="border-t border-border pt-6">
         <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">
+            <h3 className="text-lg font-semibold text-foreground">
               Feedback & Support
             </h3>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-muted-foreground">
               Tell us what to improve or report an issue. We read everything.
             </p>
           </div>
-          <div className="inline-flex rounded-full bg-gray-100 p-1">
+          <div className="inline-flex rounded-full bg-muted p-1">
             <button
               className={cn(
                 "px-3 py-1.5 text-sm font-medium rounded-full transition",
                 feedbackTab === "feedback"
-                  ? "bg-white shadow-sm text-gray-900"
-                  : "text-gray-500 hover:text-gray-700"
+                  ? "bg-card shadow-sm text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
               )}
               onClick={() => setFeedbackTab("feedback")}
             >
@@ -548,8 +548,8 @@ export default function SettingsPageClient({
               className={cn(
                 "px-3 py-1.5 text-sm font-medium rounded-full transition",
                 feedbackTab === "support"
-                  ? "bg-white shadow-sm text-gray-900"
-                  : "text-gray-500 hover:text-gray-700"
+                  ? "bg-card shadow-sm text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
               )}
               onClick={() => setFeedbackTab("support")}
             >
@@ -559,14 +559,14 @@ export default function SettingsPageClient({
         </div>
 
         <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+          <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-gray-700">
+                <label className="text-xs font-semibold text-muted-foreground">
                   Type
                 </label>
                 <select
-                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                  className="w-full rounded-lg border border-border bg-card text-foreground px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring/20"
                   value={feedbackForm.type}
                   onChange={(e) =>
                     setFeedbackForm((f) => ({ ...f, type: e.target.value }))
@@ -592,11 +592,11 @@ export default function SettingsPageClient({
                 </select>
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-gray-700">
+                <label className="text-xs font-semibold text-muted-foreground">
                   Area
                 </label>
                 <select
-                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                  className="w-full rounded-lg border border-border bg-card text-foreground px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring/20"
                   value={feedbackForm.area}
                   onChange={(e) =>
                     setFeedbackForm((f) => ({ ...f, area: e.target.value }))
@@ -615,11 +615,11 @@ export default function SettingsPageClient({
               </div>
               {feedbackTab === "support" && (
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-gray-700">
+                  <label className="text-xs font-semibold text-muted-foreground">
                     Severity
                   </label>
                   <select
-                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                    className="w-full rounded-lg border border-border bg-card text-foreground px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring/20"
                     value={feedbackForm.severity}
                     onChange={(e) =>
                       setFeedbackForm((f) => ({
@@ -636,10 +636,10 @@ export default function SettingsPageClient({
                 </div>
               )}
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-gray-700">
+                <label className="text-xs font-semibold text-muted-foreground">
                   Follow-up
                 </label>
-                <div className="flex items-center gap-2 text-sm text-gray-600">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <input
                     id="followup"
                     type="checkbox"
@@ -650,15 +650,15 @@ export default function SettingsPageClient({
                         allowFollowUp: e.target.checked,
                       }))
                     }
-                    className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                    className="h-4 w-4 rounded border-border text-indigo-600 focus:ring-indigo-500"
                   />
-                  <label htmlFor="followup">I’m okay with follow-up</label>
+                  <label htmlFor="followup">I'm okay with follow-up</label>
                 </div>
               </div>
             </div>
 
             <div className="mt-3 space-y-1">
-              <label className="text-xs font-semibold text-gray-700">
+              <label className="text-xs font-semibold text-muted-foreground">
                 Details
               </label>
               <Textarea
@@ -684,25 +684,25 @@ export default function SettingsPageClient({
               >
                 {submittingFeedback ? "Sending..." : "Submit"}
               </Button>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted-foreground">
                 We include route and device info to debug faster. No private
                 data is sent.
               </p>
             </div>
           </div>
 
-          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm space-y-3">
-            <h4 className="text-sm font-semibold text-gray-900">
+          <div className="rounded-xl border border-border bg-card p-4 shadow-sm space-y-3">
+            <h4 className="text-sm font-semibold text-foreground">
               What helps most?
             </h4>
-            <ul className="text-sm text-gray-600 space-y-1.5">
+            <ul className="text-sm text-muted-foreground space-y-1.5">
               <li>• Where were you in the app (Inbox, Library, Add)?</li>
               <li>• What did you expect vs. what happened?</li>
               <li>• Screenshots make bugs 10x easier.</li>
               <li>• Severity: blocking, major, or minor?</li>
-              <li>• For ideas: the job-to-be-done or pain you’re solving.</li>
+              <li>• For ideas: the job-to-be-done or pain you're solving.</li>
             </ul>
-            <div className="rounded-lg bg-indigo-50 border border-indigo-100 p-3 text-xs text-indigo-800">
+            <div className="rounded-lg bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-100 dark:border-indigo-800 p-3 text-xs text-indigo-800 dark:text-indigo-300">
               We read every submission. Early beta feedback directly shapes
               Tavlo.
             </div>
@@ -711,20 +711,20 @@ export default function SettingsPageClient({
       </div>
 
       {/* Focus Areas Section */}
-      <div className="border-t border-gray-200 pt-6">
+      <div className="border-t border-border pt-6">
         <FocusAreasSection />
       </div>
 
       {/* Info Box */}
-      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-        <h3 className="font-medium text-gray-900 mb-2">How it works</h3>
-        <ul className="text-sm text-gray-600 space-y-1">
+      <div className="bg-muted border border-border rounded-lg p-4">
+        <h3 className="font-medium text-foreground mb-2">How it works</h3>
+        <ul className="text-sm text-muted-foreground space-y-1">
           <li>1. Connect your social media account</li>
           <li>2. Click Sync to import your bookmarks</li>
           <li>3. New bookmarks appear in your Today feed</li>
           <li>4. Each bookmark is processed with AI summarization</li>
         </ul>
-        <p className="text-xs text-gray-400 mt-3">
+        <p className="text-xs text-muted-foreground mt-3">
           Note: We only access your bookmarks/saved posts. We cannot post or
           modify anything on your account.
         </p>

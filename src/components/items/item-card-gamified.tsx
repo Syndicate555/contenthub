@@ -277,21 +277,21 @@ const typeIcons = {
 };
 
 const typeColors = {
-  learn: "bg-blue-100 text-blue-700 border-blue-200",
-  do: "bg-green-100 text-green-700 border-green-200",
-  reference: "bg-purple-100 text-purple-700 border-purple-200",
+  learn: "bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800",
+  do: "bg-green-100 dark:bg-green-950/50 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800",
+  reference: "bg-purple-100 dark:bg-purple-950/50 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800",
 };
 
 const categoryColors: Record<string, string> = {
-  tech: "bg-indigo-100 text-indigo-700 border-indigo-200",
-  business: "bg-emerald-100 text-emerald-700 border-emerald-200",
-  design: "bg-pink-100 text-pink-700 border-pink-200",
-  productivity: "bg-amber-100 text-amber-700 border-amber-200",
-  learning: "bg-purple-100 text-purple-700 border-purple-200",
-  lifestyle: "bg-rose-100 text-rose-700 border-rose-200",
-  entertainment: "bg-orange-100 text-orange-700 border-orange-200",
-  news: "bg-slate-100 text-slate-700 border-slate-200",
-  other: "bg-gray-100 text-gray-700 border-gray-200",
+  tech: "bg-indigo-100 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800",
+  business: "bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800",
+  design: "bg-pink-100 dark:bg-pink-950/50 text-pink-700 dark:text-pink-400 border-pink-200 dark:border-pink-800",
+  productivity: "bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800",
+  learning: "bg-purple-100 dark:bg-purple-950/50 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800",
+  lifestyle: "bg-rose-100 dark:bg-rose-950/50 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-800",
+  entertainment: "bg-orange-100 dark:bg-orange-950/50 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-800",
+  news: "bg-slate-100 dark:bg-slate-800/50 text-slate-700 dark:text-slate-400 border-slate-200 dark:border-slate-700",
+  other: "bg-gray-100 dark:bg-gray-800/50 text-gray-700 dark:text-gray-400 border-gray-200 dark:border-gray-700",
 };
 
 export function ItemCardGamified({
@@ -1013,13 +1013,13 @@ export function ItemCardGamified({
                 </div>
 
                 {/* Title */}
-                <h3 className="text-base font-semibold text-gray-900 line-clamp-2 mb-1">
+                <h3 className="text-base font-semibold text-foreground line-clamp-2 mb-1">
                   {item.title || item.url}
                 </h3>
 
                 {/* Author subtitle */}
                 {item.author && (
-                  <p className="text-sm text-gray-500 mt-0.5">
+                  <p className="text-sm text-muted-foreground mt-0.5">
                     by {item.author}
                   </p>
                 )}
@@ -1027,7 +1027,7 @@ export function ItemCardGamified({
 
               {/* Date */}
               <span
-                className="text-xs text-gray-400 whitespace-nowrap cursor-help"
+                className="text-xs text-muted-foreground whitespace-nowrap cursor-help"
                 title={formatFullDate(item.createdAt)}
               >
                 {formatRelativeDate(item.createdAt)}
@@ -1142,10 +1142,10 @@ export function ItemCardGamified({
           <CardContent className="pt-0">
             {/* Summary */}
             {summaryBullets.length > 0 && (
-              <ul className="text-sm text-gray-600 space-y-1.5 mb-3">
+              <ul className="text-sm text-muted-foreground space-y-1.5 mb-3">
                 {summaryBullets.slice(0, 5).map((bullet: string, i: number) => (
                   <li key={i} className="flex items-start gap-2">
-                    <span className="text-gray-300 mt-0.5">•</span>
+                    <span className="text-muted-foreground/50 mt-0.5">•</span>
                     <span className="leading-relaxed break-words">
                       {bullet}
                     </span>
@@ -1166,7 +1166,7 @@ export function ItemCardGamified({
                   />
                 ))}
                 {item.tags.length > 6 && (
-                  <span className="text-xs text-gray-400 self-center">
+                  <span className="text-xs text-muted-foreground self-center">
                     +{item.tags.length - 6} more
                   </span>
                 )}
@@ -1175,9 +1175,9 @@ export function ItemCardGamified({
 
             {/* Note */}
             {item.note && (
-              <div className="flex items-start gap-2 p-2 bg-amber-50 border border-amber-100 rounded-lg mb-3">
+              <div className="flex items-start gap-2 p-2 bg-amber-50 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-800 rounded-lg mb-3">
                 <MessageSquare className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
-                <p className="text-xs text-amber-800 break-words">
+                <p className="text-xs text-amber-800 dark:text-amber-300 break-words">
                   {item.note}
                 </p>
               </div>
@@ -1189,7 +1189,7 @@ export function ItemCardGamified({
                 href={item.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
               >
                 <ExternalLink className="w-4 h-4" />
                 View Original
@@ -1198,7 +1198,7 @@ export function ItemCardGamified({
                 variant="ghost"
                 size="sm"
                 onClick={handleCopyLink}
-                className="h-7 px-2 text-gray-500 hover:text-gray-700"
+                className="h-7 px-2 text-muted-foreground hover:text-foreground"
               >
                 {copied ? (
                   <Check className="w-3.5 h-3.5 text-green-600" />
@@ -1210,7 +1210,7 @@ export function ItemCardGamified({
 
             {/* Actions */}
             {showActions && (
-              <div className="flex items-center gap-1 pt-3 border-t border-gray-100">
+              <div className="flex items-center gap-1 pt-3 border-t border-border">
                 <Button
                   variant="ghost"
                   size="sm"

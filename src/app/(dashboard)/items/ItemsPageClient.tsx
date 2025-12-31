@@ -322,10 +322,10 @@ export default function ItemsPage() {
             </div>
           ) : items.length === 0 ? (
             <div className="text-center py-10">
-              <p className="text-lg font-semibold text-slate-800">
+              <p className="text-lg font-semibold text-foreground">
                 No items found
               </p>
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-muted-foreground">
                 Try adjusting your search or filters.
               </p>
             </div>
@@ -461,40 +461,40 @@ function StickyTopBar({
   children?: React.ReactNode;
 }) {
   return (
-    <div className="sticky top-0 z-20 bg-gray-50/95 backdrop-blur-sm border-b border-gray-200 shadow-sm">
+    <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm border-b border-border shadow-sm">
       <div className="flex flex-col gap-4 px-3 sm:px-4 lg:px-6 pt-4 pb-5">
         <div className="flex items-center gap-3 flex-wrap">
           <div className="relative flex-1 min-w-[260px]">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               type="search"
               placeholder="Search your library…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-11 pr-16 h-11 rounded-xl border-gray-200 shadow-sm focus:ring-2 focus:ring-gray-900/10"
+              className="pl-11 pr-16 h-11 rounded-xl border-border bg-card shadow-sm focus:ring-2 focus:ring-ring/20"
             />
             {searchQuery && (
               <button
                 aria-label="Clear search"
                 onClick={onClearSearch}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
               >
                 <X className="w-4 h-4" />
               </button>
             )}
             {isSearching && (
-              <Loader2 className="absolute right-9 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-gray-400" />
+              <Loader2 className="absolute right-9 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-muted-foreground" />
             )}
           </div>
 
           <div className="flex items-center gap-3 ml-auto">
-            <span className="text-sm text-gray-600 whitespace-nowrap">
+            <span className="text-sm text-muted-foreground whitespace-nowrap">
               Showing {totalDisplay} of {totalItems || totalDisplay}
             </span>
             <Button
               variant="outline"
               size="sm"
-              className="lg:hidden h-11 rounded-xl border-gray-200 shadow-sm"
+              className="lg:hidden h-11 rounded-xl border-border shadow-sm"
               onClick={onOpenMobileFilters}
             >
               <Filter className="w-4 h-4 mr-2" />
@@ -503,7 +503,7 @@ function StickyTopBar({
           </div>
         </div>
 
-        <div className="flex items-center gap-2 text-sm text-gray-600 flex-wrap">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
           {["all", "new", "reviewed", "pinned"].map((status) => (
             <Button
               key={status}
@@ -511,8 +511,8 @@ function StickyTopBar({
               size="sm"
               className={
                 statusFilter === status
-                  ? "bg-gray-900 text-white shadow-sm"
-                  : "border-gray-200 text-gray-700 bg-white hover:border-gray-300"
+                  ? "bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 shadow-sm"
+                  : "border-border text-muted-foreground bg-card hover:border-muted-foreground/50 hover:text-foreground"
               }
               onClick={() => setStatusFilter(status as ItemStatus | "all")}
             >
@@ -528,7 +528,7 @@ function StickyTopBar({
             <Button
               variant="ghost"
               size="sm"
-              className="text-gray-600 hover:text-gray-900"
+              className="text-muted-foreground hover:text-foreground"
               onClick={onClearAll}
             >
               Clear all
@@ -571,7 +571,7 @@ function ActiveFiltersRow({
         <button
           key={`${token.type}-${token.label}`}
           onClick={() => onRemoveFilter(token.type, token.label)}
-          className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gray-100 text-gray-700 text-sm border border-gray-200"
+          className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-muted text-foreground text-sm border border-border"
           aria-label={`Remove ${token.type} ${token.label}`}
         >
           <span className="capitalize">{token.type}:</span>
@@ -657,13 +657,13 @@ function FiltersSidebar({
     return (
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <p className="text-sm font-semibold text-slate-800">{title}</p>
+          <p className="text-sm font-semibold text-foreground">{title}</p>
         </div>
         <div className="space-y-1">
           {top.map((opt, idx) => (
             <label
               key={opt.value || `${title}-${idx}`}
-              className="flex items-center gap-2 text-sm text-gray-700"
+              className="flex items-center gap-2 text-sm text-foreground"
             >
               <input
                 type={selectionMode === "single" ? "radio" : "checkbox"}
@@ -675,7 +675,7 @@ function FiltersSidebar({
                 }
                 name={selectionMode === "single" ? `${title}-facet` : undefined}
                 aria-label={`${title} ${opt.label}`}
-                className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                className="h-4 w-4 rounded border-border text-indigo-600 focus:ring-indigo-500"
               />
               {getIcon ? (
                 <span className="flex items-center justify-center w-5">
@@ -686,7 +686,7 @@ function FiltersSidebar({
                 {opt.label}
               </span>
               {opt.count !== undefined && (
-                <span className="text-xs text-gray-500">{opt.count}</span>
+                <span className="text-xs text-muted-foreground">{opt.count}</span>
               )}
             </label>
           ))}
@@ -705,7 +705,7 @@ function FiltersSidebar({
   };
 
   return (
-    <div className="sticky top-24 space-y-6 bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
+    <div className="sticky top-24 space-y-6 bg-card border border-border rounded-xl p-4 shadow-sm">
       {renderFacet(
         "Categories",
         categories.map((c) => ({
@@ -809,12 +809,12 @@ function ItemThumbnailCard({
   return (
     <button
       onClick={onClick}
-      className="group relative overflow-hidden rounded-xl bg-gray-100 border border-gray-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+      className="group relative overflow-hidden rounded-xl bg-muted border border-border shadow-sm focus:outline-none focus:ring-2 focus:ring-ring"
       aria-label={item.title || "View item"}
     >
       <div className="aspect-[3/4] w-full relative">
         <div className="absolute left-2 top-2 z-10">
-          <div className="inline-flex items-center gap-2 rounded-full bg-white/90 px-2.5 py-1 text-xs font-medium text-gray-800 shadow-sm backdrop-blur">
+          <div className="inline-flex items-center gap-2 rounded-full bg-card/90 dark:bg-card/80 px-2.5 py-1 text-xs font-medium text-foreground shadow-sm backdrop-blur">
             <PlatformIcon source={platform.domain} size="sm" />
             <span className="max-w-[120px] truncate">{platform.name}</span>
           </div>
@@ -834,7 +834,7 @@ function ItemThumbnailCard({
             }
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-gray-200 to-gray-300 text-gray-600 text-sm font-medium">
+          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-muted to-muted/50 text-muted-foreground text-sm font-medium">
             {fallbackLabel}
           </div>
         )}
@@ -909,7 +909,7 @@ function FacetViewAllModal({
             {filtered.map((opt, idx) => (
               <label
                 key={opt.value || `${title}-modal-${idx}`}
-                className="flex items-center gap-2 text-sm text-gray-700"
+                className="flex items-center gap-2 text-sm text-foreground"
               >
                 <input
                   type={selectionMode === "single" ? "radio" : "checkbox"}
@@ -928,11 +928,11 @@ function FacetViewAllModal({
                           : [...prev, opt.value],
                     )
                   }
-                  className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                  className="h-4 w-4 rounded border-border text-indigo-600 focus:ring-indigo-500"
                 />
                 <span className="flex-1">{opt.label}</span>
                 {opt.count !== undefined && (
-                  <span className="text-xs text-gray-500">{opt.count}</span>
+                  <span className="text-xs text-muted-foreground">{opt.count}</span>
                 )}
               </label>
             ))}

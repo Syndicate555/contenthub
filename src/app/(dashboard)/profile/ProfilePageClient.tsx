@@ -108,8 +108,8 @@ export function ProfilePageClient({ fallbackData }: ProfilePageClientProps) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-gray-900 border-r-transparent"></div>
-          <p className="mt-4 text-sm text-gray-600">Loading your profile...</p>
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-foreground border-r-transparent"></div>
+          <p className="mt-4 text-sm text-muted-foreground">Loading your profile...</p>
         </div>
       </div>
     );
@@ -124,7 +124,7 @@ export function ProfilePageClient({ fallbackData }: ProfilePageClientProps) {
           </p>
           <button
             onClick={() => mutate()}
-            className="mt-4 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors"
+            className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
           >
             Retry
           </button>

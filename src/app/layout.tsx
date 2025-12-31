@@ -6,6 +6,7 @@ import { Analytics } from "@vercel/analytics/react";
 import { Toaster } from "@/components/ui/sonner";
 import { SWRProvider } from "@/components/providers/swr-provider";
 import { SessionProvider } from "@/components/providers/session-provider";
+import { ThemeProvider } from "@/components/providers/theme-provider";
 import { WebVitals } from "@/components/web-vitals";
 import { ConsoleSuppressor } from "@/components/ConsoleSuppressor";
 import "./globals.css";
@@ -40,18 +41,25 @@ export default function RootLayout({
       signInFallbackRedirectUrl="/today"
       signUpFallbackRedirectUrl="/today"
     >
-      <html lang="en">
+      <html lang="en" suppressHydrationWarning>
         <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50 min-h-screen`}
+          className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground min-h-screen`}
         >
-          <ConsoleSuppressor />
-          <WebVitals />
-          <SpeedInsights />
-          <Analytics />
-          <SWRProvider>
-            <SessionProvider>{children}</SessionProvider>
-          </SWRProvider>
-          <Toaster richColors position="top-right" />
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <ConsoleSuppressor />
+            <WebVitals />
+            <SpeedInsights />
+            <Analytics />
+            <SWRProvider>
+              <SessionProvider>{children}</SessionProvider>
+            </SWRProvider>
+            <Toaster richColors position="top-right" />
+          </ThemeProvider>
         </body>
       </html>
     </ClerkProvider>

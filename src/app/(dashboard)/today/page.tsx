@@ -136,10 +136,10 @@ export default function TodayPage() {
           <div className="mb-6">
             <NoResultsIllustration />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-3">
+          <h2 className="text-2xl font-bold text-foreground mb-3">
             No results match your filters
           </h2>
-          <p className="text-gray-500 mb-8 max-w-md mx-auto">
+          <p className="text-muted-foreground mb-8 max-w-md mx-auto">
             Try adjusting your search or selecting a different source to see
             more items.
           </p>
@@ -151,7 +151,7 @@ export default function TodayPage() {
                 setSearchTerm("");
                 setSelectedPlatform(null);
               }}
-              className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-gray-900 to-gray-800 text-white rounded-lg shadow-lg hover:shadow-xl transition-all font-semibold"
+              className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-gray-900 to-gray-800 dark:from-gray-100 dark:to-gray-200 text-white dark:text-gray-900 rounded-lg shadow-lg hover:shadow-xl transition-all font-semibold"
             >
               Clear filters
             </motion.button>
@@ -159,7 +159,7 @@ export default function TodayPage() {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="inline-flex items-center px-6 py-3 text-gray-700 bg-white border-2 border-gray-200 hover:border-gray-300 rounded-lg transition-all font-semibold"
+                className="inline-flex items-center px-6 py-3 text-foreground bg-card border-2 border-border hover:border-muted-foreground/50 rounded-lg transition-all font-semibold"
               >
                 Browse Library
                 <ArrowRight className="w-4 h-4 ml-2" />
@@ -179,7 +179,7 @@ export default function TodayPage() {
           <h2 className="text-2xl font-bold text-gradient-purple-pink mb-3">
             All caught up!
           </h2>
-          <p className="text-gray-500 mb-8 max-w-md mx-auto">
+          <p className="text-muted-foreground mb-8 max-w-md mx-auto">
             You have no new items to review. Your inbox is empty and ready for
             new content.
           </p>
@@ -190,7 +190,7 @@ export default function TodayPage() {
               </button>
             </Link>
             <Link href="/items">
-              <button className="inline-flex items-center px-6 py-3 text-gray-700 bg-white border-2 border-gray-200 hover:border-gray-300 rounded-lg transition-all font-semibold">
+              <button className="inline-flex items-center px-6 py-3 text-foreground bg-card border-2 border-border hover:border-muted-foreground/50 rounded-lg transition-all font-semibold">
                 Browse Library
                 <ArrowRight className="w-4 h-4 ml-2" />
               </button>
@@ -249,7 +249,7 @@ export default function TodayPage() {
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-all"
+            className="bg-card border border-border rounded-xl p-4 shadow-sm hover:shadow-md transition-all"
           >
             <div className="flex flex-col gap-3 md:gap-4">
               <div className="flex items-center gap-4">
@@ -262,17 +262,17 @@ export default function TodayPage() {
                     <Inbox className="w-5 h-5 text-white" />
                   </motion.div>
                   <div className="flex items-baseline gap-3">
-                    <h1 className="text-2xl font-bold text-gray-900">Inbox</h1>
+                    <h1 className="text-2xl font-bold text-foreground">Inbox</h1>
                     <div className="flex items-center gap-2">
                       <motion.span
                         key={headerCount}
                         initial={{ scale: 1.2, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
-                        className="text-2xl font-black text-gray-900"
+                        className="text-2xl font-black text-foreground"
                       >
                         {headerCount}
                       </motion.span>
-                      <span className="text-sm text-gray-500 font-medium">
+                      <span className="text-sm text-muted-foreground font-medium">
                         items
                       </span>
                     </div>
@@ -309,13 +309,13 @@ export default function TodayPage() {
               {/* Search on its own row for better responsiveness */}
               <div className="relative group w-full">
                 <div className="absolute left-3 top-1/2 -translate-y-1/2">
-                  <Search className="w-4 h-4 text-gray-400 group-focus-within:text-gray-600 transition-colors" />
+                  <Search className="w-4 h-4 text-muted-foreground group-focus-within:text-foreground transition-colors" />
                 </div>
                 <Input
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Search by title, tags, or content..."
-                  className="pl-10 pr-16 h-10 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:border-gray-400 focus:ring-2 focus:ring-gray-100 transition-all w-full"
+                  className="pl-10 pr-16 h-10 text-sm bg-muted border border-border rounded-lg focus:border-ring focus:ring-2 focus:ring-ring/20 transition-all w-full"
                 />
                 {searchTerm && (
                   <motion.button
@@ -324,7 +324,7 @@ export default function TodayPage() {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={() => setSearchTerm("")}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 text-xs font-medium text-gray-600 bg-gray-200 rounded hover:bg-gray-300 hover:text-gray-700 transition-colors"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 text-xs font-medium text-muted-foreground bg-muted rounded hover:bg-accent hover:text-foreground transition-colors"
                   >
                     Clear
                   </motion.button>
@@ -333,11 +333,11 @@ export default function TodayPage() {
             </div>
 
             {/* Metadata row */}
-            <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
-              <p className="text-xs text-gray-500 font-medium">
+            <div className="flex items-center justify-between mt-3 pt-3 border-t border-border">
+              <p className="text-xs text-muted-foreground font-medium">
                 Your personal social media feed
               </p>
-              <p className="text-xs text-gray-500 font-medium">{today}</p>
+              <p className="text-xs text-muted-foreground font-medium">{today}</p>
               {hasActiveFilters && (
                 <motion.button
                   initial={{ opacity: 0, scale: 0.9 }}
@@ -348,7 +348,7 @@ export default function TodayPage() {
                     setSearchTerm("");
                     setSelectedPlatform(null);
                   }}
-                  className="text-xs font-medium text-gray-600 hover:text-gray-900 underline underline-offset-2"
+                  className="text-xs font-medium text-muted-foreground hover:text-foreground underline underline-offset-2"
                 >
                   Clear all filters
                 </motion.button>
@@ -361,11 +361,11 @@ export default function TodayPage() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-all"
+            className="bg-card border border-border rounded-xl p-4 shadow-sm hover:shadow-md transition-all"
           >
             <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2 text-gray-700 text-xs font-semibold uppercase tracking-wide">
-                <Filter className="w-4 h-4 text-gray-500" />
+              <div className="flex items-center gap-2 text-muted-foreground text-xs font-semibold uppercase tracking-wide">
+                <Filter className="w-4 h-4" />
                 <span>Filter by source</span>
               </div>
               {sidebarError && (
@@ -382,8 +382,8 @@ export default function TodayPage() {
                 className={cn(
                   "inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all",
                   selectedPlatform === null
-                    ? "bg-gray-900 text-white shadow-md"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    ? "bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 shadow-md"
+                    : "bg-muted text-muted-foreground hover:bg-accent hover:text-foreground"
                 )}
               >
                 <span className="font-semibold">All</span>
@@ -391,8 +391,8 @@ export default function TodayPage() {
                   className={cn(
                     "text-xs px-2 py-0.5 rounded-full font-semibold min-w-[1.5rem] text-center",
                     selectedPlatform === null
-                      ? "bg-white/20 text-white"
-                      : "bg-gray-200 text-gray-600"
+                      ? "bg-white/20 text-white dark:bg-black/20 dark:text-gray-900"
+                      : "bg-background text-muted-foreground"
                   )}
                 >
                   {totalCount}
@@ -429,7 +429,7 @@ export default function TodayPage() {
                             platformGradients[platform.slug] ||
                             "from-indigo-600 to-purple-600"
                           } text-white shadow-md`
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        : "bg-muted text-muted-foreground hover:bg-accent hover:text-foreground"
                     )}
                   >
                     <span className="flex items-center gap-2">
@@ -441,7 +441,7 @@ export default function TodayPage() {
                         "text-xs px-2 py-0.5 rounded-full font-semibold min-w-[1.5rem] text-center",
                         isActive
                           ? "bg-white/20 text-white"
-                          : "bg-gray-200 text-gray-600"
+                          : "bg-background text-muted-foreground"
                       )}
                     >
                       {platform.count}
@@ -451,15 +451,15 @@ export default function TodayPage() {
               })}
             </div>
             {sidebarLoading && (
-              <p className="text-xs text-gray-400 mt-2">Loading counts...</p>
+              <p className="text-xs text-muted-foreground mt-2">Loading counts...</p>
             )}
             {(isValidating || isLoading) && (
               <div
-                className="flex items-center gap-2 text-xs text-gray-500 mt-3"
+                className="flex items-center gap-2 text-xs text-muted-foreground mt-3"
                 role="status"
                 aria-live="polite"
               >
-                <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                <Loader2 className="w-4 h-4 animate-spin" />
                 <span>Updating results...</span>
               </div>
             )}
@@ -495,7 +495,7 @@ export default function TodayPage() {
                   )}
                 >
                   {/* Feed intro */}
-                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse" />
                     <span>
                       Review your saved content and decide what to keep
@@ -516,8 +516,8 @@ export default function TodayPage() {
 
                   {/* Pagination controls */}
                   {pagination && pagination.totalPages > 1 && (
-                    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border border-gray-200 bg-white rounded-lg px-4 py-3 shadow-sm">
-                      <div className="text-sm text-gray-600">
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border border-border bg-card rounded-lg px-4 py-3 shadow-sm">
+                      <div className="text-sm text-muted-foreground">
                         Page {pagination.page} of {pagination.totalPages}
                       </div>
                       <div className="flex items-center gap-2">
@@ -531,8 +531,8 @@ export default function TodayPage() {
                           className={cn(
                             "px-3 py-1.5 rounded-md border text-sm transition-colors",
                             pagination.page <= 1 || isLoading || isValidating
-                              ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
-                              : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
+                              ? "bg-muted text-muted-foreground border-border cursor-not-allowed"
+                              : "bg-card text-foreground border-border hover:bg-accent"
                           )}
                         >
                           Previous
@@ -545,8 +545,8 @@ export default function TodayPage() {
                           className={cn(
                             "px-3 py-1.5 rounded-md border text-sm transition-colors",
                             !pagination.hasMore || isLoading || isValidating
-                              ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
-                              : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
+                              ? "bg-muted text-muted-foreground border-border cursor-not-allowed"
+                              : "bg-card text-foreground border-border hover:bg-accent"
                           )}
                         >
                           Next
@@ -556,7 +556,7 @@ export default function TodayPage() {
                   )}
 
                   {/* End of feed */}
-                  <div className="text-center py-8 text-gray-400 text-sm">
+                  <div className="text-center py-8 text-muted-foreground text-sm">
                     End of your inbox
                   </div>
                 </div>
@@ -568,11 +568,11 @@ export default function TodayPage() {
         {/* Right Sidebar - AI Assistant Placeholder */}
         <aside className="hidden lg:block w-full">
           <div className="sticky top-20">
-            <div className="bg-white rounded-lg border border-gray-200 border-dashed p-6 shadow-sm">
+            <div className="bg-card rounded-lg border border-border border-dashed p-6 shadow-sm">
               <div className="text-center space-y-3">
-                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto">
+                <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center mx-auto">
                   <svg
-                    className="w-6 h-6 text-gray-400"
+                    className="w-6 h-6 text-muted-foreground"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -586,15 +586,15 @@ export default function TodayPage() {
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-900 mb-1">
+                  <h3 className="text-sm font-semibold text-foreground mb-1">
                     AI Assistant
                   </h3>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-muted-foreground">
                     Chat with AI about your saved content
                   </p>
                 </div>
                 <div className="pt-2">
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">
                     Coming Soon
                   </span>
                 </div>
