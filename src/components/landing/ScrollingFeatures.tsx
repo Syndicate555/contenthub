@@ -21,7 +21,7 @@ const STEPS: Step[] = [
   {
     id: "step-1",
     image:
-      "https://res.cloudinary.com/dggvt0gzu/image/upload/v1766752242/plus_d9xheg.gif",
+      "https://gnxrddsvzynszstsraer.supabase.co/storage/v1/object/public/Tavlo/plus_d9xheg.gif",
     alt: "Animated preview of saving content into Tavlo.",
     aspectClass: "aspect-[16/9]",
     minHeightClass: "min-h-[240px] md:min-h-[320px]",
@@ -33,7 +33,7 @@ const STEPS: Step[] = [
   {
     id: "step-2",
     image:
-      "https://res.cloudinary.com/dggvt0gzu/image/upload/v1766752297/step_2_bitli9.gif",
+      "https://gnxrddsvzynszstsraer.supabase.co/storage/v1/object/public/Tavlo/step_2_bitli9.gif",
     alt: "Saved content organized in Tavlo with filters and tags.",
     aspectClass: "aspect-[3/4] md:aspect-[4/5]",
     minHeightClass: "min-h-[400px] md:min-h-[600px]",
@@ -42,7 +42,7 @@ const STEPS: Step[] = [
   {
     id: "step-3",
     image:
-      "https://res.cloudinary.com/dggvt0gzu/image/upload/v1766748131/Screenshot_2025-12-26_at_6.21.43_AM_bpul29.png",
+      "https://gnxrddsvzynszstsraer.supabase.co/storage/v1/object/public/Tavlo/Screenshot_2025-12-26_at_6.21.43_AM_bpul29.png",
     alt: "Tavlo summary view showing curated saves and highlights.",
     aspectClass: "aspect-[3/4] md:aspect-[4/5]",
     minHeightClass: "min-h-[400px] md:min-h-[600px]",
