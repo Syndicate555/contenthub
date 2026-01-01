@@ -584,6 +584,8 @@ export default function AddPageClient({ inboundEmail }: AddPageClientProps) {
           description="We will extract the content, summarize it, and add it to your Inbox."
           step={3}
           totalSteps={4}
+          placement="left"
+          offset={24}
           secondaryAction={{
             label: "Skip tour",
             variant: "outline",

@@ -546,6 +546,16 @@
     mask-composite: exclude;
     animation: rotate-gradient 3s linear infinite;
   }
+
+  .coachmark-focus {
+    position: relative;
+    z-index: 121;
+    outline: 2px solid rgba(255, 255, 255, 0.7);
+    outline-offset: 2px;
+    box-shadow:
+      0 0 12px rgba(91, 91, 255, 0.45),
+      0 0 24px rgba(91, 91, 255, 0.2);
+  }
 }
 
 @keyframes fade-up {

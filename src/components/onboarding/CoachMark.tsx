@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 
@@ -11,6 +11,8 @@ type CoachMarkAction = {
   disabled?: boolean;
 };
 
+type CoachMarkPlacement = "auto" | "left" | "right" | "top" | "bottom";
+
 interface CoachMarkProps {
   targetSelector: string;
   title: string;
@@ -19,11 +21,14 @@ interface CoachMarkProps {
   totalSteps?: number;
   primaryAction?: CoachMarkAction;
   secondaryAction?: CoachMarkAction;
+  placement?: CoachMarkPlacement;
+  offset?: number;
 }
 
 const TOOLTIP_WIDTH = 360;
 const TOOLTIP_HEIGHT = 180;
 const PADDING = 4;
+const DEFAULT_OFFSET = 16;
 const VIEWPORT_MARGIN = 16;
 
 const clamp = (value: number, min: number, max: number) =>
@@ -37,10 +42,13 @@ const CoachMark = ({
   totalSteps,
   primaryAction,
   secondaryAction,
+  placement = "auto",
+  offset = DEFAULT_OFFSET,
 }: CoachMarkProps) => {
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
   const [targetRadius, setTargetRadius] = useState<number | null>(null);
   const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
+  const targetRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -48,9 +56,20 @@ const CoachMark = ({
     const updateRect = () => {
       const element = document.querySelector(targetSelector) as HTMLElement | null;
       if (!element) {
+        if (targetRef.current) {
+          targetRef.current.classList.remove("coachmark-focus");
+          targetRef.current = null;
+        }
         setTargetRect(null);
         setTargetRadius(null);
         return;
+      }
+      if (targetRef.current && targetRef.current !== element) {
+        targetRef.current.classList.remove("coachmark-focus");
+      }
+      if (targetRef.current !== element) {
+        element.classList.add("coachmark-focus");
+        targetRef.current = element;
       }
       setTargetRect(element.getBoundingClientRect());
       const radiusValue = window.getComputedStyle(element).borderRadius;
@@ -77,6 +96,10 @@ const CoachMark = ({
       window.removeEventListener("scroll", updateRect, true);
       window.removeEventListener("resize", updateRect);
       window.cancelAnimationFrame(rafId);
+      if (targetRef.current) {
+        targetRef.current.classList.remove("coachmark-focus");
+        targetRef.current = null;
+      }
     };
   }, [targetSelector]);
 
@@ -90,7 +113,10 @@ const CoachMark = ({
 
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
-    const tooltipWidth = Math.min(TOOLTIP_WIDTH, viewportWidth - VIEWPORT_MARGIN * 2);
+    const baseTooltipWidth = Math.min(
+      TOOLTIP_WIDTH,
+      viewportWidth - VIEWPORT_MARGIN * 2
+    );
     const tooltipHeight = TOOLTIP_HEIGHT;
 
     const highlight = {
@@ -100,34 +126,120 @@ const CoachMark = ({
       height: targetRect.height + PADDING * 2,
     };
 
-    const spaceBelow = viewportHeight - (highlight.top + highlight.height);
-    const placeBelow = spaceBelow > tooltipHeight + 24;
-    const tooltipTop = placeBelow
-      ? highlight.top + highlight.height + 12
-      : Math.max(VIEWPORT_MARGIN, highlight.top - tooltipHeight - 12);
-    const tooltipLeft = clamp(
-      highlight.left + highlight.width / 2 - tooltipWidth / 2,
-      VIEWPORT_MARGIN,
-      viewportWidth - tooltipWidth - VIEWPORT_MARGIN
-    );
+    const centerX = highlight.left + highlight.width / 2;
+    const centerY = highlight.top + highlight.height / 2;
+    const leftSpace = highlight.left - offset - VIEWPORT_MARGIN;
+    const rightSpace =
+      viewportWidth - highlight.left - highlight.width - offset - VIEWPORT_MARGIN;
+    const leftWidth = Math.min(baseTooltipWidth, Math.max(240, leftSpace));
+    const rightWidth = Math.min(baseTooltipWidth, Math.max(240, rightSpace));
+
+    const placeBottom = (width: number) => ({
+      left: clamp(
+        centerX - width / 2,
+        VIEWPORT_MARGIN,
+        viewportWidth - width - VIEWPORT_MARGIN
+      ),
+      top: highlight.top + highlight.height + offset,
+      fits:
+        highlight.top + highlight.height + offset + tooltipHeight <=
+        viewportHeight - VIEWPORT_MARGIN,
+      width,
+    });
+
+    const placeTop = (width: number) => ({
+      left: clamp(
+        centerX - width / 2,
+        VIEWPORT_MARGIN,
+        viewportWidth - width - VIEWPORT_MARGIN
+      ),
+      top: highlight.top - tooltipHeight - offset,
+      fits: highlight.top - tooltipHeight - offset >= VIEWPORT_MARGIN,
+      width,
+    });
+
+    const placeLeft = (width: number) => ({
+      left: highlight.left - width - offset,
+      top: clamp(
+        centerY - tooltipHeight / 2,
+        VIEWPORT_MARGIN,
+        viewportHeight - tooltipHeight - VIEWPORT_MARGIN
+      ),
+      fits: highlight.left - width - offset >= VIEWPORT_MARGIN,
+      width,
+    });
+
+    const placeRight = (width: number) => ({
+      left: highlight.left + highlight.width + offset,
+      top: clamp(
+        centerY - tooltipHeight / 2,
+        VIEWPORT_MARGIN,
+        viewportHeight - tooltipHeight - VIEWPORT_MARGIN
+      ),
+      fits:
+        highlight.left + highlight.width + offset + width <=
+        viewportWidth - VIEWPORT_MARGIN,
+      width,
+    });
+
+    const pickPlacement = () => {
+      const placements = {
+        left: placeLeft,
+        right: placeRight,
+        top: placeTop,
+        bottom: placeBottom,
+      };
+
+      if (placement !== "auto") {
+        const forcedWidth =
+          placement === "left"
+            ? leftWidth
+            : placement === "right"
+              ? rightWidth
+              : baseTooltipWidth;
+        return placements[placement](forcedWidth);
+      }
+
+      const candidateOrder = [
+        () => placeBottom(baseTooltipWidth),
+        () => placeRight(rightWidth),
+        () => placeLeft(leftWidth),
+        () => placeTop(baseTooltipWidth),
+      ];
+      for (const candidate of candidateOrder) {
+        const result = candidate();
+        if (result.fits) return result;
+      }
+      return placeBottom(baseTooltipWidth);
+    };
+
+    const tooltip = pickPlacement();
 
     return {
       highlight,
       radius: targetRadius !== null ? targetRadius + PADDING : 16,
       tooltip: {
-        top: tooltipTop,
-        left: tooltipLeft,
-        width: tooltipWidth,
+        top: clamp(
+          tooltip.top,
+          VIEWPORT_MARGIN,
+          viewportHeight - tooltipHeight - VIEWPORT_MARGIN
+        ),
+        left: clamp(
+          tooltip.left,
+          VIEWPORT_MARGIN,
+          viewportWidth - tooltip.width - VIEWPORT_MARGIN
+        ),
+        width: tooltip.width,
       },
     };
-  }, [targetRect, targetRadius]);
+  }, [targetRect, targetRadius, placement, offset]);
 
   if (!layout || !portalTarget) return null;
 
   return createPortal(
     <div className="fixed inset-0 z-[120] pointer-events-none">
       <div
-        className="absolute border border-white/60 shadow-[0_0_0_9999px_rgba(8,10,20,0.55)] backdrop-blur-[1px] transition-all"
+        className="absolute border border-white/60 shadow-[0_0_0_9999px_rgba(8,10,20,0.55),0_0_26px_rgba(91,91,255,0.35),0_0_10px_rgba(255,255,255,0.25)] transition-all"
         style={{
           top: layout.highlight.top,
           left: layout.highlight.left,
