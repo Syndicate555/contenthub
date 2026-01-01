@@ -8,60 +8,53 @@ interface VideoItem {
   thumbnail?: string;
 }
 
-// Helper to add Cloudinary optimizations to video URLs
-const optimizeCloudinaryUrl = (url: string): string => {
-  if (!url.includes("cloudinary.com")) return url;
-  // Add format auto, quality auto, and width constraint
-  return url.replace("/upload/", "/upload/f_auto,q_auto:eco,w_400/");
-};
-
 const TavloLoop = () => {
   const [loadedVideos, setLoadedVideos] = useState<Set<number>>(
-    new Set([0, 1, 2, 3])
+    new Set([0, 1, 2, 3]),
   );
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const innerContainerRef = useRef<HTMLDivElement>(null);
 
-  // Content items - now with optimized URLs
+  // Content items from Supabase Storage
   const contentItems: VideoItem[] = [
     {
-      src: "https://res.cloudinary.com/dggvt0gzu/video/upload/v1766545573/SnapTik.Cx_1766545558_a5rqq5.mp4",
+      src: "https://gnxrddsvzynszstsraer.supabase.co/storage/v1/object/public/Tavlo/SnapTik.Cx_1766544616_vcrcjs.mp4",
       type: "video",
     },
     {
-      src: "https://res.cloudinary.com/dggvt0gzu/video/upload/v1766545480/SnapTik.Cx_1766545372_cimakw.mp4",
+      src: "https://gnxrddsvzynszstsraer.supabase.co/storage/v1/object/public/Tavlo/SnapTik.Cx_1766544820_wlsyos.mp4",
       type: "video",
     },
     {
-      src: "https://res.cloudinary.com/dggvt0gzu/video/upload/v1766545488/SnapTik.Cx_1766545461_cx0fcj.mp4",
+      src: "https://gnxrddsvzynszstsraer.supabase.co/storage/v1/object/public/Tavlo/SnapTik.Cx_1766544917_ybipy1.mp4",
       type: "video",
     },
     {
-      src: "https://res.cloudinary.com/dggvt0gzu/video/upload/v1766545478/SnapTik.Cx_1766545396_jivuza.mp4",
+      src: "https://gnxrddsvzynszstsraer.supabase.co/storage/v1/object/public/Tavlo/SnapTik.Cx_1766544954_tv4vs9.mp4",
       type: "video",
     },
     {
-      src: "https://res.cloudinary.com/dggvt0gzu/video/upload/v1766545253/SnapTik.Cx_1766545244_o18tnl.mp4",
+      src: "https://gnxrddsvzynszstsraer.supabase.co/storage/v1/object/public/Tavlo/SnapTik.Cx_1766545038_smnwxv.mp4",
       type: "video",
     },
     {
-      src: "https://res.cloudinary.com/dggvt0gzu/video/upload/v1766545181/SnapTik.Cx_1766545171_f6832j.mp4",
+      src: "https://gnxrddsvzynszstsraer.supabase.co/storage/v1/object/public/Tavlo/SnapTik.Cx_1766545171_f6832j.mp4",
       type: "video",
     },
     {
-      src: "https://res.cloudinary.com/dggvt0gzu/video/upload/v1766545112/SnapTik.Cx_1766545038_smnwxv.mp4",
+      src: "https://gnxrddsvzynszstsraer.supabase.co/storage/v1/object/public/Tavlo/SnapTik.Cx_1766545244_o18tnl.mp4",
       type: "video",
     },
     {
-      src: "https://res.cloudinary.com/dggvt0gzu/video/upload/v1766544963/SnapTik.Cx_1766544954_tv4vs9.mp4",
+      src: "https://gnxrddsvzynszstsraer.supabase.co/storage/v1/object/public/Tavlo/SnapTik.Cx_1766545372_cimakw.mp4",
       type: "video",
     },
     {
-      src: "https://res.cloudinary.com/dggvt0gzu/video/upload/v1766544953/SnapTik.Cx_1766544917_ybipy1.mp4",
+      src: "https://gnxrddsvzynszstsraer.supabase.co/storage/v1/object/public/Tavlo/SnapTik.Cx_1766545396_jivuza.mp4",
       type: "video",
     },
     {
-      src: "https://res.cloudinary.com/dggvt0gzu/video/upload/v1766544844/SnapTik.Cx_1766544820_wlsyos.mp4",
+      src: "https://gnxrddsvzynszstsraer.supabase.co/storage/v1/object/public/Tavlo/SnapTik.Cx_1766545461_cx0fcj.mp4",
       type: "video",
     },
   ];
@@ -107,13 +100,13 @@ const TavloLoop = () => {
           if (entry.isIntersecting) {
             const index = parseInt(
               entry.target.getAttribute("data-index") || "0",
-              10
+              10,
             );
             setLoadedVideos((prev) => new Set([...prev, index]));
           }
         });
       },
-      { rootMargin: "200px" }
+      { rootMargin: "200px" },
     );
 
     // Observe all video containers
@@ -161,7 +154,7 @@ const TavloLoop = () => {
                 <div className="relative w-full h-full rounded-2xl overflow-hidden bg-surface-secondary shadow-lg">
                   {loadedVideos.has(index) ? (
                     <video
-                      src={optimizeCloudinaryUrl(item.src)}
+                      src={item.src}
                       autoPlay
                       loop
                       muted
@@ -215,7 +208,7 @@ const TavloLoop = () => {
                 <div className="relative w-full h-full rounded-2xl overflow-hidden bg-surface-secondary shadow-lg">
                   {loadedVideos.has(index) ? (
                     <video
-                      src={optimizeCloudinaryUrl(item.src)}
+                      src={item.src}
                       autoPlay
                       loop
                       muted

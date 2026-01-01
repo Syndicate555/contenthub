@@ -11,7 +11,7 @@ function AnimatedHero() {
   const { isSignedIn } = useAuth();
   const titles = useMemo(
     () => ["personal", "customized", "unique", "special"],
-    [],
+    []
   );
 
   useEffect(() => {
@@ -54,7 +54,7 @@ function AnimatedHero() {
                   aria-label="Product demonstration"
                 >
                   <source
-                    src="https://res.cloudinary.com/dggvt0gzu/video/upload/v1766757137/Screen_Recording_2025-12-26_at_8.46.33_AM_i5xmum.mp4"
+                    src="https://gnxrddsvzynszstsraer.supabase.co/storage/v1/object/public/Tavlo/Screen_Recording_2025-12-26_at_8.46.33_AM_i5xmum.mp4"
                     type="video/mp4"
                   />
                   <track

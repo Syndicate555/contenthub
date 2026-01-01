@@ -218,6 +218,7 @@ const CoachMark = ({
     return {
       highlight,
       radius: targetRadius !== null ? targetRadius + PADDING : 16,
+      viewport: { width: viewportWidth, height: viewportHeight },
       tooltip: {
         top: clamp(
           tooltip.top,
@@ -239,7 +240,43 @@ const CoachMark = ({
   return createPortal(
     <div className="fixed inset-0 z-[120] pointer-events-none">
       <div
-        className="absolute border border-white/60 shadow-[0_0_0_9999px_rgba(8,10,20,0.55),0_0_26px_rgba(91,91,255,0.35),0_0_10px_rgba(255,255,255,0.25)] transition-all"
+        className="absolute left-0 top-0 w-full bg-black/55"
+        style={{ height: Math.max(0, layout.highlight.top) }}
+      />
+      <div
+        className="absolute left-0 bg-black/55"
+        style={{
+          top: layout.highlight.top,
+          height: layout.highlight.height,
+          width: Math.max(0, layout.highlight.left),
+        }}
+      />
+      <div
+        className="absolute right-0 bg-black/55"
+        style={{
+          top: layout.highlight.top,
+          height: layout.highlight.height,
+          width: Math.max(
+            0,
+            layout.viewport.width -
+              (layout.highlight.left + layout.highlight.width)
+          ),
+        }}
+      />
+      <div
+        className="absolute left-0 w-full bg-black/55"
+        style={{
+          top: layout.highlight.top + layout.highlight.height,
+          height: Math.max(
+            0,
+            layout.viewport.height -
+              (layout.highlight.top + layout.highlight.height)
+          ),
+        }}
+      />
+
+      <div
+        className="absolute border border-white/70 shadow-[0_0_26px_rgba(91,91,255,0.45),0_0_12px_rgba(255,255,255,0.25)] transition-all"
         style={{
           top: layout.highlight.top,
           left: layout.highlight.left,

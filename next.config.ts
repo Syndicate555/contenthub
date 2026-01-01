@@ -82,7 +82,7 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
               "img-src 'self' data: blob: https: http://localhost:*; " +
               "font-src 'self' data: https://fonts.gstatic.com; " +
-              "media-src 'self' https://res.cloudinary.com https://*.tiktokcdn.com https://*.tiktokcdn-us.com https://*.fbcdn.net https://*.facebook.com https://*.licdn.com https://*.linkedin.com https://*.cdninstagram.com https://*.instagram.com https://*.ytimg.com blob: data:; " +
+              "media-src 'self' https://res.cloudinary.com https://*.supabase.co https://*.tiktokcdn.com https://*.tiktokcdn-us.com https://*.fbcdn.net https://*.facebook.com https://*.licdn.com https://*.linkedin.com https://*.cdninstagram.com https://*.instagram.com https://*.ytimg.com blob: data:; " +
               "connect-src 'self' https://clerk.tavlo.app https://*.clerk.accounts.dev https://api.clerk.com https://clerk-telemetry.com https://api.openai.com https://vercel.live https://vitals.vercel-insights.com https://vitals.vercel-analytics.com wss://ws-us3.pusher.com https://www.instagram.com https://*.instagram.com https://noembed.com https://api.microlink.io https://www.tiktok.com https://*.tiktok.com https://www.facebook.com https://*.facebook.com https://www.linkedin.com https://*.linkedin.com; " +
               "frame-src 'self' https://clerk.tavlo.app https://*.clerk.accounts.dev https://vercel.live https://challenges.cloudflare.com https://*.facebook.com https://www.facebook.com https://*.tiktok.com https://www.tiktok.com https://*.linkedin.com https://www.linkedin.com https://www.youtube.com https://www.youtube-nocookie.com https://www.instagram.com; " +
               "object-src 'none'; " +

@@ -31,7 +31,7 @@ const WhyTavloSection = () => {
           >
             <div className="relative max-w-md lg:max-w-lg mx-auto rounded-3xl bg-surface-solid/80 border border-border-light shadow-2xl shadow-black/10 overflow-hidden">
               <Image
-                src="https://res.cloudinary.com/dggvt0gzu/image/upload/v1766746119/ChatGPT_Image_Dec_26_2025_05_17_15_AM_ctjn79.png"
+                src="https://gnxrddsvzynszstsraer.supabase.co/storage/v1/object/public/Tavlo/ChatGPT_Image_Dec_26_2025_05_17_15_AM_ctjn79.png"
                 alt="Infographic illustrating content overload from saved posts across platforms."
                 width={1024}
                 height={1536}
@@ -40,7 +40,7 @@ const WhyTavloSection = () => {
                 quality={95}
               />
               <Image
-                src="https://res.cloudinary.com/dggvt0gzu/image/upload/v1767220162/ChatGPT_Image_Dec_31_2025_05_28_56_PM_hhu8z5.jpg"
+                src="https://gnxrddsvzynszstsraer.supabase.co/storage/v1/object/public/Tavlo/ChatGPT_Image_Dec_31_2025_05_28_56_PM_hhu8z5.jpg"
                 alt="Infographic illustrating content overload from saved posts across platforms."
                 width={1024}
                 height={1536}
