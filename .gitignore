@@ -24,6 +24,7 @@ project_screenshots_library
 # testing
 /coverage
 
+extract-poster.html
 # next.js
 /.next/
 /out/

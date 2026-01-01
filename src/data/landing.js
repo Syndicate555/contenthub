@@ -145,10 +145,10 @@ export const videoChapters = [
 
 // Video configuration
 export const videoConfig = {
-  src: "https://res.cloudinary.com/dggvt0gzu/video/upload/v1766763250/tavlo_demo_xbvxgg.mp4",
+  src: "https://gnxrddsvzynszstsraer.supabase.co/storage/v1/object/public/Tavlo/tavlo_demo_xbvxgg.mp4",
   // Poster frame from video (first frame, optimized)
   poster:
-    "https://res.cloudinary.com/dggvt0gzu/video/upload/v1766763250/tavlo_demo_xbvxgg.jpg",
+    "https://gnxrddsvzynszstsraer.supabase.co/storage/v1/object/public/Tavlo/tavlo_demo_poster.jpg",
   duration: 120, // approximate duration in seconds
 };
 
