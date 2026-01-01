@@ -3,6 +3,7 @@ export { default as Hero } from "./Hero";
 export { default as TavloLoop } from "./TavloLoop";
 export { default as SocialProof } from "./SocialProof";
 export { default as Features } from "./Features";
+export { default as YoutubeDemo } from "./YoutubeDemo";
 export { default as VideoDemo } from "./VideoDemo";
 export { default as WhyTavlo } from "./WhyTavlo";
 export { default as Testimonials } from "./Testimonials";

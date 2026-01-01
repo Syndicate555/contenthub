@@ -7,6 +7,7 @@ import {
   TavloLoop,
   SocialProof,
   Features,
+  YoutubeDemo,
   Testimonials,
   ScrollingFeatures,
   UnifiedLibrary,
@@ -120,6 +121,7 @@ export default function HomePage() {
         <br></br>
         <br></br>
         <UnifiedLibrary />
+        <YoutubeDemo />
         <Features />
         <VideoDemo />
         <ScrollingFeatures />
