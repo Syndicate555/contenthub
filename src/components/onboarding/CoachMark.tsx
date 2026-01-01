@@ -48,13 +48,44 @@ const CoachMark = ({
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
   const [targetRadius, setTargetRadius] = useState<number | null>(null);
   const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
+  const [fontsReady, setFontsReady] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
   const targetRef = useRef<HTMLElement | null>(null);
+  const lastRectRef = useRef<DOMRect | null>(null);
+  const stableCountRef = useRef(0);
+  const startTimeRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    let isMounted = true;
+    if ("fonts" in document && document.fonts?.ready) {
+      document.fonts.ready.then(() => {
+        if (isMounted) setFontsReady(true);
+      });
+    } else {
+      setFontsReady(true);
+    }
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const isRectStable = (prev: DOMRect, next: DOMRect) => {
+    return (
+      Math.abs(prev.top - next.top) < 0.5 &&
+      Math.abs(prev.left - next.left) < 0.5 &&
+      Math.abs(prev.width - next.width) < 0.5 &&
+      Math.abs(prev.height - next.height) < 0.5
+    );
+  };
 
   useEffect(() => {
     if (typeof window === "undefined") return;
 
     const updateRect = () => {
-      const element = document.querySelector(targetSelector) as HTMLElement | null;
+      const element = document.querySelector(
+        targetSelector,
+      ) as HTMLElement | null;
       if (!element) {
         if (targetRef.current) {
           targetRef.current.classList.remove("coachmark-focus");
@@ -62,16 +93,41 @@ const CoachMark = ({
         }
         setTargetRect(null);
         setTargetRadius(null);
+        setIsVisible(false);
         return;
       }
-      if (targetRef.current && targetRef.current !== element) {
+      const rect = element.getBoundingClientRect();
+      const lastRect = lastRectRef.current;
+      if (lastRect && isRectStable(lastRect, rect)) {
+        stableCountRef.current += 1;
+      } else {
+        stableCountRef.current = 0;
+      }
+      lastRectRef.current = rect;
+
+      const now = performance.now();
+      if (startTimeRef.current === null) {
+        startTimeRef.current = now;
+      }
+      const elapsedTime = now - startTimeRef.current;
+      const readyToShow =
+        fontsReady && stableCountRef.current >= 8 && elapsedTime >= 400;
+      const shouldShow = isVisible || readyToShow;
+
+      if (shouldShow) {
+        if (targetRef.current && targetRef.current !== element) {
+          targetRef.current.classList.remove("coachmark-focus");
+        }
+        if (targetRef.current !== element) {
+          element.classList.add("coachmark-focus");
+          targetRef.current = element;
+        }
+        setTargetRect(rect);
+        setIsVisible(true);
+      } else if (targetRef.current) {
         targetRef.current.classList.remove("coachmark-focus");
+        targetRef.current = null;
       }
-      if (targetRef.current !== element) {
-        element.classList.add("coachmark-focus");
-        targetRef.current = element;
-      }
-      setTargetRect(element.getBoundingClientRect());
       const radiusValue = window.getComputedStyle(element).borderRadius;
       const radius = Number.parseFloat(radiusValue || "0");
       setTargetRadius(Number.isFinite(radius) ? radius : null);
@@ -83,7 +139,7 @@ const CoachMark = ({
     let start = performance.now();
     const tick = (now: number) => {
       updateRect();
-      if (now - start < 900) {
+      if (now - start < 1200) {
         rafId = window.requestAnimationFrame(tick);
       }
     };
@@ -100,8 +156,11 @@ const CoachMark = ({
         targetRef.current.classList.remove("coachmark-focus");
         targetRef.current = null;
       }
+      startTimeRef.current = null;
+      stableCountRef.current = 0;
+      lastRectRef.current = null;
     };
-  }, [targetSelector]);
+  }, [targetSelector, fontsReady, isVisible]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -115,7 +174,7 @@ const CoachMark = ({
     const viewportHeight = window.innerHeight;
     const baseTooltipWidth = Math.min(
       TOOLTIP_WIDTH,
-      viewportWidth - VIEWPORT_MARGIN * 2
+      viewportWidth - VIEWPORT_MARGIN * 2,
     );
     const tooltipHeight = TOOLTIP_HEIGHT;
 
@@ -130,7 +189,11 @@ const CoachMark = ({
     const centerY = highlight.top + highlight.height / 2;
     const leftSpace = highlight.left - offset - VIEWPORT_MARGIN;
     const rightSpace =
-      viewportWidth - highlight.left - highlight.width - offset - VIEWPORT_MARGIN;
+      viewportWidth -
+      highlight.left -
+      highlight.width -
+      offset -
+      VIEWPORT_MARGIN;
     const leftWidth = Math.min(baseTooltipWidth, Math.max(240, leftSpace));
     const rightWidth = Math.min(baseTooltipWidth, Math.max(240, rightSpace));
 
@@ -138,7 +201,7 @@ const CoachMark = ({
       left: clamp(
         centerX - width / 2,
         VIEWPORT_MARGIN,
-        viewportWidth - width - VIEWPORT_MARGIN
+        viewportWidth - width - VIEWPORT_MARGIN,
       ),
       top: highlight.top + highlight.height + offset,
       fits:
@@ -151,7 +214,7 @@ const CoachMark = ({
       left: clamp(
         centerX - width / 2,
         VIEWPORT_MARGIN,
-        viewportWidth - width - VIEWPORT_MARGIN
+        viewportWidth - width - VIEWPORT_MARGIN,
       ),
       top: highlight.top - tooltipHeight - offset,
       fits: highlight.top - tooltipHeight - offset >= VIEWPORT_MARGIN,
@@ -163,7 +226,7 @@ const CoachMark = ({
       top: clamp(
         centerY - tooltipHeight / 2,
         VIEWPORT_MARGIN,
-        viewportHeight - tooltipHeight - VIEWPORT_MARGIN
+        viewportHeight - tooltipHeight - VIEWPORT_MARGIN,
       ),
       fits: highlight.left - width - offset >= VIEWPORT_MARGIN,
       width,
@@ -174,7 +237,7 @@ const CoachMark = ({
       top: clamp(
         centerY - tooltipHeight / 2,
         VIEWPORT_MARGIN,
-        viewportHeight - tooltipHeight - VIEWPORT_MARGIN
+        viewportHeight - tooltipHeight - VIEWPORT_MARGIN,
       ),
       fits:
         highlight.left + highlight.width + offset + width <=
@@ -223,28 +286,28 @@ const CoachMark = ({
         top: clamp(
           tooltip.top,
           VIEWPORT_MARGIN,
-          viewportHeight - tooltipHeight - VIEWPORT_MARGIN
+          viewportHeight - tooltipHeight - VIEWPORT_MARGIN,
         ),
         left: clamp(
           tooltip.left,
           VIEWPORT_MARGIN,
-          viewportWidth - tooltip.width - VIEWPORT_MARGIN
+          viewportWidth - tooltip.width - VIEWPORT_MARGIN,
         ),
         width: tooltip.width,
       },
     };
   }, [targetRect, targetRadius, placement, offset]);
 
-  if (!layout || !portalTarget) return null;
+  if (!layout || !portalTarget || !isVisible) return null;
 
   return createPortal(
     <div className="fixed inset-0 z-[120] pointer-events-none">
       <div
-        className="absolute left-0 top-0 w-full bg-black/55"
+        className="absolute left-0 top-0 w-full bg-black/55 transition-[height] duration-300"
         style={{ height: Math.max(0, layout.highlight.top) }}
       />
       <div
-        className="absolute left-0 bg-black/55"
+        className="absolute left-0 bg-black/55 transition-[top,height,width] duration-300"
         style={{
           top: layout.highlight.top,
           height: layout.highlight.height,
@@ -252,31 +315,31 @@ const CoachMark = ({
         }}
       />
       <div
-        className="absolute right-0 bg-black/55"
+        className="absolute right-0 bg-black/55 transition-[top,height,width] duration-300"
         style={{
           top: layout.highlight.top,
           height: layout.highlight.height,
           width: Math.max(
             0,
             layout.viewport.width -
-              (layout.highlight.left + layout.highlight.width)
+              (layout.highlight.left + layout.highlight.width),
           ),
         }}
       />
       <div
-        className="absolute left-0 w-full bg-black/55"
+        className="absolute left-0 w-full bg-black/55 transition-[top,height] duration-300"
         style={{
           top: layout.highlight.top + layout.highlight.height,
           height: Math.max(
             0,
             layout.viewport.height -
-              (layout.highlight.top + layout.highlight.height)
+              (layout.highlight.top + layout.highlight.height),
           ),
         }}
       />
 
       <div
-        className="absolute border border-white/70 shadow-[0_0_26px_rgba(91,91,255,0.45),0_0_12px_rgba(255,255,255,0.25)] transition-all"
+        className="absolute border border-white/70 shadow-[0_0_26px_rgba(91,91,255,0.45),0_0_12px_rgba(255,255,255,0.25)] transition-[top,left,width,height] duration-300"
         style={{
           top: layout.highlight.top,
           left: layout.highlight.left,
@@ -287,7 +350,7 @@ const CoachMark = ({
       />
 
       <div
-        className="absolute pointer-events-auto rounded-2xl border border-border bg-card shadow-xl p-4"
+        className="absolute pointer-events-auto rounded-2xl border border-border bg-card shadow-xl p-4 transition-[top,left] duration-300"
         style={{
           top: layout.tooltip.top,
           left: layout.tooltip.left,
@@ -301,7 +364,9 @@ const CoachMark = ({
             Step {step} of {totalSteps}
           </p>
         ) : null}
-        <h3 className="text-base font-semibold text-foreground mb-1">{title}</h3>
+        <h3 className="text-base font-semibold text-foreground mb-1">
+          {title}
+        </h3>
         <p className="text-sm text-muted-foreground mb-4">{description}</p>
         <div className="flex flex-wrap items-center justify-end gap-2">
           {secondaryAction ? (
@@ -327,7 +392,7 @@ const CoachMark = ({
         </div>
       </div>
     </div>,
-    portalTarget
+    portalTarget,
   );
 };
 
