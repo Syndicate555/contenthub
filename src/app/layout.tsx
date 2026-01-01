@@ -9,11 +9,6 @@ import { SessionProvider } from "@/components/providers/session-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { WebVitals } from "@/components/web-vitals";
 import { ConsoleSuppressor } from "@/components/ConsoleSuppressor";
-import {
-  StructuredData,
-  organizationSchema,
-  websiteSchema,
-} from "@/components/structured-data";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -108,10 +103,6 @@ export default function RootLayout({
       signUpFallbackRedirectUrl="/today"
     >
       <html lang="en" suppressHydrationWarning>
-        <head>
-          <StructuredData data={organizationSchema} />
-          <StructuredData data={websiteSchema} />
-        </head>
         <body
           className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground min-h-screen`}
         >

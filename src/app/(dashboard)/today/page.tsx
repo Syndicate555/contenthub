@@ -20,6 +20,7 @@ import {
   MessageCircle,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useTodayItemsWithFilters, updateItemStatus } from "@/hooks/use-items";
 import type { ItemStatus } from "@/types";
@@ -32,8 +33,12 @@ import {
   CaughtUpIllustration,
   NoResultsIllustration,
 } from "@/components/ui/empty-state-illustration";
+import CoachMark from "@/components/onboarding/CoachMark";
+import { useOnboarding } from "@/hooks/use-onboarding";
+import WelcomeModal from "@/components/onboarding/WelcomeModal";
 
 export default function TodayPage() {
+  const router = useRouter();
   const [processedToday, setProcessedToday] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearch = useDebouncedValue(searchTerm, 350);
@@ -43,10 +48,15 @@ export default function TodayPage() {
   const [page, setPage] = useState(1);
 
   const {
+    stats,
     sources,
     isLoading: sidebarLoading,
     error: sidebarError,
   } = useTodaySidebar();
+
+  const { stage, setStage, isReady } = useOnboarding();
+  const isNewUser = stats?.itemsSaved === 0;
+  const hasSavedItems = (stats?.itemsSaved ?? 0) > 0;
 
   // Fetch items with SWR (cached across navigations)
   const {
@@ -235,8 +245,35 @@ export default function TodayPage() {
     setPage(1);
   }, [selectedPlatform, debouncedSearch]);
 
+  useEffect(() => {
+    if (!isReady || stats?.itemsSaved === undefined) return;
+
+    if (!stage) {
+      if (isNewUser) {
+        setStage("welcome");
+      } else {
+        setStage("done");
+      }
+      return;
+    }
+
+    if (
+      hasSavedItems &&
+      (stage === "start" || stage === "add-url" || stage === "add-submit")
+    ) {
+      setStage("submitted");
+    }
+  }, [isReady, stats?.itemsSaved, stage, isNewUser, hasSavedItems, setStage]);
+
   return (
     <div className="w-full min-h-screen mesh-gradient-vibrant">
+      {isReady && isNewUser && stage === "welcome" ? (
+        <WelcomeModal
+          open={true}
+          onStartTour={() => setStage("start")}
+          onSkip={() => setStage("done")}
+        />
+      ) : null}
       <div className="grid gap-6 lg:gap-8 lg:grid-cols-[280px_minmax(0,1.5fr)_280px]">
         {/* Left Sidebar - User Profile & Stats */}
         <aside className="hidden lg:block w-full">
@@ -603,6 +640,50 @@ export default function TodayPage() {
           </div>
         </aside>
       </div>
+
+      {isReady && isNewUser && stage === "start" ? (
+        <CoachMark
+          targetSelector='[data-onboarding="nav-add"]'
+          title="Add your first post"
+          description="Click Add to paste a link. Tavlo will extract, summarize, and organize it for you."
+          step={1}
+          totalSteps={4}
+          primaryAction={{
+            label: "Go to Add",
+            onClick: () => {
+              setStage("add-url");
+              router.push("/add");
+            },
+          }}
+          secondaryAction={{
+            label: "Skip tour",
+            variant: "outline",
+            onClick: () => setStage("done"),
+          }}
+        />
+      ) : null}
+
+      {isReady && stage === "submitted" && hasSavedItems ? (
+        <CoachMark
+          targetSelector='[data-onboarding="nav-library"]'
+          title="Your first item is ready"
+          description="Open the Library to see your saved post and explore the summary, tags, and metadata."
+          step={4}
+          totalSteps={4}
+          primaryAction={{
+            label: "Open Library",
+            onClick: () => {
+              setStage("done");
+              router.push("/items");
+            },
+          }}
+          secondaryAction={{
+            label: "Finish",
+            variant: "outline",
+            onClick: () => setStage("done"),
+          }}
+        />
+      ) : null}
     </div>
   );
 }

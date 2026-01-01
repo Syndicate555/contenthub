@@ -30,6 +30,9 @@ import {
   Users,
 } from "lucide-react";
 import { showMultipleBadgesNotification } from "@/components/badge-notification";
+import { useTodaySidebar } from "@/hooks/use-today-sidebar";
+import { useOnboarding } from "@/hooks/use-onboarding";
+import CoachMark from "@/components/onboarding/CoachMark";
 
 interface AddPageClientProps {
   userId: string;
@@ -68,6 +71,9 @@ export default function AddPageClient({ inboundEmail }: AddPageClientProps) {
   const [emailCopied, setEmailCopied] = useState(false);
   const [progressStep, setProgressStep] = useState(0);
   const [quoteIndex, setQuoteIndex] = useState(0);
+  const { stats } = useTodaySidebar();
+  const { stage, setStage, isReady } = useOnboarding();
+  const isNewUser = stats?.itemsSaved === 0;
 
   // Friendly progress narrative
   const steps = useMemo(
@@ -182,6 +188,20 @@ export default function AddPageClient({ inboundEmail }: AddPageClientProps) {
     };
   }, [isSubmitting, steps, quotes.length]);
 
+  useEffect(() => {
+    if (!isReady || !isNewUser) return;
+    if (stage === "start") {
+      setStage("add-url");
+    }
+  }, [isReady, isNewUser, stage, setStage]);
+
+  useEffect(() => {
+    if (!isReady || !isNewUser) return;
+    if (stage === "add-url" && url.trim().length > 0) {
+      setStage("add-submit");
+    }
+  }, [isReady, isNewUser, stage, url, setStage]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -214,6 +234,10 @@ export default function AddPageClient({ inboundEmail }: AddPageClientProps) {
 
       if (!data.ok) {
         throw new Error(data.error || "Failed to save item");
+      }
+
+      if (isNewUser && stage && stage !== "done") {
+        setStage("submitted");
       }
 
       // Show badge notifications if any badges were earned
@@ -308,6 +332,7 @@ export default function AddPageClient({ inboundEmail }: AddPageClientProps) {
                       onChange={(e) => setUrl(e.target.value)}
                       disabled={isSubmitting}
                       autoFocus
+                      data-onboarding="add-url-input"
                     />
                     <p className="text-xs text-muted-foreground">
                       Paste a link from Twitter, Instagram, LinkedIn, Facebook,
@@ -334,6 +359,7 @@ export default function AddPageClient({ inboundEmail }: AddPageClientProps) {
                     type="submit"
                     className="w-full flex items-center gap-2"
                     disabled={isSubmitting}
+                    data-onboarding="add-submit-button"
                   >
                     {isSubmitting ? (
                       <>
@@ -535,6 +561,36 @@ export default function AddPageClient({ inboundEmail }: AddPageClientProps) {
           </motion.div>
         </div>
       </motion.div>
+
+      {isReady && isNewUser && stage === "add-url" ? (
+        <CoachMark
+          targetSelector='[data-onboarding="add-url-input"]'
+          title="Paste a link"
+          description="Drop any URL from X, LinkedIn, TikTok, YouTube, or any web page."
+          step={2}
+          totalSteps={4}
+          secondaryAction={{
+            label: "Skip tour",
+            variant: "outline",
+            onClick: () => setStage("done"),
+          }}
+        />
+      ) : null}
+
+      {isReady && isNewUser && stage === "add-submit" ? (
+        <CoachMark
+          targetSelector='[data-onboarding="add-submit-button"]'
+          title="Save & Process"
+          description="We will extract the content, summarize it, and add it to your Inbox."
+          step={3}
+          totalSteps={4}
+          secondaryAction={{
+            label: "Skip tour",
+            variant: "outline",
+            onClick: () => setStage("done"),
+          }}
+        />
+      ) : null}
     </div>
   );
 }

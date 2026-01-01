@@ -56,6 +56,7 @@ export default function DashboardLayout({
       icon: FolderOpen,
       isActive: pathname === "/items" || pathname.startsWith("/items?"),
       onPrefetch: prefetchLibrary,
+      onboardingTarget: "nav-library",
     },
     {
       href: "/profile",
@@ -97,6 +98,7 @@ export default function DashboardLayout({
                   // Prefetch data on hover for instant navigation
                   onMouseEnter={item.onPrefetch}
                   onFocus={item.onPrefetch}
+                  data-onboarding={item.onboardingTarget}
                   className={cn(
                     "relative flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200",
                     item.isActive
@@ -116,6 +118,7 @@ export default function DashboardLayout({
               ))}
               <Link
                 href="/add"
+                data-onboarding="nav-add"
                 className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 rounded-lg transition-colors shadow-sm"
               >
                 <Plus className="w-4 h-4" />
