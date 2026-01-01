@@ -11,65 +11,81 @@ interface PlatformIconProps {
 // Platform configurations with colors and icons
 const platforms: Record<
   string,
-  { name: string; color: string; bgColor: string; borderColor: string }
+  {
+    name: string;
+    color: string;
+    textClassName: string;
+    bgColor: string;
+    borderColor: string;
+  }
 > = {
   "twitter.com": {
     name: "Twitter",
     color: "#1DA1F2",
+    textClassName: "text-[#1DA1F2]",
     bgColor: "bg-[#1DA1F2]/10",
     borderColor: "border-l-[#1DA1F2]",
   },
   "x.com": {
     name: "X",
     color: "#000000",
-    bgColor: "bg-black/10",
-    borderColor: "border-l-black",
+    textClassName: "text-black dark:text-slate-100",
+    bgColor: "bg-black/10 dark:bg-white/10",
+    borderColor: "border-l-black dark:border-l-slate-200",
   },
   "linkedin.com": {
     name: "LinkedIn",
     color: "#0A66C2",
+    textClassName: "text-[#0A66C2]",
     bgColor: "bg-[#0A66C2]/10",
     borderColor: "border-l-[#0A66C2]",
   },
   "instagram.com": {
     name: "Instagram",
     color: "#E4405F",
+    textClassName: "text-[#E4405F]",
     bgColor: "bg-[#E4405F]/10",
     borderColor: "border-l-[#E4405F]",
   },
   "youtube.com": {
     name: "YouTube",
     color: "#FF0000",
+    textClassName: "text-[#FF0000]",
     bgColor: "bg-[#FF0000]/10",
     borderColor: "border-l-[#FF0000]",
   },
   "github.com": {
     name: "GitHub",
     color: "#181717",
-    bgColor: "bg-[#181717]/10",
-    borderColor: "border-l-[#181717]",
+    textClassName: "text-[#181717] dark:text-slate-100",
+    bgColor: "bg-[#181717]/10 dark:bg-white/10",
+    borderColor: "border-l-[#181717] dark:border-l-slate-200",
   },
   "medium.com": {
     name: "Medium",
     color: "#000000",
-    bgColor: "bg-black/10",
-    borderColor: "border-l-black",
+    textClassName: "text-black dark:text-slate-100",
+    bgColor: "bg-black/10 dark:bg-white/10",
+    borderColor: "border-l-black dark:border-l-slate-200",
   },
   "reddit.com": {
     name: "Reddit",
     color: "#FF4500",
+    textClassName: "text-[#FF4500]",
     bgColor: "bg-[#FF4500]/10",
     borderColor: "border-l-[#FF4500]",
   },
   "tiktok.com": {
     name: "TikTok",
     color: "#000000",
-    bgColor: "bg-black/10",
-    borderColor: "border-l-black",
+    textClassName: "text-black dark:text-slate-100",
+    bgColor: "bg-black/10 dark:bg-white/10",
+    borderColor: "border-l-black dark:border-l-slate-200",
   },
   "facebook.com": {
     name: "Facebook",
     color: "#1877F2",
+    textClassName: "text-[#1877F2]",
     bgColor: "bg-[#1877F2]/10",
     borderColor: "border-l-[#1877F2]",
   },
@@ -169,8 +185,9 @@ export function getPlatformInfo(source: string) {
   return {
     name: source || "Website",
     color: "#6B7280",
-    bgColor: "bg-gray-100",
-    borderColor: "border-l-gray-400",
+    textClassName: "text-gray-500 dark:text-gray-300",
+    bgColor: "bg-gray-100 dark:bg-white/10",
+    borderColor: "border-l-gray-400 dark:border-l-gray-600",
     domain: "generic",
   };
 }
@@ -204,8 +221,7 @@ export function PlatformIcon({
   return (
     <div className="flex items-center gap-1.5">
       <div
-        className={`flex items-center justify-center rounded ${platform.bgColor} p-1`}
-        style={{ color: platform.color }}
+        className={`flex items-center justify-center rounded p-1 ${platform.bgColor} ${platform.textClassName}`}
       >
         {IconComponent ? (
           <IconComponent className={sizeClass} />
@@ -214,7 +230,7 @@ export function PlatformIcon({
         )}
       </div>
       {showLabel && (
-        <span className="text-xs font-medium" style={{ color: platform.color }}>
+        <span className={`text-xs font-medium ${platform.textClassName}`}>
           {platform.name}
         </span>
       )}
