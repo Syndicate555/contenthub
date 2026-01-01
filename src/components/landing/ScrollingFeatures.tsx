@@ -26,7 +26,7 @@ const STEPS: Step[] = [
     aspectClass: "aspect-[16/9]",
     minHeightClass: "min-h-[240px] md:min-h-[320px]",
     fit: "contain",
-    frameClass: "p-4 md:p-6 bg-white",
+    frameClass: "p-4 md:p-6 bg-surface-solid",
     unoptimized: true,
     wrapperClass: "lg:mt-20 xl:mt-48",
   },
@@ -47,7 +47,7 @@ const STEPS: Step[] = [
     aspectClass: "aspect-[3/4] md:aspect-[4/5]",
     minHeightClass: "min-h-[400px] md:min-h-[600px]",
     fit: "contain",
-    frameClass: "p-4 md:p-6 bg-white",
+    frameClass: "p-4 md:p-6 bg-surface-solid",
   },
 ];
 
@@ -57,7 +57,7 @@ export const ScrollingFeatures = () => {
   return (
     <section
       id="how-it-works"
-      className="relative w-full bg-white py-12 md:py-24"
+      className="relative w-full bg-bg-page py-12 md:py-24"
       ref={containerRef}
     >
       <div className="container mx-auto px-4 md:px-6">
@@ -118,7 +118,7 @@ export const ScrollingFeatures = () => {
                   viewport={{ once: false, amount: 0.5 }}
                   transition={{ duration: 0.6, ease: "easeOut" }}
                   className={cn(
-                    "relative w-full h-full rounded-2xl overflow-hidden shadow-2xl border border-border-light bg-white",
+                    "relative w-full h-full rounded-2xl overflow-hidden shadow-2xl border border-border-light bg-surface-solid",
                     step.aspectClass ?? "aspect-[3/4] md:aspect-[4/5]",
                     step.frameClass
                   )}

@@ -47,14 +47,14 @@ export function StreakWarning() {
   // Success state: user has activity today
   if (status.hasActivityToday) {
     return (
-      <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-start gap-3">
-        <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+      <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg p-4 flex items-start gap-3">
+        <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
         <div className="flex-1">
-          <h3 className="text-sm font-semibold text-green-900 flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-green-900 dark:text-green-100 flex items-center gap-2">
             <Flame className="w-4 h-4" />
             {status.currentStreak}-day streak maintained!
           </h3>
-          <p className="text-sm text-green-700 mt-1">
+          <p className="text-sm text-green-700 dark:text-green-300 mt-1">
             Great job! You've completed your daily activity. Keep up the
             momentum.
           </p>
@@ -74,18 +74,20 @@ export function StreakWarning() {
   return (
     <div
       className={`border rounded-lg p-4 flex items-start gap-3 ${
-        isUrgent ? "bg-red-50 border-red-200" : "bg-yellow-50 border-yellow-200"
+        isUrgent
+          ? "bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800"
+          : "bg-yellow-50 dark:bg-yellow-950/30 border-yellow-200 dark:border-yellow-800"
       }`}
     >
       <AlertCircle
         className={`w-5 h-5 flex-shrink-0 mt-0.5 ${
-          isUrgent ? "text-red-600" : "text-yellow-600"
+          isUrgent ? "text-red-600 dark:text-red-400" : "text-yellow-600 dark:text-yellow-400"
         }`}
       />
       <div className="flex-1">
         <h3
           className={`text-sm font-semibold flex items-center gap-2 ${
-            isUrgent ? "text-red-900" : "text-yellow-900"
+            isUrgent ? "text-red-900 dark:text-red-100" : "text-yellow-900 dark:text-yellow-100"
           }`}
         >
           <Flame className="w-4 h-4" />
@@ -93,12 +95,12 @@ export function StreakWarning() {
         </h3>
         <p
           className={`text-sm mt-1 ${
-            isUrgent ? "text-red-700" : "text-yellow-700"
+            isUrgent ? "text-red-700 dark:text-red-300" : "text-yellow-700 dark:text-yellow-300"
           }`}
         >
           {status.warningMessage}
         </p>
-        <p className="text-xs text-gray-600 mt-2">
+        <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
           Save, process, or review an item to maintain your streak.
         </p>
       </div>
@@ -125,7 +127,9 @@ export function CompactStreakWarning() {
   return (
     <div
       className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm ${
-        isUrgent ? "bg-red-100 text-red-900" : "bg-yellow-100 text-yellow-900"
+        isUrgent
+          ? "bg-red-100 dark:bg-red-950/50 text-red-900 dark:text-red-200"
+          : "bg-yellow-100 dark:bg-yellow-950/50 text-yellow-900 dark:text-yellow-200"
       }`}
     >
       <Flame className="w-4 h-4" />

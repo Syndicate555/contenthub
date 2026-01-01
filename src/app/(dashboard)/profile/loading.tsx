@@ -3,7 +3,7 @@
 export default function ProfileLoading() {
   return (
     <div className="space-y-6">
-      <div className="bg-gradient-to-br from-gray-900 to-gray-700 rounded-xl p-6 text-white shadow-lg animate-pulse">
+      <div className="bg-gradient-to-br from-gray-900 to-gray-700 dark:from-gray-800 dark:to-gray-900 rounded-xl p-6 text-white shadow-lg animate-pulse">
         <div className="flex items-start justify-between">
           <div className="space-y-2">
             <div className="h-6 w-28 bg-white/20 rounded" />
@@ -21,23 +21,23 @@ export default function ProfileLoading() {
         {[1, 2, 3, 4].map((i) => (
           <div
             key={i}
-            className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm animate-pulse space-y-2"
+            className="bg-card rounded-lg p-4 border border-border shadow-sm animate-pulse space-y-2"
           >
-            <div className="h-5 w-12 bg-gray-200 rounded" />
-            <div className="h-6 w-20 bg-gray-200 rounded" />
-            <div className="h-3 w-16 bg-gray-200 rounded" />
+            <div className="h-5 w-12 bg-muted rounded" />
+            <div className="h-6 w-20 bg-muted rounded" />
+            <div className="h-3 w-16 bg-muted rounded" />
           </div>
         ))}
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
-          <div className="h-64 w-full bg-white border border-gray-200 rounded-xl shadow-sm animate-pulse" />
-          <div className="h-80 w-full bg-white border border-gray-200 rounded-xl shadow-sm animate-pulse" />
+          <div className="h-64 w-full bg-card border border-border rounded-xl shadow-sm animate-pulse" />
+          <div className="h-80 w-full bg-card border border-border rounded-xl shadow-sm animate-pulse" />
         </div>
         <div className="space-y-6">
-          <div className="h-56 w-full bg-white border border-gray-200 rounded-xl shadow-sm animate-pulse" />
-          <div className="h-40 w-full bg-white border border-gray-200 rounded-xl shadow-sm animate-pulse" />
+          <div className="h-56 w-full bg-card border border-border rounded-xl shadow-sm animate-pulse" />
+          <div className="h-40 w-full bg-card border border-border rounded-xl shadow-sm animate-pulse" />
         </div>
       </div>
     </div>

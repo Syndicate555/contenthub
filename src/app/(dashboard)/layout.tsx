@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
 import { Inbox, FolderOpen, Plus, Settings, User } from "lucide-react";
@@ -73,8 +74,14 @@ export default function DashboardLayout({
           <div className="flex items-center justify-between">
             {/* Logo */}
             <Link href="/today" className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-linear-to-br from-gray-900 to-gray-700 rounded-lg flex items-center justify-center shadow-sm">
-                <span className="text-white font-bold text-sm">TV</span>
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center">
+                <Image
+                  src="/tavo_logo.png"
+                  alt="Tavlo"
+                  width={32}
+                  height={32}
+                  className="rounded-lg"
+                />
               </div>
               <span className="font-semibold text-foreground hidden sm:inline">
                 Tavlo

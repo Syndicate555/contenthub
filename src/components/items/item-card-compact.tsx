@@ -19,9 +19,9 @@ export function ItemCardCompact({ item, onOpen }: ItemCardCompactProps) {
   return (
     <button
       onClick={() => onOpen?.(item)}
-      className="group flex flex-col rounded-xl border border-slate-200 bg-white shadow-sm hover:shadow-md transition overflow-hidden text-left"
+      className="group flex flex-col rounded-xl border border-border bg-card shadow-sm hover:shadow-md transition overflow-hidden text-left"
     >
-      <div className="relative aspect-[4/3] bg-slate-100 w-full overflow-hidden">
+      <div className="relative aspect-[4/3] bg-muted w-full overflow-hidden">
         {item.imageUrl && !imageError ? (
           <Image
             src={item.imageUrl}
@@ -32,11 +32,11 @@ export function ItemCardCompact({ item, onOpen }: ItemCardCompactProps) {
             sizes="(min-width: 1280px) 400px, (min-width: 768px) 300px, 100vw"
           />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center text-slate-400 text-sm">
+          <div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-sm">
             No preview
           </div>
         )}
-        <div className="absolute left-2 top-2 flex items-center gap-2 rounded-full bg-white/90 px-2 py-1 text-xs font-medium text-slate-700 shadow-sm">
+        <div className="absolute left-2 top-2 flex items-center gap-2 rounded-full bg-white/90 dark:bg-gray-800/90 px-2 py-1 text-xs font-medium text-slate-700 dark:text-slate-300 shadow-sm">
           <PlatformIcon source={item.source || ""} size="sm" />
           <span className="truncate max-w-[140px]">
             {cleanHostname(item.source)}
@@ -44,10 +44,10 @@ export function ItemCardCompact({ item, onOpen }: ItemCardCompactProps) {
         </div>
       </div>
       <div className="flex flex-col gap-2 p-3">
-        <p className="text-sm font-semibold text-slate-900 line-clamp-2 min-h-[40px]">
+        <p className="text-sm font-semibold text-foreground line-clamp-2 min-h-[40px]">
           {item.title || item.url}
         </p>
-        <div className="flex items-center justify-between text-xs text-slate-500">
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
           <span className="truncate">{item.category || "Uncategorized"}</span>
           <span>{createdText}</span>
         </div>

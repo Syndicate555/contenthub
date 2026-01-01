@@ -36,7 +36,16 @@ const WhyTavloSection = () => {
                 width={1024}
                 height={1536}
                 sizes="(max-width: 768px) 100vw, 48vw"
-                className="w-full h-auto"
+                className="w-full h-auto dark:hidden"
+                quality={95}
+              />
+              <Image
+                src="https://res.cloudinary.com/dggvt0gzu/image/upload/v1767220162/ChatGPT_Image_Dec_31_2025_05_28_56_PM_hhu8z5.jpg"
+                alt="Infographic illustrating content overload from saved posts across platforms."
+                width={1024}
+                height={1536}
+                sizes="(max-width: 768px) 100vw, 48vw"
+                className="hidden w-full h-auto dark:block"
                 quality={95}
               />
             </div>

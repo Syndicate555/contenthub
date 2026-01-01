@@ -81,7 +81,7 @@ export default function AddPageClient({ inboundEmail }: AddPageClientProps) {
       { title: "Tagging & routing", detail: "Applying tags, domains, and XP." },
       { title: "Finalizing", detail: "Saving to Inbox and polishing UI." },
     ],
-    [],
+    []
   );
 
   const quotes = [
@@ -167,13 +167,13 @@ export default function AddPageClient({ inboundEmail }: AddPageClientProps) {
     steps.forEach((_, idx) => {
       // spread progress across ~10 seconds
       timers.push(
-        setTimeout(() => setProgressStep((s) => Math.max(s, idx)), 1800 * idx),
+        setTimeout(() => setProgressStep((s) => Math.max(s, idx)), 1800 * idx)
       );
     });
 
     const quoteTimer = setInterval(
       () => setQuoteIndex((i) => (i + 1) % quotes.length),
-      2200,
+      2200
     );
 
     return () => {
@@ -225,7 +225,7 @@ export default function AddPageClient({ inboundEmail }: AddPageClientProps) {
       router.push("/today");
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to save item",
+        error instanceof Error ? error.message : "Failed to save item"
       );
     } finally {
       setIsSubmitting(false);
@@ -244,7 +244,7 @@ export default function AddPageClient({ inboundEmail }: AddPageClientProps) {
   };
 
   return (
-    <div className="min-h-[80vh] bg-gradient-to-b from-slate-50 via-white to-indigo-50/60 overflow-x-hidden">
+    <div className="min-h-[80vh] bg-gradient-to-b from-background via-background to-indigo-50/60 dark:to-indigo-950/20 overflow-x-hidden">
       <motion.div
         className="max-w-5xl mx-auto py-8 px-4 space-y-6"
         variants={containerVariants}
@@ -254,7 +254,7 @@ export default function AddPageClient({ inboundEmail }: AddPageClientProps) {
         {/* Hero banner */}
         <motion.div
           variants={itemVariants}
-          className="relative overflow-hidden rounded-2xl border border-indigo-100 bg-white shadow-sm p-6"
+          className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-sm p-6"
         >
           <div className="pointer-events-none absolute inset-0">
             <div className="absolute -left-10 -top-16 h-48 w-48 rounded-full bg-indigo-100 blur-3xl" />
@@ -263,23 +263,23 @@ export default function AddPageClient({ inboundEmail }: AddPageClientProps) {
           </div>
           <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-2">
-              <p className="text-xs uppercase tracking-[0.2em] text-indigo-500 font-semibold">
+              <p className="text-xs uppercase tracking-[0.2em] text-indigo-600 dark:text-indigo-100 font-semibold">
                 Add any link
               </p>
-              <h1 className="text-2xl sm:text-3xl font-semibold text-slate-900">
+              <h1 className="text-2xl sm:text-3xl font-semibold text-foreground">
                 Drop a link, we distill the signal.
               </h1>
-              <p className="text-sm text-slate-600 max-w-2xl">
+              <p className="text-sm text-muted-foreground max-w-2xl">
                 Automatic extraction, AI summarization, tagging, and inbox
                 routing. Watch the pipeline in action with live progress and
                 playful cues.
               </p>
             </div>
             <div className="flex gap-2">
-              <span className="rounded-full bg-white/70 border border-indigo-100 px-3 py-1 text-xs font-medium text-indigo-700 shadow-sm flex items-center gap-1">
+              <span className="rounded-full bg-card/70 border border-indigo-100 dark:border-indigo-800 px-3 py-1 text-xs font-medium text-indigo-700 dark:text-indigo-400 shadow-sm flex items-center gap-1">
                 <Sparkles className="w-4 h-4" /> AI Powered
               </span>
-              <span className="rounded-full bg-white/70 border border-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700 shadow-sm flex items-center gap-1">
+              <span className="rounded-full bg-card/70 border border-emerald-100 dark:border-emerald-800 px-3 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-400 shadow-sm flex items-center gap-1">
                 <Check className="w-4 h-4" /> Auto-tagged
               </span>
             </div>
@@ -289,7 +289,7 @@ export default function AddPageClient({ inboundEmail }: AddPageClientProps) {
         <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
           {/* Add Content form + progress */}
           <motion.div variants={itemVariants}>
-            <Card className="shadow-md border-slate-100">
+            <Card className="shadow-md border-border">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <LinkIcon className="w-5 h-5" />
@@ -309,7 +309,7 @@ export default function AddPageClient({ inboundEmail }: AddPageClientProps) {
                       disabled={isSubmitting}
                       autoFocus
                     />
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-muted-foreground">
                       Paste a link from Twitter, Instagram, LinkedIn, Facebook,
                       TikTok, or any webpage
                     </p>
@@ -317,7 +317,7 @@ export default function AddPageClient({ inboundEmail }: AddPageClientProps) {
 
                   <div className="space-y-2">
                     <Label htmlFor="note" className="flex items-center gap-2">
-                      <MessageSquarePlus className="w-4 h-4 text-slate-500" />
+                      <MessageSquarePlus className="w-4 h-4 text-muted-foreground" />
                       Note (optional)
                     </Label>
                     <Textarea
@@ -349,7 +349,7 @@ export default function AddPageClient({ inboundEmail }: AddPageClientProps) {
                   </Button>
 
                   {isSubmitting && (
-                    <div className="space-y-4 rounded-xl border border-slate-200 bg-gradient-to-br from-slate-50 via-white to-indigo-50 p-4 shadow-lg overflow-hidden relative">
+                    <div className="space-y-4 rounded-xl border border-border bg-gradient-to-br from-muted via-card to-indigo-50/50 dark:to-indigo-950/20 p-4 shadow-lg overflow-hidden relative">
                       {/* Floating shapes background */}
                       <div className="pointer-events-none absolute inset-0">
                         <div className="absolute -left-6 -top-6 h-24 w-24 rounded-full bg-indigo-200/30 blur-2xl animate-pulse" />
@@ -359,8 +359,8 @@ export default function AddPageClient({ inboundEmail }: AddPageClientProps) {
 
                       <div className="flex items-center justify-between gap-2 relative">
                         <div className="flex items-center gap-2">
-                          <Sparkles className="w-4 h-4 text-indigo-500" />
-                          <span className="text-sm font-medium text-slate-800">
+                          <Sparkles className="w-4 h-4 text-indigo-500 dark:text-indigo-400" />
+                          <span className="text-sm font-medium text-foreground">
                             Processing your link
                           </span>
                         </div>
@@ -374,11 +374,13 @@ export default function AddPageClient({ inboundEmail }: AddPageClientProps) {
                         </span>
                       </div>
 
-                      <div className="relative h-2 w-full overflow-hidden rounded-full bg-slate-200 shadow-inner">
+                      <div className="relative h-2 w-full overflow-hidden rounded-full bg-muted shadow-inner">
                         <div
                           className="absolute left-0 top-0 h-full rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 transition-all duration-700"
                           style={{
-                            width: `${(progressStep / (steps.length - 1)) * 100}%`,
+                            width: `${
+                              (progressStep / (steps.length - 1)) * 100
+                            }%`,
                           }}
                         />
                         <div className="absolute inset-0 animate-[pulse_2s_ease-in-out_infinite] bg-white/10" />
@@ -393,10 +395,10 @@ export default function AddPageClient({ inboundEmail }: AddPageClientProps) {
                               key={step.title}
                               className={`flex items-start gap-2 rounded-lg border p-2 text-sm transition shadow-sm ${
                                 isDone
-                                  ? "border-green-200 bg-green-50 text-green-800"
+                                  ? "border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950/50 text-green-800 dark:text-green-300"
                                   : isActive
-                                    ? "border-indigo-200 bg-white text-indigo-900 shadow-md"
-                                    : "border-slate-200 bg-white/70 text-slate-600"
+                                  ? "border-indigo-200 dark:border-indigo-800 bg-card text-foreground shadow-md"
+                                  : "border-border bg-card/70 text-muted-foreground"
                               }`}
                             >
                               {isDone ? (
@@ -415,14 +417,12 @@ export default function AddPageClient({ inboundEmail }: AddPageClientProps) {
                         })}
                       </div>
 
-                      <div className="flex items-center justify-between text-xs text-slate-500 relative">
+                      <div className="flex items-center justify-between text-xs text-muted-foreground relative">
                         <div className="flex items-center gap-1">
-                          <Activity className="w-3.5 h-3.5 text-slate-400" />
+                          <Activity className="w-3.5 h-3.5" />
                           <span>{quotes[quoteIndex]}</span>
                         </div>
-                        <span className="text-[11px] text-slate-400">
-                          AI working…
-                        </span>
+                        <span className="text-[11px]">AI working…</span>
                       </div>
                     </div>
                   )}
@@ -433,63 +433,63 @@ export default function AddPageClient({ inboundEmail }: AddPageClientProps) {
 
           {/* How it works / info */}
           <motion.div variants={itemVariants} className="space-y-4">
-            <Card className="shadow-md border-slate-100">
+            <Card className="shadow-md border-border">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-indigo-500" />
+                  <Sparkles className="w-5 h-5 text-indigo-500 dark:text-indigo-400" />
                   How this works
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3 text-sm text-slate-700">
+              <CardContent className="space-y-3 text-sm text-muted-foreground">
                 <div className="flex items-start gap-3">
-                  <div className="mt-0.5 h-8 w-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                  <div className="mt-0.5 h-8 w-8 rounded-full bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
                     1
                   </div>
                   <div>
-                    <p className="font-medium text-slate-900">
+                    <p className="font-medium text-foreground">
                       Smart extraction
                     </p>
-                    <p className="text-xs text-slate-600">
+                    <p className="text-xs text-muted-foreground">
                       We fetch text, media, and metadata from the link so you
-                      don’t have to copy-paste.
+                      don't have to copy-paste.
                     </p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="mt-0.5 h-8 w-8 rounded-full bg-pink-50 text-pink-600 flex items-center justify-center">
+                  <div className="mt-0.5 h-8 w-8 rounded-full bg-pink-50 dark:bg-pink-950/50 text-pink-600 dark:text-pink-400 flex items-center justify-center">
                     2
                   </div>
                   <div>
-                    <p className="font-medium text-slate-900">AI enrichment</p>
-                    <p className="text-xs text-slate-600">
+                    <p className="font-medium text-foreground">AI enrichment</p>
+                    <p className="text-xs text-muted-foreground">
                       Summaries, tags, categories, and XP are generated to keep
                       your inbox organized.
                     </p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="mt-0.5 h-8 w-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                  <div className="mt-0.5 h-8 w-8 rounded-full bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
                     3
                   </div>
                   <div>
-                    <p className="font-medium text-slate-900">Ready to act</p>
-                    <p className="text-xs text-slate-600">
+                    <p className="font-medium text-foreground">Ready to act</p>
+                    <p className="text-xs text-muted-foreground">
                       Content drops into your Inbox with focus areas, badges,
                       and actions ready to go.
                     </p>
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2 pt-1">
-                  <span className="px-3 py-1 text-xs rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100">
+                  <span className="px-3 py-1 text-xs rounded-full bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-800">
                     Summaries
                   </span>
-                  <span className="px-3 py-1 text-xs rounded-full bg-amber-50 text-amber-700 border border-amber-100">
+                  <span className="px-3 py-1 text-xs rounded-full bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border border-amber-100 dark:border-amber-800">
                     Tags
                   </span>
-                  <span className="px-3 py-1 text-xs rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">
+                  <span className="px-3 py-1 text-xs rounded-full bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800">
                     Domains
                   </span>
-                  <span className="px-3 py-1 text-xs rounded-full bg-pink-50 text-pink-700 border border-pink-100">
+                  <span className="px-3 py-1 text-xs rounded-full bg-pink-50 dark:bg-pink-950/50 text-pink-700 dark:text-pink-400 border border-pink-100 dark:border-pink-800">
                     XP
                   </span>
                 </div>
@@ -497,7 +497,7 @@ export default function AddPageClient({ inboundEmail }: AddPageClientProps) {
             </Card>
 
             {/* Email Newsletter Forwarding Section */}
-            <Card className="shadow-md border-slate-100">
+            <Card className="shadow-md border-border">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Mail className="w-5 h-5" />
@@ -508,21 +508,26 @@ export default function AddPageClient({ inboundEmail }: AddPageClientProps) {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="rounded-xl border border-dashed border-amber-200 bg-amber-50/60 p-4 text-sm text-amber-900">
+                <div className="rounded-xl border border-dashed border-amber-200 dark:border-amber-800 bg-amber-50/60 dark:bg-amber-950/30 p-4 text-sm text-amber-900 dark:text-amber-300">
                   Newsletter forwarding is temporarily disabled while we finish
                   the new ingestion pipeline. Stay tuned—your personalized
                   address will be back shortly.
                 </div>
                 <div className="flex items-center gap-2 w-full opacity-60 pointer-events-none select-none">
-                  <code className="flex-1 min-w-0 px-3 py-2 text-sm bg-gray-100 rounded-md border border-gray-200 font-mono break-all">
+                  <code className="flex-1 min-w-0 px-3 py-2 text-sm bg-muted rounded-md border border-border font-mono break-all">
                     {inboundEmail}
                   </code>
-                  <Button variant="outline" size="icon" disabled className="shrink-0">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    disabled
+                    className="shrink-0"
+                  >
                     <Copy className="w-4 h-4" />
                   </Button>
                 </div>
-                <p className="text-xs text-gray-500">
-                  We’ll process newsletters with AI summaries, tags, and
+                <p className="text-xs text-muted-foreground">
+                  We'll process newsletters with AI summaries, tags, and
                   categorization once this is live.
                 </p>
               </CardContent>

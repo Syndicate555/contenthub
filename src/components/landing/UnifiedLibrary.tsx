@@ -150,8 +150,8 @@ export const UnifiedLibrary = () => {
         </div>
 
         <div className="relative max-w-7xl mx-auto">
-          <div className="relative overflow-hidden rounded-[32px] border border-brand-1/20 bg-gradient-to-br from-brand-1/15 via-white/70 to-brand-2/15 px-6 pb-10 pt-10 shadow-[0_40px_120px_rgba(15,23,42,0.12)]">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(91,91,255,0.16),transparent_45%),radial-gradient(circle_at_80%_15%,rgba(83,193,255,0.18),transparent_40%),radial-gradient(circle_at_50%_90%,rgba(91,91,255,0.12),transparent_55%)]" />
+          <div className="relative overflow-hidden rounded-[32px] border border-brand-1/20 bg-gradient-to-br from-brand-1/15 via-white/70 to-brand-2/15 dark:from-brand-1/20 dark:via-[#0b1220]/70 dark:to-brand-2/20 px-6 pb-10 pt-10 shadow-[0_40px_120px_rgba(15,23,42,0.12)]">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(91,91,255,0.16),transparent_45%),radial-gradient(circle_at_80%_15%,rgba(83,193,255,0.18),transparent_40%),radial-gradient(circle_at_50%_90%,rgba(91,91,255,0.12),transparent_55%)] dark:opacity-80" />
             <div className="relative z-10 flex flex-col items-center gap-6">
               <div className="flex w-full max-w-3xl items-center justify-center gap-4">
                 <div className="h-px flex-1 bg-gradient-to-r from-transparent via-brand-1/30 to-transparent" />

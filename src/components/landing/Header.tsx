@@ -10,6 +10,7 @@ import {
 } from "framer-motion";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { navLinks } from "@/data/landing";
 import { useAuth } from "@clerk/nextjs";
 
@@ -92,7 +93,7 @@ const DesktopNav = ({ navItems, visible }: NavbarProps) => {
         x: "-50%",
         top: 0,
         borderRadius: "2rem",
-        backgroundColor: "rgba(255, 255, 255, 0.0)",
+        backgroundColor: "transparent",
         backdropFilter: "none",
         boxShadow: "none",
       }}
@@ -106,8 +107,8 @@ const DesktopNav = ({ navItems, visible }: NavbarProps) => {
           ? "0 0 24px rgba(34, 42, 53, 0.06), 0 1px 1px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(34, 42, 53, 0.04), 0 0 4px rgba(34, 42, 53, 0.08), 0 16px 68px rgba(47, 48, 55, 0.05), 0 1px 0 rgba(255, 255, 255, 0.1) inset"
           : "none",
         backgroundColor: visible
-          ? "rgba(255, 255, 255, 0.9)"
-          : "rgba(255, 255, 255, 0.0)",
+          ? "var(--surface)"
+          : "transparent",
         borderRadius: visible ? "1rem" : "2rem",
       }}
       transition={{
@@ -120,7 +121,7 @@ const DesktopNav = ({ navItems, visible }: NavbarProps) => {
       )}
     >
       <Logo />
-      <motion.div className="lg:flex flex-row flex-1 hidden items-center justify-center space-x-2 lg:space-x-2 text-sm text-zinc-600 font-medium hover:text-zinc-800 transition duration-200">
+      <motion.div className="lg:flex flex-row flex-1 hidden items-center justify-center space-x-2 lg:space-x-2 text-sm text-text-secondary font-medium transition duration-200">
         {navItems.map((navItem, idx: number) => (
           <a
             key={`link=${idx}`}
@@ -131,20 +132,21 @@ const DesktopNav = ({ navItems, visible }: NavbarProps) => {
               }
             }}
             onMouseEnter={() => setHovered(idx)}
-            className="text-neutral-600 relative px-4 py-2 min-h-[48px] min-w-[48px] flex items-center justify-center"
+            className="text-text-secondary hover:text-text-primary relative px-4 py-2 min-h-[48px] min-w-[48px] flex items-center justify-center transition-colors"
             aria-label={`Navigate to ${navItem.label} section`}
           >
             {hovered === idx && (
               <motion.div
                 layoutId="hovered"
-                className="w-full h-full absolute inset-0 bg-gray-100 rounded-full"
+                className="w-full h-full absolute inset-0 bg-border-light rounded-full"
               />
             )}
             <span className="relative z-20">{navItem.label}</span>
           </a>
         ))}
       </motion.div>
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
+        <ThemeToggle />
         {isSignedIn ? (
           <Link href="/today">
             <Button className="hidden md:flex bg-gradient-to-r from-brand-1 to-brand-2 text-white hover:shadow-lg hover:shadow-brand-1/20 rounded-full gap-2">
@@ -211,7 +213,7 @@ const MobileNav = ({ navItems, visible }: NavbarProps) => {
           left: "50%",
           top: 0,
           borderRadius: "2rem",
-          backgroundColor: "rgba(255, 255, 255, 0.0)",
+          backgroundColor: "transparent",
           backdropFilter: "none",
           boxShadow: "none",
         }}
@@ -228,8 +230,8 @@ const MobileNav = ({ navItems, visible }: NavbarProps) => {
               : "none",
           backgroundColor:
             visible || open
-              ? "rgba(255, 255, 255, 0.9)"
-              : "rgba(255, 255, 255, 0.0)",
+              ? "var(--surface)"
+              : "transparent",
           borderRadius: open ? "1rem" : visible ? "1rem" : "2rem",
         }}
         transition={{
@@ -244,19 +246,22 @@ const MobileNav = ({ navItems, visible }: NavbarProps) => {
       >
         <div className="flex flex-row justify-between items-center w-full px-4 py-2">
           <Logo />
-          <button
-            type="button"
-            onClick={() => setOpen(!open)}
-            className="p-2 min-h-[48px] min-w-[48px] flex items-center justify-center"
-            aria-label={open ? "Close menu" : "Open menu"}
-            aria-expanded={open}
-          >
-            {open ? (
-              <X className="text-black w-6 h-6" />
-            ) : (
-              <Menu className="text-black w-6 h-6" />
-            )}
-          </button>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <button
+              type="button"
+              onClick={() => setOpen(!open)}
+              className="p-2 min-h-[48px] min-w-[48px] flex items-center justify-center"
+              aria-label={open ? "Close menu" : "Open menu"}
+              aria-expanded={open}
+            >
+              {open ? (
+                <X className="text-text-primary w-6 h-6" />
+              ) : (
+                <Menu className="text-text-primary w-6 h-6" />
+              )}
+            </button>
+          </div>
         </div>
 
         <AnimatePresence>
@@ -268,7 +273,7 @@ const MobileNav = ({ navItems, visible }: NavbarProps) => {
               }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              className="flex bg-white inset-x-0 z-50 flex-col items-start justify-start gap-4 w-full px-4 py-8 shadow-xl rounded-b-2xl overflow-hidden"
+              className="flex bg-surface-solid inset-x-0 z-50 flex-col items-start justify-start gap-4 w-full px-4 py-8 shadow-xl rounded-b-2xl overflow-hidden"
             >
               {navItems.map((navItem, idx: number) => (
                 <a
@@ -279,7 +284,7 @@ const MobileNav = ({ navItems, visible }: NavbarProps) => {
                       e.preventDefault();
                     }
                   }}
-                  className="relative text-neutral-600 w-full text-left py-2 font-medium min-h-[48px] flex items-center"
+                  className="relative text-text-secondary hover:text-text-primary w-full text-left py-2 font-medium min-h-[48px] flex items-center transition-colors"
                   aria-label={`Navigate to ${navItem.label} section`}
                 >
                   <motion.span className="block">{navItem.label}</motion.span>

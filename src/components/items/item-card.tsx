@@ -437,7 +437,7 @@ export function ItemCard({
 
         {/* TikTok embed for videos (uses iframe) */}
         {showTikTokEmbed ? (
-          <div className="w-full flex justify-center bg-gray-50 py-4">
+          <div className="w-full flex justify-center bg-muted py-4">
             <iframe
               src={tiktokEmbedUrl}
               className="w-full max-w-[325px] h-[730px] border-0"
@@ -598,7 +598,7 @@ export function ItemCard({
           item.imageUrl && (
             <button
               onClick={() => setIsImageModalOpen(true)}
-              className="block w-full relative bg-gray-50 overflow-hidden cursor-zoom-in group min-h-[200px] max-h-80"
+              className="block w-full relative bg-muted overflow-hidden cursor-zoom-in group min-h-[200px] max-h-80"
             >
               <Image
                 src={item.imageUrl}

@@ -666,7 +666,7 @@ export function ItemCardGamified({
 
           {/* TikTok embed for videos (uses iframe) */}
           {showTikTokEmbed ? (
-            <div className="w-full flex justify-center bg-gray-50 py-4">
+            <div className="w-full flex justify-center bg-muted py-4">
               <iframe
                 src={tiktokEmbedUrl!}
                 className="w-full max-w-full sm:max-w-[325px] h-[730px] border-0"
@@ -680,7 +680,7 @@ export function ItemCardGamified({
 
           {/* LinkedIn embed for posts with videos/documents */}
           {showLinkedInEmbed ? (
-            <div className="w-full bg-gray-50 py-4">
+            <div className="w-full bg-muted py-4">
               {/* Hint to scroll for video/document/content */}
               <div className="flex flex-wrap justify-center items-center mb-2 gap-3 px-3">
                 <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-100 text-blue-700 rounded-full text-xs font-medium text-center">
@@ -707,7 +707,7 @@ export function ItemCardGamified({
                 {item.imageUrl && (
                   <button
                     onClick={() => setIsImageModalOpen(true)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-300 text-gray-700 rounded-full text-xs font-medium hover:bg-gray-50 hover:border-gray-400 transition-colors max-w-full whitespace-normal text-center"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-full text-xs font-medium hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-400 dark:hover:border-gray-500 transition-colors max-w-full whitespace-normal text-center"
                   >
                     <svg
                       className="w-3.5 h-3.5"
@@ -741,10 +741,10 @@ export function ItemCardGamified({
 
           {/* Facebook embed for posts */}
           {showFacebookEmbed ? (
-            <div className="w-full bg-gray-50 py-6 px-4">
+            <div className="w-full bg-muted py-6 px-4">
               {/* Hint to scroll for content and View Image button */}
               <div className="flex flex-wrap justify-center items-center mb-4 gap-3">
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 rounded-full text-xs font-medium">
                   <svg
                     className="w-4 h-4"
                     fill="none"
@@ -766,7 +766,7 @@ export function ItemCardGamified({
                 {item.videoUrl && (
                   <button
                     onClick={() => setIsVideoModalOpen(true)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-blue-300 text-blue-700 rounded-full text-xs font-medium hover:bg-blue-50 hover:border-blue-400 transition-colors max-w-full whitespace-normal text-center"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-gray-800 border border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300 rounded-full text-xs font-medium hover:bg-blue-50 dark:hover:bg-blue-950/50 hover:border-blue-400 dark:hover:border-blue-600 transition-colors max-w-full whitespace-normal text-center"
                   >
                     <svg
                       className="w-3.5 h-3.5"
@@ -788,7 +788,7 @@ export function ItemCardGamified({
                 {item.imageUrl && (
                   <button
                     onClick={() => setIsImageModalOpen(true)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-300 text-gray-700 rounded-full text-xs font-medium hover:bg-gray-50 hover:border-gray-400 transition-colors max-w-full whitespace-normal text-center"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-full text-xs font-medium hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-400 dark:hover:border-gray-500 transition-colors max-w-full whitespace-normal text-center"
                   >
                     <svg
                       className="w-3.5 h-3.5"
@@ -907,7 +907,7 @@ export function ItemCardGamified({
               (isInsta && (hasInstaVideo || showInstagramEmbed))) && (
               <button
                 onClick={() => setIsImageModalOpen(true)}
-                className="block w-full relative bg-gray-50 overflow-hidden cursor-zoom-in group min-h-[200px] max-h-80"
+                className="block w-full relative bg-muted overflow-hidden cursor-zoom-in group min-h-[200px] max-h-80"
               >
                 {isTikTok && item.videoUrl ? (
                   // Custom TikTok placeholder with play button

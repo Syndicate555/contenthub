@@ -60,9 +60,6 @@ const Pricing = () => {
                   <span className="text-4xl font-bold text-text-primary">
                     Free
                   </span>
-                  <span className="text-text-muted">
-                    / forever for beta users
-                  </span>
                 </div>
 
                 <p className="text-sm text-text-secondary mb-8">
@@ -86,7 +83,7 @@ const Pricing = () => {
                   className="block w-full py-4 bg-gradient-to-r from-brand-1 to-brand-2 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-brand-1/25 hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center gap-2 group"
                   aria-label="Join the beta program - Sign up now"
                 >
-                  Join the beta
+                  Try for free
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
                 </Link>
                 <p className="text-xs text-center text-text-muted mt-4">
