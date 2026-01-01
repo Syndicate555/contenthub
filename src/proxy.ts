@@ -6,6 +6,9 @@ import { validateSession } from "./lib/session-validation";
 const isPublicRoute = createRouteMatcher([
   "/", // Landing page - publicly accessible
   "/sign-in(.*)",
+  "/privacy", // Privacy policy - publicly accessible
+  "/sitemap.xml", // SEO - must be publicly accessible for Google
+  "/robots.txt", // SEO - must be publicly accessible for crawlers
   "/api/webhooks(.*)",
   "/api/quick-add", // Uses bearer token auth instead
   "/api/items/extension(.*)", // Extension API - uses bearer token auth instead
