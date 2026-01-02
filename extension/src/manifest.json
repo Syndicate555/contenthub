@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Tavlo - Save to Your Feed",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Save links to your personal Tavlo feed with one click",
   "permissions": [
     "activeTab",

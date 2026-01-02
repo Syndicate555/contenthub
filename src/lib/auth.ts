@@ -43,22 +43,78 @@ export async function getCurrentUser() {
     }
   }
 
-  // Check for Bearer token (mobile demo mode)
+  // Check for Bearer token (mobile demo mode or extension)
   const headersList = await headers();
   const authHeader = headersList.get("authorization");
 
   if (authHeader?.startsWith("Bearer ")) {
     const token = authHeader.replace("Bearer ", "");
-    const payload = verifyDemoToken(token);
 
-    if (payload) {
+    // Try demo token first
+    const demoPayload = verifyDemoToken(token);
+    if (demoPayload) {
       const demoUser = await db.user.findUnique({
-        where: { id: payload.userId },
+        where: { id: demoPayload.userId },
       });
 
       if (demoUser) {
         return demoUser;
       }
+    }
+
+    // Try Clerk JWT token (for extension)
+    try {
+      const { verifyToken } = await import("@clerk/nextjs/server");
+      const verified = await verifyToken(token, {
+        secretKey: process.env.CLERK_SECRET_KEY,
+      });
+
+      if (verified?.sub) {
+        let user = await db.user.findUnique({
+          where: { clerkId: verified.sub },
+        });
+
+        // If user doesn't exist yet, create them
+        if (!user) {
+          // Get email from JWT payload (Clerk includes it in custom claims)
+          // The email is typically in the 'email' claim or we can leave it empty
+          // and let it be updated when user logs in via the web
+          const email = (verified.email as string | undefined) || "";
+
+          try {
+            user = await db.user.create({
+              data: {
+                clerkId: verified.sub,
+                email,
+              },
+            });
+          } catch (error: unknown) {
+            if (
+              error &&
+              typeof error === "object" &&
+              "code" in error &&
+              error.code === "P2002"
+            ) {
+              user = await db.user.findUnique({
+                where: { clerkId: verified.sub },
+              });
+
+              if (!user) {
+                throw error;
+              }
+            } else {
+              throw error;
+            }
+          }
+        }
+
+        if (user) {
+          return user;
+        }
+      }
+    } catch (error) {
+      console.warn("[Auth] Failed to verify Clerk JWT from Bearer token:", error);
+      // Continue to regular session auth
     }
   }
 
