@@ -72,6 +72,12 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 
 chrome.runtime.onMessageExternal.addListener(
   (message, sender, sendResponse) => {
+    console.log("[Tavlo Extension Background] Received message:", {
+      type: message.type,
+      sender: sender.url,
+      hasToken: !!message.token,
+    });
+
     if (message.type === "TAVLO_EXTENSION_AUTH") {
       const { token, email } = message;
 
@@ -81,11 +87,14 @@ chrome.runtime.onMessageExternal.addListener(
         return;
       }
 
+      console.log("[Tavlo Extension Background] Saving token to storage...");
+
       Promise.all([
         setToken(token),
         email ? setUserEmail(email) : Promise.resolve(),
       ])
         .then(() => {
+          console.log("[Tavlo Extension Background] Token saved successfully!");
           sendResponse({ success: true });
         })
         .catch((error) => {

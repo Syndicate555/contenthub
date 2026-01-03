@@ -60,47 +60,82 @@ export function AuthBridge({ token, email }: AuthBridgeProps) {
         // Save extension ID for later use
         setExtensionId(extId);
 
-        // Use Chrome extension messaging API
+        // Use Chrome extension messaging API with retry logic
+        // Service workers can be inactive and need to wake up
         if (chromeRuntimeAvailable) {
-          // @ts-expect-error - chrome.runtime.sendMessage is available via externally_connectable
-          window.chrome.runtime.sendMessage(
-            extId,
-            {
-              type: "TAVLO_EXTENSION_AUTH",
-              token,
-              email,
-            },
-            (response: { success: boolean; error?: string }) => {
-              // @ts-expect-error - chrome.runtime.lastError is available
-              if (window.chrome.runtime.lastError) {
-                console.error(
-                  "[Tavlo Auth] Error sending message:",
-                  // @ts-expect-error - chrome.runtime.lastError
-                  window.chrome.runtime.lastError.message
-                );
-                console.error("[Tavlo Auth] Extension ID used:", extId);
-                console.error(
-                  "[Tavlo Auth] Current domain:",
-                  window.location.origin
-                );
-                setStatus("error");
-                return;
-              }
+          const sendMessageWithRetry = (
+            attempt: number = 1,
+            maxAttempts: number = 3
+          ) => {
+            // @ts-expect-error - chrome.runtime.sendMessage is available via externally_connectable
+            window.chrome.runtime.sendMessage(
+              extId,
+              {
+                type: "TAVLO_EXTENSION_AUTH",
+                token,
+                email,
+              },
+              (response: { success: boolean; error?: string }) => {
+                // @ts-expect-error - chrome.runtime.lastError is available
+                if (window.chrome.runtime.lastError) {
+                  const errorMessage =
+                    // @ts-expect-error - chrome.runtime.lastError
+                    window.chrome.runtime.lastError.message;
 
-              if (response?.success) {
-                console.log(
-                  "[Tavlo Auth] Token sent successfully to extension"
-                );
-                setStatus("success");
-              } else {
-                console.error(
-                  "[Tavlo Auth] Extension rejected token:",
-                  response?.error
-                );
-                setStatus("error");
+                  console.warn(
+                    `[Tavlo Auth] Attempt ${attempt}/${maxAttempts} failed:`,
+                    errorMessage
+                  );
+
+                  // If service worker is inactive, retry after a delay
+                  if (
+                    errorMessage.includes("Receiving end does not exist") &&
+                    attempt < maxAttempts
+                  ) {
+                    console.log(
+                      `[Tavlo Auth] Service worker may be inactive. Retrying in ${attempt * 500}ms...`
+                    );
+                    setTimeout(() => {
+                      sendMessageWithRetry(attempt + 1, maxAttempts);
+                    }, attempt * 500); // Exponential backoff: 500ms, 1000ms, 1500ms
+                    return;
+                  }
+
+                  // Max retries reached or different error
+                  console.error(
+                    "[Tavlo Auth] Error sending message after",
+                    attempt,
+                    "attempts:",
+                    errorMessage
+                  );
+                  console.error("[Tavlo Auth] Extension ID used:", extId);
+                  console.error(
+                    "[Tavlo Auth] Current domain:",
+                    window.location.origin
+                  );
+                  setStatus("error");
+                  return;
+                }
+
+                if (response?.success) {
+                  console.log(
+                    "[Tavlo Auth] Token sent successfully to extension",
+                    attempt > 1 ? `(after ${attempt} attempts)` : ""
+                  );
+                  setStatus("success");
+                } else {
+                  console.error(
+                    "[Tavlo Auth] Extension rejected token:",
+                    response?.error
+                  );
+                  setStatus("error");
+                }
               }
-            }
-          );
+            );
+          };
+
+          // Start sending with retry logic
+          sendMessageWithRetry();
         } else {
           console.error(
             "[Tavlo Auth] Chrome runtime not available. This page must be accessed from Chrome/Edge with the extension installed."

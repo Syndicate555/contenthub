@@ -20,31 +20,40 @@ function App() {
   }, []);
 
   const checkAuthStatus = async () => {
+    console.log("[Tavlo Extension] Checking auth status...");
     setIsLoading(true);
     try {
       const authenticated = await isAuthenticated();
+      console.log("[Tavlo Extension] Is authenticated:", authenticated);
 
       if (authenticated) {
         const token = await getToken();
+        console.log("[Tavlo Extension] Got token:", token ? "yes" : "no");
         if (token) {
           // Validate token with backend
+          console.log("[Tavlo Extension] Validating token with backend...");
           const isValid = await validateToken(token);
+          console.log("[Tavlo Extension] Token is valid:", isValid);
 
           if (isValid) {
             setAuthToken(token);
             setCurrentScreen("save");
+            console.log("[Tavlo Extension] Switched to save screen");
           } else {
             // Token is invalid/expired
+            console.log("[Tavlo Extension] Token invalid, showing login screen");
             setCurrentScreen("login");
           }
         } else {
+          console.log("[Tavlo Extension] No token found, showing login screen");
           setCurrentScreen("login");
         }
       } else {
+        console.log("[Tavlo Extension] Not authenticated, showing login screen");
         setCurrentScreen("login");
       }
     } catch (error) {
-      console.error("Error checking auth status:", error);
+      console.error("[Tavlo Extension] Error checking auth status:", error);
       setCurrentScreen("login");
     } finally {
       setIsLoading(false);
