@@ -120,7 +120,9 @@ export default function HomePage() {
         <br></br>
         <br></br>
         <br></br>
-        <UnifiedLibrary />
+        <div className="hidden lg:block">
+          <UnifiedLibrary />
+        </div>
         <YoutubeDemo />
         <Features />
         <VideoDemo />

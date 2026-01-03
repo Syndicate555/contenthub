@@ -50,7 +50,6 @@ function AnimatedHero() {
                   playsInline
                   preload="metadata"
                   className="w-full h-full object-cover"
-                  poster="https://res.cloudinary.com/dggvt0gzu/video/upload/v1766757137/Screen_Recording_2025-12-26_at_8.46.33_AM_i5xmum.jpg"
                   aria-label="Product demonstration"
                 >
                   <source
@@ -150,14 +149,22 @@ function AnimatedHero() {
 
           {/* Right Column */}
           <div className="relative w-full">
-            {/* Mobile: Show poster image as fallback */}
+            {/* Mobile: Show video */}
             <div className="lg:hidden relative w-full aspect-video rounded-xl bg-surface-solid border border-border-light shadow-xl overflow-hidden">
-              <img
-                src="https://res.cloudinary.com/dggvt0gzu/video/upload/so_0,f_jpg,q_auto:good,w_800/v1766546298/Screen_Recording_2025-12-23_at_10.11.45_PM_nxxtlj.jpg"
-                alt="Tavlo Demo"
+              <video
+                autoPlay
+                loop
+                muted
+                playsInline
+                preload="metadata"
                 className="w-full h-full object-cover"
-                loading="eager"
-              />
+                aria-label="Product demonstration"
+              >
+                <source
+                  src="https://gnxrddsvzynszstsraer.supabase.co/storage/v1/object/public/Tavlo/Screen_Recording_2025-12-26_at_8.46.33_AM_i5xmum.mp4"
+                  type="video/mp4"
+                />
+              </video>
             </div>
 
             {/* Desktop: Spacer (video is in background) */}
