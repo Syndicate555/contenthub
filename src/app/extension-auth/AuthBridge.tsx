@@ -275,7 +275,30 @@ export function AuthBridge({ token, email }: AuthBridgeProps) {
 
         {/* Manual close button */}
         <button
-          onClick={() => window.close()}
+          onClick={() => {
+            // Use extension messaging to close tab (handles navigation history)
+            const chromeAvailable =
+              typeof window !== "undefined" &&
+              // @ts-expect-error - chrome is available via externally_connectable
+              typeof window.chrome !== "undefined" &&
+              // @ts-expect-error - chrome.runtime is available
+              typeof window.chrome.runtime !== "undefined";
+
+            if (chromeAvailable && extensionId) {
+              // @ts-expect-error - chrome.runtime.sendMessage
+              window.chrome.runtime.sendMessage(
+                extensionId,
+                { type: "TAVLO_EXTENSION_CLOSE_TAB" },
+                () => {
+                  // Fallback: try window.close() in case it works
+                  window.close();
+                }
+              );
+            } else {
+              // Fallback if chrome API not available
+              window.close();
+            }
+          }}
           className="w-full px-6 py-3 bg-gradient-to-r from-purple-500 via-blue-500 to-indigo-500 text-white rounded-2xl hover:shadow-2xl hover:shadow-purple-300 transition-all duration-300 font-bold hover:scale-105 transform"
         >
           Close Window
