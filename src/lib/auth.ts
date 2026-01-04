@@ -64,7 +64,13 @@ export async function getCurrentUser() {
 
     // Try Clerk JWT token (for extension)
     try {
+      // Use Clerk's JWT verification for custom templates
       const { verifyToken } = await import("@clerk/nextjs/server");
+
+      if (!process.env.CLERK_SECRET_KEY) {
+        throw new Error("CLERK_SECRET_KEY not configured");
+      }
+
       const verified = await verifyToken(token, {
         secretKey: process.env.CLERK_SECRET_KEY,
       });
@@ -113,7 +119,12 @@ export async function getCurrentUser() {
         }
       }
     } catch (error) {
-      console.warn("[Auth] Failed to verify Clerk JWT from Bearer token:", error);
+      console.error("[Auth] Failed to verify Clerk JWT from Bearer token:", error);
+      console.error("[Auth] Error details:", {
+        name: error instanceof Error ? error.name : "Unknown",
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       // Continue to regular session auth
     }
   }
