@@ -82,7 +82,7 @@ const Integrations = dynamic(
   () => import("@/components/landing/Integrations"),
   {
     loading: () => <ComponentSkeleton variant="section" minHeight="300px" />,
-  },
+  }
 );
 
 const Pricing = dynamic(() => import("@/components/landing/Pricing"), {
@@ -125,7 +125,7 @@ export default function HomePage() {
         </div>
         <YoutubeDemo />
         <Features />
-        <VideoDemo />
+        {/* <VideoDemo /> */}
         <ScrollingFeatures />
         <WhyTavloSection />
         <Integrations />

@@ -10,17 +10,13 @@ interface VideoItem {
 
 const TavloLoop = () => {
   const [loadedVideos, setLoadedVideos] = useState<Set<number>>(
-    new Set([0, 1, 2, 3]),
+    new Set([0, 1, 2, 3])
   );
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const innerContainerRef = useRef<HTMLDivElement>(null);
 
   // Content items from Supabase Storage
   const contentItems: VideoItem[] = [
-    {
-      src: "https://gnxrddsvzynszstsraer.supabase.co/storage/v1/object/public/Tavlo/SnapTik.Cx_1766544616_vcrcjs.mp4",
-      type: "video",
-    },
     {
       src: "https://gnxrddsvzynszstsraer.supabase.co/storage/v1/object/public/Tavlo/SnapTik.Cx_1766544820_wlsyos.mp4",
       type: "video",
@@ -100,13 +96,13 @@ const TavloLoop = () => {
           if (entry.isIntersecting) {
             const index = parseInt(
               entry.target.getAttribute("data-index") || "0",
-              10,
+              10
             );
             setLoadedVideos((prev) => new Set([...prev, index]));
           }
         });
       },
-      { rootMargin: "200px" },
+      { rootMargin: "200px" }
     );
 
     // Observe all video containers
