@@ -11,7 +11,7 @@ const isPublicRoute = createRouteMatcher([
   "/robots.txt", // SEO - must be publicly accessible for crawlers
   "/api/webhooks(.*)",
   "/api/quick-add", // Uses bearer token auth instead
-  "/api/items/extension(.*)", // Extension API - uses bearer token auth instead
+  "/api/items(.*)", // Items API - supports both session cookies and bearer token auth
   "/api/domains", // Public - domains are global, not user-specific
   "/api/health(.*)", // Health check for function warming and monitoring
   "/video(.*)", // Serve static demo video without auth
